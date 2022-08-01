@@ -1,0 +1,4 @@
+Rename the file .privateKeys (remove -example)
+Replace the contents of this file with your private key(s).
+This is only for running on a private machine. Don't share your key or this file with anyone.
+You can paste one private key on each line to use multiple accounts.
