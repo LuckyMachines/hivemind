@@ -1,7 +1,9 @@
 import React, { Component } from "react";
-import { Grid, Header, Button } from "semantic-ui-react";
+import { Grid, Button } from "semantic-ui-react";
 import Layout from "../components/Layout";
 import ConnectWallet from "../components/ConnectWallet";
+import Question from "../components/Question";
+import SecretPhrase from "../components/SecretPhrase";
 const settings = require("../settings");
 
 class Dashboard extends Component {
@@ -10,7 +12,8 @@ class Dashboard extends Component {
     this.state = {
       connectedWallet: "",
       provider: "",
-      accounts: []
+      accounts: [],
+      secretPhrase: ""
     };
   }
 
@@ -39,21 +42,26 @@ class Dashboard extends Component {
               {settings.projectTitle}
             </h1>
           </Grid.Row>
+          <Grid.Row color="black">
+            <ConnectWallet
+              setProvider={this.setProvider}
+              setAccounts={this.setAccounts}
+              setConnectedWallet={this.setConnectedWallet}
+            />
+          </Grid.Row>
+          <Grid.Row color="black" style={{ paddingTop: "0px" }}>
+            {this.state.connectedWallet
+              ? `Connected: ${this.state.connectedWallet}`
+              : "Not connected"}
+          </Grid.Row>
           <Grid.Row style={{ backgroundColor: "#99ccff", color: "#001433" }}>
-            <Grid.Column width={12}>
-              <center>
-                <ConnectWallet
-                  setProvider={this.setProvider}
-                  setAccounts={this.setAccounts}
-                  setConnectedWallet={this.setConnectedWallet}
-                />
-                <br />
-                <p>
-                  <strong>Connected Wallet:</strong>{" "}
-                  {this.state.connectedWallet}
-                </p>
-              </center>
-            </Grid.Column>
+            <SecretPhrase />
+          </Grid.Row>
+          <Grid.Row style={{ backgroundColor: "#99ccff", color: "#001433" }}>
+            <Question />
+          </Grid.Row>
+          <Grid.Row style={{ backgroundColor: "#99ccff", color: "#001433" }}>
+            <Button color="black">Submit Answers</Button>
           </Grid.Row>
         </Grid>
       </Layout>
