@@ -342,11 +342,6 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-1.2.1.tgz#b520529ec21d8e5945a1851dfd1c32e94e39ff45"
   integrity sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==
 
-"@luckymachines/railway@^0.0.4":
-  version "0.0.4"
-  resolved "https://registry.yarnpkg.com/@luckymachines/railway/-/railway-0.0.4.tgz#f38b8259d9110f66274b6293bd5a90ad8cf95e5f"
-  integrity sha512-RF7OwCyrg/FYNtNfNV4JAKvNnep6IhzzKwGa2ZXikh8tDu6HEqNIBhCiKLMxgvpha10Ggkgnr6KU/nP3bh3cYA==
-
 "@metamask/eth-sig-util@4.0.1":
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/@metamask/eth-sig-util/-/eth-sig-util-4.0.1.tgz#3ad61f6ea9ad73ba5b19db780d40d9aae5157088"
