@@ -1,12 +1,8 @@
-// Maintains scores for each player
-// players with highest scores get biggest payouts in final round
-// mapping from game ID => user address => score
-// mapping(uint256 => mapping(address => uint256)) playerScore;
-
-// All questions for hubs to pull from
-// Can designate questions to a partictular round
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.9;
+
+// Maintains scores for each player
+// players with highest scores get biggest payouts in final round
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "hardhat/console.sol";

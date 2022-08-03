@@ -1,5 +1,3 @@
-// All questions for hubs to pull from
-// Can designate questions to a partictular round
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.9;
 
