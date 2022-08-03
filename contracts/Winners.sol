@@ -1,0 +1,1 @@
+// Any group of players who enter this hub split the prize pool. If nobody wins, pool carries over to next game.
