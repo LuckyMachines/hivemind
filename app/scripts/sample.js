@@ -4,7 +4,7 @@ const settings = require("../settings");
 const doSomething = async () => {
   let p = await provider();
   let accounts = await p.eth.getAccounts();
-  // console.log("Accounts:", accounts);
+  console.log("Accounts:", accounts);
 
   // Load a contract
   // const myContract = new p.eth.Contract(myContractABI, myContractAddress);

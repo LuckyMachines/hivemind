@@ -1,4 +1,6 @@
+Use this file to load accounts that will interact with the dapp, these might be different from the private keys set for deployment in the project root.
 Rename the file .privateKeys (remove -example)
 Replace the contents of this file with your private key(s).
 This is only for running on a private machine. Don't share your key or this file with anyone.
 You can paste one private key on each line to use multiple accounts.
+Do not leave any blank spaces or empty lines
