@@ -1,3 +1,4 @@
+These keys are used for contract deployment, you can set separate keys in 'app' to interact from various wallets.
 Rename the file .privateKeys (remove -example)
 Replace the contents of this file with your private key(s).
 This is only for running on a private machine. Don't share your key or this file with anyone.
