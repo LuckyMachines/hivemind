@@ -61,7 +61,9 @@ class Dashboard extends Component {
             <Question />
           </Grid.Row>
           <Grid.Row style={{ backgroundColor: "#99ccff", color: "#001433" }}>
-            <Button color="black">Submit Answers</Button>
+            <Button color="black" size="massive">
+              Submit Answers
+            </Button>
           </Grid.Row>
         </Grid>
       </Layout>
