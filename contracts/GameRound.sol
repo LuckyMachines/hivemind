@@ -151,14 +151,16 @@ contract GameRound is Hub {
         returns (uint256 index)
     {
         index = 4; // this is returned if nothing matches
-        if (stringsMatch(response, responses[gameID][0])) {
-            index = 0;
-        } else if (stringsMatch(response, responses[gameID][1])) {
-            index = 1;
-        } else if (stringsMatch(response, responses[gameID][2])) {
-            index = 2;
-        } else if (stringsMatch(response, responses[gameID][3])) {
-            index = 3;
+        if (!stringsMatch(response, "")) {
+            if (stringsMatch(response, responses[gameID][0])) {
+                index = 0;
+            } else if (stringsMatch(response, responses[gameID][1])) {
+                index = 1;
+            } else if (stringsMatch(response, responses[gameID][2])) {
+                index = 2;
+            } else if (stringsMatch(response, responses[gameID][3])) {
+                index = 3;
+            }
         }
     }
 
