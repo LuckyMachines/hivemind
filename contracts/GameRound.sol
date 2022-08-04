@@ -6,9 +6,9 @@ import "./ScoreKeeper.sol";
 import "hardhat/console.sol";
 
 contract GameRound is Hub {
-    string constant hubName;
-    string constant nextRoundHub;
-
+    uint256 constant maxPointsPerRound = 10000;
+    string public hubName;
+    string public nextRoundHub;
     uint256 public roundTimeLimit; // in seconds
     uint256 internal _gameID;
 
@@ -61,7 +61,7 @@ contract GameRound is Hub {
         string memory crowdAnswer,
         string memory secretPhrase,
         uint256 gameID
-    ) {
+    ) public {
         require(
             block.timestamp < roundStartTime[gameID] + roundTimeLimit,
             "Cannot submit answers. Round time limit has passed."
@@ -78,33 +78,39 @@ contract GameRound is Hub {
         string memory crowdAnswer,
         string memory secretPhrase,
         uint256 gameID
-    ) {
-        require(!answersRevealed[player], "Player already revealed answers");
+    ) public {
+        address player = tx.origin;
+        require(
+            !answersRevealed[gameID][player],
+            "Player already revealed answers"
+        );
         // These must be the exact same values as sent to submit answers or play is not valid
         bytes32 hashedReveal = keccak256(
             abi.encode(questionAnswer, crowdAnswer, secretPhrase)
         );
-        address player = tx.origin;
         bool hashesMatch = hashedAnswer[gameID][player] == hashedReveal;
 
         uint256 cIndex = indexOfResponse(gameID, crowdAnswer);
         if (cIndex < 4) {
             responseScores[gameID][cIndex] += 1;
-            answersRevealed[player] = true;
+            answersRevealed[gameID][player] = true;
             if (hashesMatch) {
                 roundWinner[gameID][player] = true;
 
                 uint256 currentRevealPoints = revealPoints[gameID];
-                SCORE_KEEPER.increaseScore(
-                    currentRevealPoints,
-                    gameID,
-                    playerAddress
-                );
+                SCORE_KEEPER.increaseScore(currentRevealPoints, gameID, player);
                 revealPoints[gameID] = currentRevealPoints > 0
                     ? currentRevealPoints - 1
                     : 0;
             }
         }
+
+        // TODO: final answer should kick off calculating winner(s)
+
+        // Can use keeper for when last player doesn't anwer
+
+        // TODO: store winner addresses in list that winner contract can access for prize distributions
+        // should be in railcar info already...
     }
 
     // Admin functions
@@ -117,7 +123,7 @@ contract GameRound is Hub {
     }
 
     // Internal
-    function _groupDidEnter(uint256 railcarID) internal {
+    function _groupDidEnter(uint256 railcarID) internal override {
         super._groupDidEnter(railcarID);
         // request randomness to use for question
     }
@@ -126,7 +132,7 @@ contract GameRound is Hub {
     function startNewRound(uint256 railcarID, uint256 randomSeed) internal {
         // TODO: use actual randomness, pass any value for testing
         _gameID++;
-        revealPoints[_gameID] = 10000;
+        revealPoints[_gameID] = maxPointsPerRound;
         string memory q;
         string[4] memory r;
         (q, r) = QUESTIONS.getQuestionWithSeed(randomSeed);
@@ -141,17 +147,26 @@ contract GameRound is Hub {
 
     function indexOfResponse(uint256 gameID, string memory response)
         internal
+        view
         returns (uint256 index)
     {
         index = 4; // this is returned if nothing matches
-        if (abi.encode(response) == abi.encode(responses[gameID][0])) {
+        if (stringsMatch(response, responses[gameID][0])) {
             index = 0;
-        } else if (abi.encode(response) == abi.encode(responses[gameID][1])) {
+        } else if (stringsMatch(response, responses[gameID][1])) {
             index = 1;
-        } else if (abi.encode(response) == abi.encode(responses[gameID][2])) {
+        } else if (stringsMatch(response, responses[gameID][2])) {
             index = 2;
-        } else if (abi.encode(response) == abi.encode(responses[gameID][3])) {
+        } else if (stringsMatch(response, responses[gameID][3])) {
             index = 3;
         }
+    }
+
+    function stringsMatch(string memory s1, string memory s2)
+        internal
+        pure
+        returns (bool)
+    {
+        return keccak256(abi.encode(s1)) == keccak256(abi.encode(s2));
     }
 }
