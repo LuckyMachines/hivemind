@@ -35,6 +35,7 @@
     "typechain": "^8.1.0"
   },
   "dependencies": {
-    "@luckymachines/railway": "0.0.8"
+    "@luckymachines/railway": "0.0.8",
+    "dotenv": "^16.0.1"
   }
 }
