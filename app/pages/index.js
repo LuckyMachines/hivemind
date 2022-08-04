@@ -4,6 +4,9 @@ import Layout from "../components/Layout";
 import ConnectWallet from "../components/ConnectWallet";
 import Question from "../components/Question";
 import SecretPhrase from "../components/SecretPhrase";
+import Lobby from "../components/Lobby";
+import Winners from "../components/Winners";
+
 const settings = require("../settings");
 
 class Dashboard extends Component {
@@ -13,7 +16,13 @@ class Dashboard extends Component {
       connectedWallet: "",
       provider: "",
       accounts: [],
-      secretPhrase: ""
+      secretPhrase: "",
+      showRound1: false,
+      showRound2: false,
+      showRound3: false,
+      showRound4: false,
+      showWinners: false,
+      showLobby: true
     };
   }
 
@@ -58,7 +67,12 @@ class Dashboard extends Component {
             <SecretPhrase />
           </Grid.Row>
           <Grid.Row style={{ backgroundColor: "#99ccff", color: "#001433" }}>
-            <Question />
+            <Lobby show={this.state.showLobby}>Lobby</Lobby>
+            <Question show={this.state.showRound1} />
+            <Question show={this.state.showRound2} />
+            <Question show={this.state.showRound3} />
+            <Question show={this.state.showRound4} />
+            <Winners show={this.state.showWinners}>Winners</Winners>
           </Grid.Row>
           <Grid.Row style={{ backgroundColor: "#99ccff", color: "#001433" }}>
             <Button color="black" size="massive">

@@ -6,7 +6,7 @@ const Layout = (props) => {
   return (
     <Container>
       <Head>
-        <title>Web3 Starter | Lucky Machines</title>
+        <title>Hivemind</title>
       </Head>
       {props.children}
     </Container>
