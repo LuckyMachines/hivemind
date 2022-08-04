@@ -1,4 +1,8 @@
 require("@nomicfoundation/hardhat-toolbox");
+require("@openzeppelin/hardhat-upgrades");
+
+// WARNING: these are local hardhat test accounts, do not store any
+// actual private keys in this file
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
