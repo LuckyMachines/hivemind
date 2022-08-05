@@ -60,6 +60,10 @@ const Question = (props) => {
             </Card.Content>
           </Card>
         </Card.Group>
+        <br />
+        <Button color="black" size="massive">
+          Submit Answers
+        </Button>
         {props.children}
       </div>
     );

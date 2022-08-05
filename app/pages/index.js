@@ -17,6 +17,7 @@ class Dashboard extends Component {
       provider: "",
       accounts: [],
       secretPhrase: "",
+      showSecretPhrase: false,
       showRound1: false,
       showRound2: false,
       showRound3: false,
@@ -72,20 +73,15 @@ class Dashboard extends Component {
               : "Not connected"}
           </Grid.Row>
           <Grid.Row style={{ backgroundColor: "#99ccff", color: "#001433" }}>
-            <SecretPhrase />
+            <SecretPhrase show={this.state.showSecretPhrase} />
           </Grid.Row>
           <Grid.Row style={{ backgroundColor: "#99ccff", color: "#001433" }}>
-            <Lobby show={this.state.showLobby}>Lobby</Lobby>
+            <Lobby show={this.state.showLobby} provider={this.state.provider} />
             <Question show={this.state.showRound1} />
             <Question show={this.state.showRound2} />
             <Question show={this.state.showRound3} />
             <Question show={this.state.showRound4} />
             <Winners show={this.state.showWinners}>Winners</Winners>
-          </Grid.Row>
-          <Grid.Row style={{ backgroundColor: "#99ccff", color: "#001433" }}>
-            <Button color="black" size="massive">
-              Submit Answers
-            </Button>
           </Grid.Row>
         </Grid>
       </Layout>

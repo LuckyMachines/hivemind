@@ -3,14 +3,34 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "hardhat/console.sol";
+import "./ScoreKeeper.sol";
 
 contract Lobby is AccessControlEnumerable {
-    constructor() {
+    ScoreKeeper private SCORE_KEEPER;
+    uint256 private _currentGameID;
+    bool private _needsNewGameID; // set to true when game has started
+    // Mapping from game id
+    mapping(uint256 => uint256) public playerCount;
+
+    constructor(address scoreKeeperAddress) {
+        SCORE_KEEPER = ScoreKeeper(scoreKeeperAddress);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+    }
+
+    function joinGame() public {
+        require(
+            !SCORE_KEEPER.playerInActiveGame(_msgSender()),
+            "player already in game"
+        );
+        if (_needsNewGameID) {
+            _currentGameID++;
+            _needsNewGameID = false;
+        }
+        SCORE_KEEPER.setGameID(_currentGameID, _msgSender());
+        playerCount[_currentGameID]++;
     }
 }
 
-// View available games
-// Choose game to play / join
+// join game
 // move with group into round 1 when game is ready
 // Max limit 1000

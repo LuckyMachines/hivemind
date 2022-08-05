@@ -3,6 +3,7 @@ const { ethers } = require("hardhat");
 const deployedContracts = require("../deployed-contracts.json");
 const fs = require("fs");
 const settings = require("../hivemind-settings.json");
+const { Console } = require("console");
 const adminAddress = settings.adminAddress; // using hardhat account 0
 const hubRegistry = deployedContracts.hubRegistry;
 
@@ -41,6 +42,8 @@ async function main() {
   const Lobby = await ethers.getContractFactory("Lobby");
   const GameRound = await ethers.getContractFactory("GameRound");
   const Winners = await ethers.getContractFactory("Winners");
+
+  // TODO: grantScoreSetterRole() for all rounds & lobby
 
   console.log("Deploying Question Pack 1...");
   const qp1 = await Questions.deploy(questions1, responses1);
@@ -144,6 +147,13 @@ async function main() {
       `unable to save deployed-contracts.json to ${path}. Error: ${err.message}`
     );
   }
+
+  console.log("Authorizing score keepers...");
+  await scoreKeeper.grantScoreSetterRole(lobby.address);
+  await scoreKeeper.grantScoreSetterRole(round1.address);
+  await scoreKeeper.grantScoreSetterRole(round2.address);
+  await scoreKeeper.grantScoreSetterRole(round3.address);
+  await scoreKeeper.grantScoreSetterRole(round4.address);
 }
 
 main()
