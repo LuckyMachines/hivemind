@@ -3,6 +3,9 @@ import { Button } from "semantic-ui-react";
 import Web3 from "web3";
 
 const ConnectWallet = (props) => {
+  const REQUIRED_CHAIN_ID = "0x7a69"; // hardhat
+  // const REQUIRED_CHAIN_ID = "0x89"; // mumbai
+  // const REQUIRED_CHAIN_ID = "0x13881"; // mumbai
   let provider;
   let accounts;
   const [connectWalletLoading, setConnectedWalletLoading] = useState(false);
@@ -13,11 +16,21 @@ const ConnectWallet = (props) => {
         ethereum.request({ method: "eth_requestAccounts" });
         await window.ethereum.request({ method: "eth_requestAccounts" });
         provider = new Web3(window.ethereum);
-        accounts = await provider.eth.getAccounts();
-        props.setProvider(provider);
-        props.setAccounts(accounts);
-        props.setConnectedWallet(accounts[0]);
-        console.log("Wallet connected:", accounts[0]);
+        let chainID = await window.ethereum.request({
+          method: "eth_chainId"
+        });
+        if (chainID != REQUIRED_CHAIN_ID) {
+          window.alert(`Wrong chain. Please connect to ${REQUIRED_CHAIN_ID}`);
+          console.log(
+            `Wrong chain (${chainID}). Please connect to ${REQUIRED_CHAIN_ID}`
+          );
+        } else {
+          accounts = await provider.eth.getAccounts();
+          props.setProvider(provider);
+          props.setAccounts(accounts);
+          props.setConnectedWallet(accounts[0]);
+          console.log("Wallet connected:", accounts[0]);
+        }
       } else {
         console.log("Wallet not connected, no window.ethereum");
       }

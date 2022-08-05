@@ -26,6 +26,14 @@ class Dashboard extends Component {
     };
   }
 
+  async componentDidMount() {
+    this._isMounted = true;
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
+  }
+
   setProvider = (p) => {
     this.setState({ provider: p });
   };
