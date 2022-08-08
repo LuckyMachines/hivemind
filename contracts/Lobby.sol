@@ -18,7 +18,6 @@ contract Lobby is AccessControlEnumerable {
         _needsNewGameID = true;
     }
 
-    // TODO: join via game controller
     function joinGame() public {
         address player = tx.origin;
         require(
