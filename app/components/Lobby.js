@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { Button, Card } from "semantic-ui-react";
 import Addresses from "../../deployed-contracts.json";
-import LobbyContract from "../../artifacts/contracts/Lobby.sol/Lobby.json";
-import ScoreKeeperContract from "../../artifacts/contracts/ScoreKeeper.sol/ScoreKeeper.json";
+import GameController from "../../artifacts/contracts/GameController.sol/GameController.json";
 
 const Lobby = (props) => {
   const [joinGameLoading, setJoinGameLoading] = useState(false);
@@ -11,35 +10,33 @@ const Lobby = (props) => {
   const [buttonText, setButtonText] = useState("Join Game");
   const web3 = props.provider;
   let accounts;
-  let lobby;
-  let scoreKeeper;
+  let gameController;
 
   const joinGame = async () => {
     setJoinGameLoading(true);
     if (web3) {
       accounts = await web3.eth.getAccounts();
-      lobby = new web3.eth.Contract(LobbyContract.abi, Addresses.lobby);
-      scoreKeeper = new web3.eth.Contract(
-        ScoreKeeperContract.abi,
-        Addresses.scoreKeeper
+      gameController = new web3.eth.Contract(
+        GameController.abi,
+        Addresses.gameController
       );
       try {
         if (buttonText == "Join Game") {
-          let playerInGame = await scoreKeeper.methods
-            .playerInActiveGame(accounts[0])
+          let playerInGame = await gameController.methods
+            .getIsInActiveGame(accounts[0])
             .call();
           // TODO: check if player is already in game
           // TODO: set gas parameters
           if (!playerInGame) {
-            await lobby.methods.joinGame().send({ from: accounts[0] });
+            await gameController.methods.joinGame().send({ from: accounts[0] });
           }
-          const currentGameID = await scoreKeeper.methods
-            .currentGameID(accounts[0])
+          const currentGameID = await gameController.methods
+            .getCurrentGame(accounts[0])
             .call();
           console.log("New game ID:", currentGameID);
           setGameID(currentGameID);
-          const playerCount = await lobby.methods
-            .playerCount(currentGameID)
+          const playerCount = await gameController.methods
+            .getPlayerCount(currentGameID)
             .call();
           setPlayersInGame(playerCount);
           setButtonText("Waiting for game to start...");
