@@ -125,6 +125,14 @@ contract GameController is AccessControlEnumerable {
         gameID = SCORE_KEEPER.currentGameID(playerAddress);
     }
 
+    function getPlayerCount(uint256 gameID)
+        public
+        view
+        returns (uint256 playerCount)
+    {
+        playerCount = LOBBY.playerCount(gameID);
+    }
+
     // Event triggers
     function roundStart(
         string memory hubAlias,
