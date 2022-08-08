@@ -5,9 +5,11 @@ import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@luckymachines/railway/contracts/HubRegistry.sol";
 import "./Lobby.sol";
 import "./GameRound.sol";
+import "./ScoreKeeper.sol";
 
 contract GameController is AccessControlEnumerable {
     Lobby internal LOBBY;
+    ScoreKeeper internal SCORE_KEEPER;
     HubRegistry internal HUB_REGISTRY;
 
     bytes32 public EVENT_SENDER_ROLE = keccak256("EVENT_SENDER_ROLE");
@@ -19,8 +21,13 @@ contract GameController is AccessControlEnumerable {
         uint256 groupID
     );
 
-    constructor(address lobbyAddress, address HubRegistryAddress) {
+    constructor(
+        address lobbyAddress,
+        address scoreKeeperAddress,
+        address HubRegistryAddress
+    ) {
         LOBBY = Lobby(lobbyAddress);
+        SCORE_KEEPER = ScoreKeeper(scoreKeeperAddress);
         HUB_REGISTRY = HubRegistry(HubRegistryAddress);
     }
 
@@ -57,6 +64,51 @@ contract GameController is AccessControlEnumerable {
             secretPhrase,
             gameID
         );
+    }
+
+    // Game Summary Functions
+    function getScore(uint256 gameID)
+        public
+        view
+        returns (uint256 playerScore)
+    {
+        playerScore = SCORE_KEEPER.playerScore(gameID, _msgSender());
+    }
+
+    function getScore(uint256 gameID, address playerAddress)
+        public
+        view
+        returns (uint256 playerScore)
+    {
+        playerScore = SCORE_KEEPER.playerScore(gameID, playerAddress);
+    }
+
+    function getLatestRound(uint256 gameID)
+        public
+        view
+        returns (string memory hubAlias)
+    {
+        hubAlias = SCORE_KEEPER.latestRound(gameID, _msgSender());
+    }
+
+    function getLatestRound(uint256 gameID, address playerAddress)
+        public
+        view
+        returns (string memory hubAlias)
+    {
+        hubAlias = SCORE_KEEPER.latestRound(gameID, playerAddress);
+    }
+
+    function getCurrentGame() public view returns (uint256 gameID) {
+        gameID = SCORE_KEEPER.currentGameID(_msgSender());
+    }
+
+    function getCurrentGame(address playerAddress)
+        public
+        view
+        returns (uint256 gameID)
+    {
+        gameID = SCORE_KEEPER.currentGameID(playerAddress);
     }
 
     // Event triggers
