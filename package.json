@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy": "npx hardhat run --network hh scripts/deploy-hivemind-registry.js;npx hardhat run --network hh scripts/deploy-hivemind.js"
+    "deploy": "npx hardhat run --network hh scripts/deploy-registry.js;npx hardhat run --network hh scripts/deploy-rail-yard.js;npx hardhat run --network hh scripts/deploy-hivemind.js"
   },
   "repository": {
     "type": "git",

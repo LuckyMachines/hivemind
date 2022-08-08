@@ -6,6 +6,7 @@ const settings = require("../hivemind-settings.json");
 //const { Console } = require("console");
 const adminAddress = settings.adminAddress; // using hardhat account 0
 const hubRegistry = deployedContracts.hubRegistry;
+const railYard = deployedContracts.railYard;
 
 // TODO: read in from csv files
 const questions1 = [
@@ -67,7 +68,7 @@ async function main() {
   await scoreKeeper.deployed();
 
   console.log("Deploying Lobby...");
-  const lobby = await Lobby.deploy(scoreKeeper.address);
+  const lobby = await Lobby.deploy(scoreKeeper.address, railYard);
   await lobby.deployed();
 
   console.log("Deploying Game Controller...");
@@ -149,6 +150,7 @@ async function main() {
 
   let deployedContractsJSON = {
     hubRegistry: hubRegistry,
+    railYard: railYard,
     gameController: gameController.address,
     scoreKeeper: scoreKeeper.address,
     lobby: lobby.address,
