@@ -66,7 +66,7 @@ async function main() {
   await scoreKeeper.deployed();
 
   console.log("Deploying Lobby...");
-  const lobby = await Lobby.deploy();
+  const lobby = await Lobby.deploy(scoreKeeper.address);
   await lobby.deployed();
 
   console.log("Deploying Round 1...");
@@ -154,6 +154,12 @@ async function main() {
   await scoreKeeper.grantScoreSetterRole(round2.address);
   await scoreKeeper.grantScoreSetterRole(round3.address);
   await scoreKeeper.grantScoreSetterRole(round4.address);
+
+  console.log("TODO: Adding event senders...");
+  // TODO: await gameController.addEventSender(round1.address);
+  // TODO: await gameController.addEventSender(round2.address);
+  // TODO: await gameController.addEventSender(round3.address);
+  // TODO: await gameController.addEventSender(round4.address);
 }
 
 main()

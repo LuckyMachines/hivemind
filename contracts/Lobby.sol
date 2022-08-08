@@ -15,18 +15,21 @@ contract Lobby is AccessControlEnumerable {
     constructor(address scoreKeeperAddress) {
         SCORE_KEEPER = ScoreKeeper(scoreKeeperAddress);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        _needsNewGameID = true;
     }
 
+    // TODO: join via game controller
     function joinGame() public {
+        address player = tx.origin;
         require(
-            !SCORE_KEEPER.playerInActiveGame(_msgSender()),
+            !SCORE_KEEPER.playerInActiveGame(player),
             "player already in game"
         );
         if (_needsNewGameID) {
             _currentGameID++;
             _needsNewGameID = false;
         }
-        SCORE_KEEPER.setGameID(_currentGameID, _msgSender());
+        SCORE_KEEPER.setGameID(_currentGameID, player);
         playerCount[_currentGameID]++;
     }
 }

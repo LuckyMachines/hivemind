@@ -3,6 +3,7 @@ pragma solidity ^0.8.9;
 import "@luckymachines/railway/contracts/Hub.sol";
 import "./Questions.sol";
 import "./ScoreKeeper.sol";
+import "./GameController.sol";
 import "hardhat/console.sol";
 
 contract GameRound is Hub {
@@ -14,6 +15,7 @@ contract GameRound is Hub {
 
     Questions internal QUESTIONS;
     ScoreKeeper internal SCORE_KEEPER;
+    GameController internal GAME_CONTROLLER;
 
     // mapping from game ID
     mapping(uint256 => uint256) internal revealPoints;
@@ -27,13 +29,12 @@ contract GameRound is Hub {
     mapping(uint256 => mapping(address => bool)) public answersRevealed;
     mapping(uint256 => mapping(address => bool)) public roundWinner;
 
-    event RoundStart(uint256 startTime, uint256 gameID, uint256 groupID);
-
     constructor(
         string memory thisHub,
         string memory nextHub,
         address questionsAddress,
         address scoreKeeperAddress,
+        address gameControllerAddress,
         address hubRegistryAddress,
         address hubAdmin
     ) Hub(hubRegistryAddress, hubAdmin) {
@@ -43,6 +44,7 @@ contract GameRound is Hub {
         nextRoundHub = nextHub;
         QUESTIONS = Questions(questionsAddress);
         SCORE_KEEPER = ScoreKeeper(scoreKeeperAddress);
+        GAME_CONTROLLER = GameController(gameControllerAddress);
     }
 
     // Player functions
@@ -138,7 +140,12 @@ contract GameRound is Hub {
         (q, r) = QUESTIONS.getQuestionWithSeed(randomSeed);
         question[_gameID] = q;
         responses[_gameID] = r;
-        emit RoundStart(block.timestamp, _gameID, railcarID);
+        GAME_CONTROLLER.roundStart(
+            hubName,
+            block.timestamp,
+            _gameID,
+            railcarID
+        );
     }
 
     function exitWinnersToNextRound() internal {

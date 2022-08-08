@@ -24,27 +24,30 @@ const Lobby = (props) => {
         Addresses.scoreKeeper
       );
       try {
-        switch (buttonText) {
-          case "Join Game":
-            // TODO: set gas parameters
+        if (buttonText == "Join Game") {
+          let playerInGame = await scoreKeeper.methods
+            .playerInActiveGame(accounts[0])
+            .call();
+          // TODO: check if player is already in game
+          // TODO: set gas parameters
+          if (!playerInGame) {
             await lobby.methods.joinGame().send({ from: accounts[0] });
-            const newGameID = await scoreKeeper.methods
-              .currentGameID(accounts[0])
-              .call();
-            setGameID(newGameID);
-            const playerCount = await lobby.methods.playerCount(gameID).call();
-            setPlayersInGame(playerCount);
-            setButtonText("Waiting for game to start...");
-            break;
-          case "Start Game":
-            break;
-          default:
-            console.log(
-              "This button does nothing, but have fun clicking away!"
-            );
-            break;
+          }
+          const currentGameID = await scoreKeeper.methods
+            .currentGameID(accounts[0])
+            .call();
+          console.log("New game ID:", currentGameID);
+          setGameID(currentGameID);
+          const playerCount = await lobby.methods
+            .playerCount(currentGameID)
+            .call();
+          setPlayersInGame(playerCount);
+          setButtonText("Waiting for game to start...");
+        } else if (buttonText == "Start Game") {
+          // move into next round
+        } else {
+          console.log("This button does nothing, but have fun clicking away!");
         }
-        // Join game
       } catch (err) {
         console.log(err.message);
       }
