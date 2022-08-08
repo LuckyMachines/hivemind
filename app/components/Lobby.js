@@ -25,7 +25,6 @@ const Lobby = (props) => {
           let playerInGame = await gameController.methods
             .getIsInActiveGame(accounts[0])
             .call();
-          // TODO: check if player is already in game
           // TODO: set gas parameters
           if (!playerInGame) {
             await gameController.methods.joinGame().send({ from: accounts[0] });
