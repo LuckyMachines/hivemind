@@ -26,6 +26,7 @@ contract GameController is AccessControlEnumerable {
         address scoreKeeperAddress,
         address HubRegistryAddress
     ) {
+        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         LOBBY = Lobby(lobbyAddress);
         SCORE_KEEPER = ScoreKeeper(scoreKeeperAddress);
         HUB_REGISTRY = HubRegistry(HubRegistryAddress);
