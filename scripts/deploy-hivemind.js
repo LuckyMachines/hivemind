@@ -3,7 +3,7 @@ const { ethers } = require("hardhat");
 const deployedContracts = require("../deployed-contracts.json");
 const fs = require("fs");
 const settings = require("../hivemind-settings.json");
-const { Console } = require("console");
+//const { Console } = require("console");
 const adminAddress = settings.adminAddress; // using hardhat account 0
 const hubRegistry = deployedContracts.hubRegistry;
 
@@ -42,6 +42,7 @@ async function main() {
   const Lobby = await ethers.getContractFactory("Lobby");
   const GameRound = await ethers.getContractFactory("GameRound");
   const Winners = await ethers.getContractFactory("Winners");
+  const GameController = await ethers.getContractFactory("GameController");
 
   // TODO: grantScoreSetterRole() for all rounds & lobby
 
@@ -69,12 +70,33 @@ async function main() {
   const lobby = await Lobby.deploy(scoreKeeper.address);
   await lobby.deployed();
 
+  console.log("Deploying Game Controller...");
+  const gameController = await GameController.deploy(
+    lobby.address,
+    scoreKeeper.address,
+    hubRegistry
+  );
+  await gameController.deployed();
+
+  /*
+  constructor(
+        string memory thisHub,
+        string memory nextHub,
+        address questionsAddress,
+        address scoreKeeperAddress,
+        address gameControllerAddress,
+        address hubRegistryAddress,
+        address hubAdmin
+    )
+  */
+
   console.log("Deploying Round 1...");
   const round1 = await GameRound.deploy(
     "hivemind.round1",
     "hivemind.round2",
     qp1.address,
     scoreKeeper.address,
+    gameController.address,
     hubRegistry,
     adminAddress
   );
@@ -86,6 +108,7 @@ async function main() {
     "hivemind.round3",
     qp2.address,
     scoreKeeper.address,
+    gameController.address,
     hubRegistry,
     adminAddress
   );
@@ -97,6 +120,7 @@ async function main() {
     "hivemind.round4",
     qp3.address,
     scoreKeeper.address,
+    gameController.address,
     hubRegistry,
     adminAddress
   );
@@ -108,6 +132,7 @@ async function main() {
     "hivemind.round5",
     qp4.address,
     scoreKeeper.address,
+    gameController.address,
     hubRegistry,
     adminAddress
   );
@@ -124,6 +149,7 @@ async function main() {
 
   let deployedContractsJSON = {
     hubRegistry: hubRegistry,
+    gameController: gameController.address,
     scoreKeeper: scoreKeeper.address,
     lobby: lobby.address,
     round1: round1.address,
@@ -155,11 +181,13 @@ async function main() {
   await scoreKeeper.grantScoreSetterRole(round3.address);
   await scoreKeeper.grantScoreSetterRole(round4.address);
 
-  console.log("TODO: Adding event senders...");
-  // TODO: await gameController.addEventSender(round1.address);
-  // TODO: await gameController.addEventSender(round2.address);
-  // TODO: await gameController.addEventSender(round3.address);
-  // TODO: await gameController.addEventSender(round4.address);
+  console.log("Adding event senders...");
+  await gameController.addEventSender(round1.address);
+  await gameController.addEventSender(round2.address);
+  await gameController.addEventSender(round3.address);
+  await gameController.addEventSender(round4.address);
+
+  console.log("All done");
 }
 
 main()
