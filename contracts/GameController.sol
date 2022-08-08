@@ -67,6 +67,7 @@ contract GameController is AccessControlEnumerable {
     }
 
     // Game Summary Functions
+    // Can be called directly by player or by passing player address as last argument
     function getScore(uint256 gameID)
         public
         view
