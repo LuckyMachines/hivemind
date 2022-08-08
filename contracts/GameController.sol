@@ -101,6 +101,18 @@ contract GameController is AccessControlEnumerable {
         hubAlias = SCORE_KEEPER.latestRound(gameID, playerAddress);
     }
 
+    function getIsInActiveGame() public view returns (bool inActiveGame) {
+        inActiveGame = SCORE_KEEPER.playerInActiveGame(_msgSender());
+    }
+
+    function getIsInActiveGame(address playerAddress)
+        public
+        view
+        returns (bool inActiveGame)
+    {
+        inActiveGame = SCORE_KEEPER.playerInActiveGame(playerAddress);
+    }
+
     function getCurrentGame() public view returns (uint256 gameID) {
         gameID = SCORE_KEEPER.currentGameID(_msgSender());
     }
