@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.9;
 
-import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import "@luckymachines/railway/contracts/Hub.sol";
 import "@luckymachines/railway/contracts/RailYard.sol";
 import "hardhat/console.sol";
 import "./ScoreKeeper.sol";
+import "./GameRound.sol";
 
-contract Lobby is AccessControlEnumerable {
+contract Lobby is Hub {
     ScoreKeeper private SCORE_KEEPER;
     RailYard private RAIL_YARD;
     address private _gameControllerAddress;
@@ -23,10 +24,16 @@ contract Lobby is AccessControlEnumerable {
     mapping(uint256 => uint256) public railcarID;
 
     constructor(
+        string memory hubName,
         address scoreKeeperAddress,
         address railYardAddress,
-        string memory gameStartHub
-    ) {
+        string memory gameStartHub,
+        address hubRegistryAddress,
+        address hubAdmin
+    ) Hub(hubRegistryAddress, hubAdmin) {
+        uint256 hubID = REGISTRY.idFromAddress(address(this));
+        REGISTRY.setName(hubName, hubID);
+        inputAllowed[hubID] = true; // allow input from self to start railcars here
         SCORE_KEEPER = ScoreKeeper(scoreKeeperAddress);
         RAIL_YARD = RailYard(railYardAddress);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
@@ -48,6 +55,11 @@ contract Lobby is AccessControlEnumerable {
                 address(this),
                 playerLimit
             );
+            uint256 rid = railcarID[_currentGameID];
+            // Manually enter railcar since not receiving from any other hub
+            if (_groupCanEnter(rid)) {
+                _groupDidEnter(rid);
+            }
             _needsNewGameID = false;
         }
         SCORE_KEEPER.setGameID(_currentGameID, player);
@@ -67,10 +79,9 @@ contract Lobby is AccessControlEnumerable {
 
     function startGame() public {
         if (_canStartGame()) {
-            console.log("Starting game...");
-            // move railcar to first hub
-            // reset needsnewgameid
-            // reset joinCountdownStartTime
+            _sendGroupToHub(railcarID[_currentGameID], gameHub);
+            _needsNewGameID = true;
+            joinCountdownStartTime = 0;
         }
         // can only call if game is ready to start
         // anyone can call this
