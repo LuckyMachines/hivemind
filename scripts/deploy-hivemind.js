@@ -69,9 +69,12 @@ async function main() {
 
   console.log("Deploying Lobby...");
   const lobby = await Lobby.deploy(
+    "hivemind.lobby",
     scoreKeeper.address,
     railYard,
-    "hivemind.round1"
+    "hivemind.round1",
+    hubRegistry,
+    adminAddress
   );
   await lobby.deployed();
 
@@ -82,18 +85,6 @@ async function main() {
     hubRegistry
   );
   await gameController.deployed();
-
-  /*
-  constructor(
-        string memory thisHub,
-        string memory nextHub,
-        address questionsAddress,
-        address scoreKeeperAddress,
-        address gameControllerAddress,
-        address hubRegistryAddress,
-        address hubAdmin
-    )
-  */
 
   console.log("Deploying Round 1...");
   const round1 = await GameRound.deploy(
@@ -195,6 +186,33 @@ async function main() {
   await gameController.addEventSender(round2.address);
   await gameController.addEventSender(round3.address);
   await gameController.addEventSender(round4.address);
+
+  const Registry = await ethers.getContractFactory("HubRegistry");
+  const registry = await Registry.attach(hubRegistry);
+
+  console.log("Getting hub IDs...");
+  const lobbyID = await registry.idFromName("hivemind.lobby");
+  const round1ID = await registry.idFromName("hivemind.round1");
+  const round2ID = await registry.idFromName("hivemind.round2");
+  const round3ID = await registry.idFromName("hivemind.round3");
+  const round4ID = await registry.idFromName("hivemind.round4");
+  const winnersID = await registry.idFromName("hivemind.winners");
+
+  console.log("Opening connections to hubs...");
+  await lobby.setAllowAllInputs(true);
+  await round1.setInputsAllowed([lobbyID], [true]);
+  await round2.setInputsAllowed([round1ID], [true]);
+  await round3.setInputsAllowed([round2ID], [true]);
+  await round4.setInputsAllowed([round3ID], [true]);
+  await winners.setInputsAllowed([round4ID], [true]);
+
+  console.log("Connecting hubs...");
+  await lobby.addHubConnections([round1ID]);
+  await round1.addHubConnections([round2ID, lobbyID]);
+  await round2.addHubConnections([round3ID, lobbyID]);
+  await round3.addHubConnections([round4ID, lobbyID]);
+  await round4.addHubConnections([winnersID, lobbyID]);
+  await winners.addHubConnections([lobbyID]);
 
   console.log("All done");
 }
