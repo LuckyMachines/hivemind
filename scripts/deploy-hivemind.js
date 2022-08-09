@@ -68,7 +68,11 @@ async function main() {
   await scoreKeeper.deployed();
 
   console.log("Deploying Lobby...");
-  const lobby = await Lobby.deploy(scoreKeeper.address, railYard);
+  const lobby = await Lobby.deploy(
+    scoreKeeper.address,
+    railYard,
+    "hivemind.round1"
+  );
   await lobby.deployed();
 
   console.log("Deploying Game Controller...");
@@ -175,6 +179,9 @@ async function main() {
       `unable to save deployed-contracts.json to ${path}. Error: ${err.message}`
     );
   }
+
+  console.log("Setting game controller address on Lobby...");
+  await lobby.setGameControllerAddress(gameController.address);
 
   console.log("Authorizing score keepers...");
   await scoreKeeper.grantScoreSetterRole(lobby.address);

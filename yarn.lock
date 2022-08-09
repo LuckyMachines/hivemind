@@ -508,10 +508,10 @@
     "@ethersproject/properties" "^5.6.0"
     "@ethersproject/strings" "^5.6.1"
 
-"@luckymachines/railway@0.0.8":
-  version "0.0.8"
-  resolved "https://registry.yarnpkg.com/@luckymachines/railway/-/railway-0.0.8.tgz#9442ddb2a17a426aedb0173a7914e05f9991f58c"
-  integrity sha512-EU78beaaWYgFarxcNHfNX8FR2qAdKCnrDAZTAuKqxlpPv0qJ4Y+bonidd+HYnC2gAN1/lbwgt026N/wLXn7Xvw==
+"@luckymachines/railway@0.0.11":
+  version "0.0.11"
+  resolved "https://registry.yarnpkg.com/@luckymachines/railway/-/railway-0.0.11.tgz#4836274757e51d6cdaf8613f5fff78b1683f7c04"
+  integrity sha512-GSMED3aPno+pB8PNsYxIK7hBnmdYRjwSdEjoFZPHTBxlEEsKjRSVpo4ZBTxavzScyWYTQQYZDj4zF+PsScycDA==
   dependencies:
     "@opengsn/contracts" "^2.2.6"
     "@opengsn/dev" "^2.2.6"

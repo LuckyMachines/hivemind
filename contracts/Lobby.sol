@@ -9,21 +9,29 @@ import "./ScoreKeeper.sol";
 contract Lobby is AccessControlEnumerable {
     ScoreKeeper private SCORE_KEEPER;
     RailYard private RAIL_YARD;
+    address private _gameControllerAddress;
     uint256 private _currentGameID;
     bool private _needsNewGameID; // set to true when game has started
 
     uint256 public timeLimitToJoin = 300; // Countdown starts after 2nd player joins
-    uint256 public playerLimit = 10; // game automatically starts if player limit reached
+    uint256 public playerLimit = 2; // game automatically starts if player limit reached
     uint256 public joinCountdownStartTime;
+    string public gameHub;
 
     // Mapping from game id
     mapping(uint256 => uint256) public playerCount;
+    mapping(uint256 => uint256) public railcarID;
 
-    constructor(address scoreKeeperAddress, address railYardAddress) {
+    constructor(
+        address scoreKeeperAddress,
+        address railYardAddress,
+        string memory gameStartHub
+    ) {
         SCORE_KEEPER = ScoreKeeper(scoreKeeperAddress);
         RAIL_YARD = RailYard(railYardAddress);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _needsNewGameID = true;
+        gameHub = gameStartHub;
     }
 
     function joinGame() public {
@@ -34,6 +42,12 @@ contract Lobby is AccessControlEnumerable {
         );
         if (_needsNewGameID) {
             _currentGameID++;
+            // Create railcar with game controller as owner, this as operator
+            railcarID[_currentGameID] = RAIL_YARD.createRailcar(
+                _gameControllerAddress,
+                address(this),
+                playerLimit
+            );
             _needsNewGameID = false;
         }
         SCORE_KEEPER.setGameID(_currentGameID, player);
@@ -43,7 +57,7 @@ contract Lobby is AccessControlEnumerable {
             joinCountdownStartTime = block.timestamp;
         }
 
-        // TODO: join group railcar
+        RAIL_YARD.joinRailcar(railcarID[_currentGameID], player);
 
         // auto-start game if at limit
         if (playerCount[_currentGameID] == playerLimit) {
@@ -53,7 +67,8 @@ contract Lobby is AccessControlEnumerable {
 
     function startGame() public {
         if (_canStartGame()) {
-            // start game...
+            console.log("Starting game...");
+            // move railcar to first hub
             // reset needsnewgameid
             // reset joinCountdownStartTime
         }
@@ -62,6 +77,13 @@ contract Lobby is AccessControlEnumerable {
     }
 
     // Admin functions
+    function setGameControllerAddress(address gameControllerAddress)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        _gameControllerAddress = gameControllerAddress;
+    }
+
     function setTimeLimitToJoin(uint256 timeInSeconds)
         public
         onlyRole(DEFAULT_ADMIN_ROLE)

@@ -150,6 +150,9 @@ contract GameController is AccessControlEnumerable {
     {
         grantRole(EVENT_SENDER_ROLE, eventSenderAddress);
     }
+
+    // set railcar operator to current hub at each entry
+    // move railcar to next hub?
 }
 
 // trigger events from other contracts
