@@ -68,7 +68,8 @@ contract GameController is AccessControlEnumerable {
     }
 
     // Game Summary Functions
-    // Can be called directly by player or by passing player address as last argument
+    // Player specific functions
+    // called directly by player or by passing player address as last argument
     function getScore(uint256 gameID)
         public
         view
@@ -83,22 +84,6 @@ contract GameController is AccessControlEnumerable {
         returns (uint256 playerScore)
     {
         playerScore = SCORE_KEEPER.playerScore(gameID, playerAddress);
-    }
-
-    function getLatestRound(uint256 gameID)
-        public
-        view
-        returns (string memory hubAlias)
-    {
-        hubAlias = SCORE_KEEPER.latestRound(gameID, _msgSender());
-    }
-
-    function getLatestRound(uint256 gameID, address playerAddress)
-        public
-        view
-        returns (string memory hubAlias)
-    {
-        hubAlias = SCORE_KEEPER.latestRound(gameID, playerAddress);
     }
 
     function getIsInActiveGame() public view returns (bool inActiveGame) {
@@ -125,12 +110,21 @@ contract GameController is AccessControlEnumerable {
         gameID = SCORE_KEEPER.currentGameID(playerAddress);
     }
 
+    // Game specific functions
     function getPlayerCount(uint256 gameID)
         public
         view
         returns (uint256 playerCount)
     {
         playerCount = LOBBY.playerCount(gameID);
+    }
+
+    function getLatestRound(uint256 gameID)
+        public
+        view
+        returns (string memory hubAlias)
+    {
+        hubAlias = SCORE_KEEPER.latestRound(gameID);
     }
 
     // Event triggers

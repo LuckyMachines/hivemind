@@ -174,6 +174,12 @@ async function main() {
   console.log("Setting game controller address on Lobby...");
   await lobby.setGameControllerAddress(gameController.address);
 
+  console.log("Setting game round roles...");
+  await qp1.grantGameRoundRole(round1.address);
+  await qp2.grantGameRoundRole(round2.address);
+  await qp3.grantGameRoundRole(round3.address);
+  await qp4.grantGameRoundRole(round4.address);
+
   console.log("Authorizing score keepers...");
   await scoreKeeper.grantScoreSetterRole(lobby.address);
   await scoreKeeper.grantScoreSetterRole(round1.address);
@@ -186,6 +192,7 @@ async function main() {
   await gameController.addEventSender(round2.address);
   await gameController.addEventSender(round3.address);
   await gameController.addEventSender(round4.address);
+  await gameController.addEventSender(winners.address);
 
   const Registry = await ethers.getContractFactory("HubRegistry");
   const registry = await Registry.attach(hubRegistry);

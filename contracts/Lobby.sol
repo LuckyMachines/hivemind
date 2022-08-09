@@ -56,6 +56,9 @@ contract Lobby is Hub {
                 playerLimit
             );
             uint256 rid = railcarID[_currentGameID];
+            uint256[] memory storageValues = new uint256[](1);
+            storageValues[0] = _currentGameID;
+            RAIL_YARD.createRailcar(4, storageValues);
             // Manually enter railcar since not receiving from any other hub
             if (_groupCanEnter(rid)) {
                 _groupDidEnter(rid);

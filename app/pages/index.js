@@ -6,6 +6,9 @@ import Question from "../components/Question";
 import SecretPhrase from "../components/SecretPhrase";
 import Lobby from "../components/Lobby";
 import Winners from "../components/Winners";
+import Addresses from "../../deployed-contracts.json";
+import GameController from "../../artifacts/contracts/GameController.sol/GameController.json";
+import { ethers } from "ethers";
 
 const settings = require("../settings");
 
@@ -15,6 +18,7 @@ class Dashboard extends Component {
     this.state = {
       connectedWallet: "",
       provider: "",
+      gameController: "",
       accounts: [],
       secretPhrase: "",
       showSecretPhrase: false,
@@ -23,7 +27,8 @@ class Dashboard extends Component {
       showRound3: false,
       showRound4: false,
       showWinners: false,
-      showLobby: true
+      showLobby: true,
+      currentHub: "hivemind.lobby"
     };
   }
 
@@ -35,14 +40,184 @@ class Dashboard extends Component {
     this._isMounted = false;
   }
 
+  async loadGameController(p) {
+    const gameController = new p.eth.Contract(
+      GameController.abi,
+      Addresses.gameController
+    );
+    this.setState({ gameController: gameController });
+
+    let url = "http://127.0.0.1:8545";
+    let p2 = new ethers.providers.JsonRpcProvider(url);
+    const gc2 = await new ethers.Contract(
+      Addresses.gameController,
+      GameController.abi,
+      p2
+    );
+    gc2.on("RoundStart", (hubAlias, startTime, gameID, groupID) => {
+      this.roundStarted(hubAlias, gameID, groupID, startTime);
+    });
+  }
+
+  async loadAccounts(p) {
+    const accounts = await p.eth.getAccounts();
+    this.setState({ accounts: accounts });
+  }
+
   setProvider = (p) => {
     this.setState({ provider: p });
+    this.loadGameController(p);
+    this.loadAccounts(p);
   };
   setAccounts = (a) => {
     this.setState({ accounts: a });
   };
   setConnectedWallet = (w) => {
     this.setState({ connectedWallet: w });
+  };
+
+  roundStarted = (hubAlias, gameID, groupID, startTime) => {
+    if (this.hubIsNew(this.state.currentHub, hubAlias)) {
+      console.log("Move to hub:", hubAlias);
+      this.showHub(hubAlias);
+    }
+    // console.log(`Game Started at hub: ${hubAlias}. Game ID: ${gameID} `);
+  };
+
+  showHub = (hubAlias) => {
+    this.setState({ currentHub: hubAlias });
+
+    switch (hubAlias) {
+      case "hivemind.lobby":
+        this.setState({
+          showSecretPhrase: false,
+          showRound1: false,
+          showRound2: false,
+          showRound3: false,
+          showRound4: false,
+          showWinners: false,
+          showLobby: true
+        });
+        break;
+      case "hivemind.round1":
+        this.setState({
+          showSecretPhrase: true,
+          showRound1: true,
+          showRound2: false,
+          showRound3: false,
+          showRound4: false,
+          showWinners: false,
+          showLobby: false
+        });
+        break;
+      case "hivemind.round2":
+        this.setState({
+          showSecretPhrase: true,
+          showRound1: false,
+          showRound2: true,
+          showRound3: false,
+          showRound4: false,
+          showWinners: false,
+          showLobby: false
+        });
+        break;
+      case "hivemind.round3":
+        this.setState({
+          showSecretPhrase: true,
+          showRound1: false,
+          showRound2: false,
+          showRound3: true,
+          showRound4: false,
+          showWinners: false,
+          showLobby: false
+        });
+        break;
+      case "hivemind.round4":
+        this.setState({
+          showSecretPhrase: true,
+          showRound1: false,
+          showRound2: false,
+          showRound3: false,
+          showRound4: true,
+          showWinners: false,
+          showLobby: false
+        });
+        break;
+      case "hivemind.winners":
+        this.setState({
+          showSecretPhrase: false,
+          showRound1: false,
+          showRound2: false,
+          showRound3: false,
+          showRound4: false,
+          showWinners: true,
+          showLobby: false
+        });
+        break;
+      default:
+        break;
+    }
+    /*
+    showSecretPhrase: false,
+      showRound1: false,
+      showRound2: false,
+      showRound3: false,
+      showRound4: false,
+      showWinners: false,
+      showLobby: true,
+    */
+  };
+
+  hubIsNew = (currentHubAlias, testHubAlias) => {
+    let isNew = false;
+    switch (currentHubAlias) {
+      case "hivemind.lobby":
+        if (
+          testHubAlias == "hivemind.round1" ||
+          testHubAlias == "hivemind.round2" ||
+          testHubAlias == "hivemind.round3" ||
+          testHubAlias == "hivemind.round4" ||
+          testHubAlias == "hivemind.winners"
+        ) {
+          isNew = true;
+        }
+        break;
+      case "hivemind.round1":
+        if (
+          testHubAlias == "hivemind.round2" ||
+          testHubAlias == "hivemind.round3" ||
+          testHubAlias == "hivemind.round4" ||
+          testHubAlias == "hivemind.winners"
+        ) {
+          isNew = true;
+        }
+        break;
+      case "hivemind.round2":
+        if (
+          testHubAlias == "hivemind.round3" ||
+          testHubAlias == "hivemind.round4" ||
+          testHubAlias == "hivemind.winners"
+        ) {
+          isNew = true;
+        }
+        break;
+      case "hivemind.round3":
+        if (
+          testHubAlias == "hivemind.round4" ||
+          testHubAlias == "hivemind.winners"
+        ) {
+          isNew = true;
+        }
+        break;
+      case "hivemind.round4":
+        if (testHubAlias == "hivemind.winners") {
+          isNew = true;
+        }
+        break;
+      default:
+        break;
+    }
+    return isNew;
   };
 
   render() {
@@ -76,12 +251,39 @@ class Dashboard extends Component {
             <SecretPhrase show={this.state.showSecretPhrase} />
           </Grid.Row>
           <Grid.Row style={{ backgroundColor: "#99ccff", color: "#001433" }}>
-            <Lobby show={this.state.showLobby} provider={this.state.provider} />
-            <Question show={this.state.showRound1} />
-            <Question show={this.state.showRound2} />
-            <Question show={this.state.showRound3} />
-            <Question show={this.state.showRound4} />
-            <Winners show={this.state.showWinners}>Winners</Winners>
+            <Lobby
+              accounts={this.state.accounts}
+              gameController={this.state.gameController}
+              show={this.state.showLobby}
+              provider={this.state.provider}
+            />
+            <Question
+              accounts={this.state.accounts}
+              gameController={this.state.gameController}
+              show={this.state.showRound1}
+            />
+            <Question
+              accounts={this.state.accounts}
+              gameController={this.state.gameController}
+              show={this.state.showRound2}
+            />
+            <Question
+              accounts={this.state.accounts}
+              gameController={this.state.gameController}
+              show={this.state.showRound3}
+            />
+            <Question
+              accounts={this.state.accounts}
+              gameController={this.state.gameController}
+              show={this.state.showRound4}
+            />
+            <Winners
+              accounts={this.state.accounts}
+              gameController={this.state.gameController}
+              show={this.state.showWinners}
+            >
+              Winners
+            </Winners>
           </Grid.Row>
         </Grid>
       </Layout>

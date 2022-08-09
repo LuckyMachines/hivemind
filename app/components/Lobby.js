@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Button, Card } from "semantic-ui-react";
 import Addresses from "../../deployed-contracts.json";
-import GameController from "../../artifacts/contracts/GameController.sol/GameController.json";
 
 const Lobby = (props) => {
   const [joinGameLoading, setJoinGameLoading] = useState(false);
@@ -9,22 +8,33 @@ const Lobby = (props) => {
   const [gameID, setGameID] = useState("(Not in game)");
   const [buttonText, setButtonText] = useState("Join Game");
   const web3 = props.provider;
-  let accounts;
-  let gameController;
+  const accounts = props.accounts;
+  const gameController = props.gameController;
+  let eventOptions = {
+    address: [Addresses.gameController]
+  };
+
+  let subscription;
 
   const joinGame = async () => {
     setJoinGameLoading(true);
-    if (web3) {
-      accounts = await web3.eth.getAccounts();
-      gameController = new web3.eth.Contract(
-        GameController.abi,
-        Addresses.gameController
-      );
+    if (web3 && accounts && gameController) {
       try {
         if (buttonText == "Join Game") {
           let playerInGame = await gameController.methods
             .getIsInActiveGame(accounts[0])
             .call();
+          subscription = web3.eth.subscribe(
+            "logs",
+            eventOptions,
+            (err, event) => {
+              if (!err) {
+                console.log(event);
+              } else {
+                console.log(err.message);
+              }
+            }
+          );
           // TODO: set gas parameters
           if (!playerInGame) {
             await gameController.methods.joinGame().send({ from: accounts[0] });
@@ -40,7 +50,7 @@ const Lobby = (props) => {
           setPlayersInGame(playerCount);
           setButtonText("Waiting for game to start...");
         } else if (buttonText == "Start Game") {
-          // move into next round
+          // move into next round (probably do this automatically without button)
         } else {
           console.log("This button does nothing, but have fun clicking away!");
         }

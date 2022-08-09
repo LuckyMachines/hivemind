@@ -10,9 +10,10 @@ import "hardhat/console.sol";
 contract ScoreKeeper is AccessControlEnumerable {
     bytes32 public SCORE_SETTER_ROLE = keccak256("SCORE_SETTER_ROLE");
 
+    // Mapping from game ID
+    mapping(uint256 => string) public latestRound;
     // Mapping from game ID => player address
     mapping(uint256 => mapping(address => uint256)) public playerScore;
-    mapping(uint256 => mapping(address => string)) public latestRound; // the last hub the player is known to be in
     // Mapping from player address
     mapping(address => uint256) public currentGameID;
     mapping(address => bool) public playerInActiveGame;
@@ -36,12 +37,11 @@ contract ScoreKeeper is AccessControlEnumerable {
         playerScore[gameID][playerAddress] += points;
     }
 
-    function setLatestRound(
-        string memory hubName,
-        uint256 gameID,
-        address playerAddress
-    ) external onlyRole(SCORE_SETTER_ROLE) {
-        latestRound[gameID][playerAddress] = hubName;
+    function setLatestRound(string memory hubName, uint256 gameID)
+        external
+        onlyRole(SCORE_SETTER_ROLE)
+    {
+        latestRound[gameID] = hubName;
     }
 
     function setGameID(uint256 gameID, address playerAddress)

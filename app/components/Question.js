@@ -1,7 +1,41 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button, Card } from "semantic-ui-react";
 
 const Question = (props) => {
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [gameID, setGameID] = useState("Loading...");
+  const [buttonText, setButtonText] = useState("Submit Answers");
+  const web3 = props.provider;
+  const gameController = props.gameController;
+  const accounts = props.accounts;
+
+  const submit = async () => {
+    setSubmitLoading(true);
+    if (web3 && gameController && accounts) {
+      try {
+        if (buttonText == "Submit Answers") {
+          const currentGameID = await gameController.methods
+            .getCurrentGame(accounts[0])
+            .call();
+          console.log("Current game ID:", currentGameID);
+          setGameID(currentGameID);
+          setButtonText("Waiting for all players to answer");
+          // TODO: submit answers
+        } else if (buttonText == "Reveal Answers") {
+          // TODO: submit revealed answers (must be same as answers)
+          setButtonText("Waiting for all players to reveal");
+        } else {
+          console.log("This button does nothing, but have fun clicking away!");
+        }
+      } catch (err) {
+        console.log(err.message);
+      }
+    } else {
+      window.alert("Please connect your web3 wallet");
+    }
+    setSubmitLoading(false);
+  };
+
   let content =
     props.show == false ? (
       ""
@@ -61,8 +95,8 @@ const Question = (props) => {
           </Card>
         </Card.Group>
         <br />
-        <Button color="black" size="massive">
-          Submit Answers
+        <Button color="black" size="massive" onClick={submit}>
+          {buttonText}
         </Button>
         {props.children}
       </div>

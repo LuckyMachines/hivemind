@@ -127,7 +127,9 @@ contract GameRound is Hub {
     // Internal
     function _groupDidEnter(uint256 railcarID) internal override {
         super._groupDidEnter(railcarID);
-        // request randomness to use for question
+        // TODO:request randomness to use for question
+        // Testing with timestamp as faux random
+        startNewRound(railcarID, block.timestamp);
     }
 
     // on randomness delivered...
@@ -148,7 +150,7 @@ contract GameRound is Hub {
         );
     }
 
-    function exitWinnersToNextRound() internal {
+    function exitPlayersToNextRound() internal {
         // _sendGroupToHub(uint256 railcarID, string memory hubName);
     }
 
