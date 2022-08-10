@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.9;
 import "@luckymachines/railway/contracts/Hub.sol";
+import "@luckymachines/railway/contracts/RailYard.sol";
 import "./Questions.sol";
 import "./ScoreKeeper.sol";
 import "./GameController.sol";
@@ -11,7 +12,6 @@ contract GameRound is Hub {
     string public hubName;
     string public nextRoundHub;
     uint256 public roundTimeLimit = 300; // in seconds (5 minute default)
-    uint256 internal _gameID;
 
     enum GamePhase {
         Pregame,
@@ -23,6 +23,7 @@ contract GameRound is Hub {
     Questions internal QUESTIONS;
     ScoreKeeper internal SCORE_KEEPER;
     GameController internal GAME_CONTROLLER;
+    RailYard internal RAIL_YARD;
 
     // mapping from game ID
     mapping(uint256 => uint256) internal revealPoints;
@@ -34,6 +35,7 @@ contract GameRound is Hub {
     mapping(uint256 => GamePhase) public phase;
     mapping(uint256 => uint256) public totalResponses;
     mapping(uint256 => uint256) public totalReveals;
+    mapping(uint256 => uint256) public railcar;
 
     // from game ID => player
     mapping(uint256 => mapping(address => bytes32)) public hashedAnswer;
@@ -46,6 +48,7 @@ contract GameRound is Hub {
         address questionsAddress,
         address scoreKeeperAddress,
         address gameControllerAddress,
+        address railYardAddress,
         address hubRegistryAddress,
         address hubAdmin
     ) Hub(hubRegistryAddress, hubAdmin) {
@@ -56,6 +59,7 @@ contract GameRound is Hub {
         QUESTIONS = Questions(questionsAddress);
         SCORE_KEEPER = ScoreKeeper(scoreKeeperAddress);
         GAME_CONTROLLER = GameController(gameControllerAddress);
+        RAIL_YARD = RailYard(railYardAddress);
     }
 
     // Player functions
@@ -75,6 +79,8 @@ contract GameRound is Hub {
         string memory secretPhrase,
         uint256 gameID
     ) public {
+        address player = tx.origin;
+        require(playerIsInHub(gameID, player), "Player is not in this hub");
         require(
             phase[gameID] == GamePhase.Question,
             "Game not in question phase"
@@ -86,7 +92,7 @@ contract GameRound is Hub {
         bytes32 inputHash = keccak256(
             abi.encode(questionAnswer, crowdAnswer, secretPhrase)
         );
-        hashedAnswer[gameID][tx.origin] = inputHash;
+        hashedAnswer[gameID][player] = inputHash;
         totalResponses[gameID]++;
         if (totalResponses[gameID] >= GAME_CONTROLLER.getPlayerCount(gameID)) {
             updatePhase(gameID);
@@ -100,8 +106,9 @@ contract GameRound is Hub {
         string memory secretPhrase,
         uint256 gameID
     ) public {
-        require(phase[gameID] == GamePhase.Reveal, "Game not in reveal phase");
         address player = tx.origin;
+        require(playerIsInHub(gameID, player), "Player is not in this hub");
+        require(phase[gameID] == GamePhase.Reveal, "Game not in reveal phase");
         require(
             !answersRevealed[gameID][player],
             "Player already revealed answers"
@@ -203,25 +210,29 @@ contract GameRound is Hub {
     // on randomness delivered...
     function startNewRound(uint256 railcarID, uint256 randomSeed) internal {
         // TODO: use actual randomness, pass any value for testing
-        _gameID++;
-        revealPoints[_gameID] = maxPointsPerRound;
+        uint256 gameID = RAIL_YARD.getRailcarIntStorage(railcarID)[0]; // get from railcar
+        revealPoints[gameID] = maxPointsPerRound;
         string memory q;
         string[4] memory r;
         (q, r) = QUESTIONS.getQuestionWithSeed(randomSeed);
-        question[_gameID] = q;
-        responses[_gameID] = r;
-        roundStartTime[_gameID] = block.timestamp;
-        phase[_gameID] = GamePhase.Question;
-        GAME_CONTROLLER.roundStart(
-            hubName,
-            block.timestamp,
-            _gameID,
-            railcarID
-        );
+        question[gameID] = q;
+        responses[gameID] = r;
+        roundStartTime[gameID] = block.timestamp;
+        phase[gameID] = GamePhase.Question;
+        railcar[gameID] = railcarID;
+        GAME_CONTROLLER.roundStart(hubName, block.timestamp, gameID, railcarID);
     }
 
     function exitPlayersToNextRound() internal {
         // _sendGroupToHub(uint256 railcarID, string memory hubName);
+    }
+
+    function playerIsInHub(uint256 gameID, address playerAddress)
+        internal
+        view
+        returns (bool)
+    {
+        return RAIL_YARD.isMember(railcar[gameID], playerAddress);
     }
 
     function indexOfResponse(uint256 gameID, string memory response)
