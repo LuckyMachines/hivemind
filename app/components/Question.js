@@ -11,7 +11,7 @@ const Question = (props) => {
   const gameController = props.gameController;
   const accounts = props.accounts;
   const unselectedColor = "grey";
-  const selectedColor = "green";
+  const selectedColor = "blue";
 
   const submit = async () => {
     setSubmitLoading(true);
