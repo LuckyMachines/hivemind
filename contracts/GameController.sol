@@ -144,7 +144,7 @@ contract GameController is AccessControlEnumerable {
     function getRailcarID(uint256 gameID)
         public
         view
-        returns (uinty256 railcarID)
+        returns (uint256 railcarID)
     {
         railcarID = LOBBY.railcarID(gameID);
     }
