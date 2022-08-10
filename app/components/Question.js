@@ -5,9 +5,13 @@ const Question = (props) => {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [gameID, setGameID] = useState("Loading...");
   const [buttonText, setButtonText] = useState("Submit Answers");
+  const [playerChoice, setPlayerChoice] = useState("");
+  const [crowdChoice, setCrowdChoice] = useState("");
   const web3 = props.provider;
   const gameController = props.gameController;
   const accounts = props.accounts;
+  const unselectedColor = "grey";
+  const selectedColor = "green";
 
   const submit = async () => {
     setSubmitLoading(true);
@@ -39,30 +43,60 @@ const Question = (props) => {
   const crowdResponseContent = (p) => {
     return p.responses[2] == "" ? (
       <>
-        <div className="ui two buttons">
-          <Button basic color="black">
+        <div>
+          <Button
+            color={
+              crowdChoice == p.responses[0] ? selectedColor : unselectedColor
+            }
+            onClick={() => setCrowdChoice(p.responses[0])}
+          >
             {p.responses[0]}
           </Button>
-          <Button basic color="black">
+          <Button
+            color={
+              crowdChoice == p.responses[1] ? selectedColor : unselectedColor
+            }
+            onClick={() => setCrowdChoice(p.responses[1])}
+          >
             {p.responses[1]}
           </Button>
         </div>
       </>
     ) : (
       <>
-        <div className="ui two buttons">
-          <Button basic color="black">
+        <div>
+          <Button
+            color={
+              crowdChoice == p.responses[0] ? selectedColor : unselectedColor
+            }
+            onClick={() => setCrowdChoice(p.responses[0])}
+          >
             {p.responses[0]}
           </Button>
-          <Button basic color="black">
+          <Button
+            color={
+              crowdChoice == p.responses[1] ? selectedColor : unselectedColor
+            }
+            onClick={() => setCrowdChoice(p.responses[1])}
+          >
             {p.responses[1]}
           </Button>
         </div>
-        <div className="ui two buttons">
-          <Button basic color="black">
+        <div>
+          <Button
+            color={
+              crowdChoice == p.responses[2] ? selectedColor : unselectedColor
+            }
+            onClick={() => setCrowdChoice(p.responses[2])}
+          >
             {p.responses[2]}
           </Button>
-          <Button basic color="black">
+          <Button
+            color={
+              crowdChoice == p.responses[3] ? selectedColor : unselectedColor
+            }
+            onClick={() => setCrowdChoice(p.responses[3])}
+          >
             {p.responses[3]}
           </Button>
         </div>
@@ -73,30 +107,60 @@ const Question = (props) => {
   const userResponseContent = (p) => {
     return p.responses[2] == "" ? (
       <>
-        <div className="ui two buttons">
-          <Button basic color="black">
+        <div>
+          <Button
+            color={
+              playerChoice == p.responses[0] ? selectedColor : unselectedColor
+            }
+            onClick={() => setPlayerChoice(p.responses[0])}
+          >
             {p.responses[0]}
           </Button>
-          <Button basic color="black">
+          <Button
+            color={
+              playerChoice == p.responses[1] ? selectedColor : unselectedColor
+            }
+            onClick={() => setPlayerChoice(p.responses[1])}
+          >
             {p.responses[1]}
           </Button>
         </div>
       </>
     ) : (
       <>
-        <div className="ui two buttons">
-          <Button basic color="black">
+        <div>
+          <Button
+            color={
+              playerChoice == p.responses[0] ? selectedColor : unselectedColor
+            }
+            onClick={() => setPlayerChoice(p.responses[0])}
+          >
             {p.responses[0]}
           </Button>
-          <Button basic color="black">
+          <Button
+            color={
+              playerChoice == p.responses[1] ? selectedColor : unselectedColor
+            }
+            onClick={() => setPlayerChoice(p.responses[1])}
+          >
             {p.responses[1]}
           </Button>
         </div>
-        <div className="ui two buttons">
-          <Button basic color="black">
+        <div>
+          <Button
+            color={
+              playerChoice == p.responses[2] ? selectedColor : unselectedColor
+            }
+            onClick={() => setPlayerChoice(p.responses[2])}
+          >
             {p.responses[2]}
           </Button>
-          <Button basic color="black">
+          <Button
+            color={
+              playerChoice == p.responses[3] ? selectedColor : unselectedColor
+            }
+            onClick={() => setPlayerChoice(p.responses[3])}
+          >
             {p.responses[3]}
           </Button>
         </div>

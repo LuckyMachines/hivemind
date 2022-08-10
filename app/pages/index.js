@@ -37,15 +37,7 @@ class Dashboard extends Component {
       round3Question: "",
       round3Responses: ["", "", "", ""],
       round4Question: "",
-      round4Responses: ["", "", "", ""],
-      round1PlayerChoice: "",
-      round1CrowdChoice: "",
-      round2PlayerChoice: "",
-      round2CrowdChoice: "",
-      round3PlayerChoice: "",
-      round3CrowdChoice: "",
-      round4PlayerChoice: "",
-      round4CrowdChoice: ""
+      round4Responses: ["", "", "", ""]
     };
   }
 
