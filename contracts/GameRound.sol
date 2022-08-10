@@ -10,7 +10,7 @@ contract GameRound is Hub {
     uint256 constant maxPointsPerRound = 10000;
     string public hubName;
     string public nextRoundHub;
-    uint256 public roundTimeLimit; // in seconds
+    uint256 public roundTimeLimit = 300; // in seconds (5 minute default)
     uint256 internal _gameID;
 
     Questions internal QUESTIONS;
@@ -25,7 +25,7 @@ contract GameRound is Hub {
     mapping(uint256 => uint256[4]) public responseScores; // how many people chose each response
 
     // from game ID => player
-    mapping(uint256 => mapping(address => bytes32)) hashedAnswer;
+    mapping(uint256 => mapping(address => bytes32)) public hashedAnswer;
     mapping(uint256 => mapping(address => bool)) public answersRevealed;
     mapping(uint256 => mapping(address => bool)) public roundWinner;
 
