@@ -132,11 +132,9 @@ contract GameRound is Hub {
         if (totalReveals[gameID] >= GAME_CONTROLLER.getPlayerCount(gameID)) {
             updatePhase(gameID);
         }
-        // TODO: final answer should kick off calculating winner(s)
     }
 
-    // public functions
-
+    // Public functions
     function needsUpdate(uint256 gameID) public view returns (bool) {
         // TODO: also check for all players having submitted
         if (
