@@ -20,12 +20,3 @@ const SecretPhrase = (props) => {
 };
 
 export default SecretPhrase;
-
-/*
-label="How Many?"
-                    placeholder="# of Keys to Purchase"
-                    value={this.state.purchaseQty}
-                    onChange={(event) =>
-                      this.setState({ purchaseQty: event.target.value })
-                    }
-*/
