@@ -7,8 +7,6 @@ const Question = (props) => {
   const [playerChoice, setPlayerChoice] = useState("");
   const [crowdChoice, setCrowdChoice] = useState("");
   const web3 = props.provider;
-  const gameController = props.gameController;
-  const accounts = props.accounts;
   const unselectedColor = "grey";
   const selectedColor = "blue";
 

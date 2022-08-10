@@ -328,8 +328,6 @@ class Dashboard extends Component {
             <Question
               question={this.state.round1Question}
               responses={this.state.round1Responses}
-              accounts={this.state.accounts}
-              gameController={this.state.gameController}
               show={this.state.showRound1}
               provider={this.state.provider}
               submitChoices={this.submitChoices}
@@ -337,8 +335,6 @@ class Dashboard extends Component {
             <Question
               question={this.state.round2Question}
               responses={this.state.round2Responses}
-              accounts={this.state.accounts}
-              gameController={this.state.gameController}
               show={this.state.showRound2}
               provider={this.state.provider}
               submitChoices={this.submitChoices}
@@ -346,8 +342,6 @@ class Dashboard extends Component {
             <Question
               question={this.state.round3Question}
               responses={this.state.round3Responses}
-              accounts={this.state.accounts}
-              gameController={this.state.gameController}
               show={this.state.showRound3}
               provider={this.state.provider}
               submitChoices={this.submitChoices}
@@ -355,8 +349,6 @@ class Dashboard extends Component {
             <Question
               question={this.state.round4Question}
               responses={this.state.round4Responses}
-              accounts={this.state.accounts}
-              gameController={this.state.gameController}
               show={this.state.showRound4}
               provider={this.state.provider}
               submitChoices={this.submitChoices}
