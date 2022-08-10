@@ -136,7 +136,6 @@ contract GameRound is Hub {
 
     // Public functions
     function needsUpdate(uint256 gameID) public view returns (bool) {
-        // TODO: also check for all players having submitted
         if (
             (phase[gameID] == GamePhase.Question &&
                 block.timestamp >= (roundStartTime[gameID] + roundTimeLimit)) ||
