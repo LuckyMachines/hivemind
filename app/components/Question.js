@@ -3,7 +3,6 @@ import { Button, Card } from "semantic-ui-react";
 
 const Question = (props) => {
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [gameID, setGameID] = useState("Loading...");
   const [buttonText, setButtonText] = useState("Submit Answers");
   const [playerChoice, setPlayerChoice] = useState("");
   const [crowdChoice, setCrowdChoice] = useState("");
@@ -15,14 +14,10 @@ const Question = (props) => {
 
   const submit = async () => {
     setSubmitLoading(true);
-    if (web3 && gameController && accounts) {
+    if (web3) {
       try {
         if (buttonText == "Submit Answers") {
-          const currentGameID = await gameController.methods
-            .getCurrentGame(accounts[0])
-            .call();
-          console.log("Current game ID:", currentGameID);
-          setGameID(currentGameID);
+          props.submitChoices(playerChoice, crowdChoice);
           setButtonText("Waiting for all players to answer");
           // TODO: submit answers
         } else if (buttonText == "Reveal Answers") {
@@ -189,7 +184,12 @@ const Question = (props) => {
           </Card>
         </Card.Group>
         <br />
-        <Button color="black" size="massive" onClick={submit}>
+        <Button
+          loading={submitLoading}
+          color="black"
+          size="massive"
+          onClick={() => submit()}
+        >
           {buttonText}
         </Button>
         {props.children}

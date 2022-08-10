@@ -149,6 +149,13 @@ class Dashboard extends Component {
     }
   };
 
+  submitChoices = async (playerChoice, crowdChoice) => {
+    // send player choice, crowd choice, and secret phrase to contract
+    console.log(`${playerChoice}, ${crowdChoice}, ${this.state.secretPhrase}`);
+  };
+
+  revealChoices = async () => {};
+
   showHub = (hubAlias) => {
     this.setState({ currentHub: hubAlias });
 
@@ -324,6 +331,8 @@ class Dashboard extends Component {
               accounts={this.state.accounts}
               gameController={this.state.gameController}
               show={this.state.showRound1}
+              provider={this.state.provider}
+              submitChoices={this.submitChoices}
             />
             <Question
               question={this.state.round2Question}
@@ -331,6 +340,8 @@ class Dashboard extends Component {
               accounts={this.state.accounts}
               gameController={this.state.gameController}
               show={this.state.showRound2}
+              provider={this.state.provider}
+              submitChoices={this.submitChoices}
             />
             <Question
               question={this.state.round3Question}
@@ -338,6 +349,8 @@ class Dashboard extends Component {
               accounts={this.state.accounts}
               gameController={this.state.gameController}
               show={this.state.showRound3}
+              provider={this.state.provider}
+              submitChoices={this.submitChoices}
             />
             <Question
               question={this.state.round4Question}
@@ -345,10 +358,13 @@ class Dashboard extends Component {
               accounts={this.state.accounts}
               gameController={this.state.gameController}
               show={this.state.showRound4}
+              provider={this.state.provider}
+              submitChoices={this.submitChoices}
             />
             <Winners
               accounts={this.state.accounts}
               gameController={this.state.gameController}
+              provider={this.state.provider}
               show={this.state.showWinners}
             >
               Winners
