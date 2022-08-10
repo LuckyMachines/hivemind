@@ -21,6 +21,20 @@ contract GameController is AccessControlEnumerable {
         uint256 groupID
     );
 
+    event RevealStart(
+        string hubAlias,
+        uint256 startTime,
+        uint256 gameID,
+        uint256 groupID
+    );
+
+    event RoundEnd(
+        string hubAlias,
+        uint256 timestamp,
+        uint256 gameID,
+        uint256 groupID
+    );
+
     constructor(
         address lobbyAddress,
         address scoreKeeperAddress,
