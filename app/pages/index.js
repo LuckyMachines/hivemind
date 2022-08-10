@@ -29,7 +29,15 @@ class Dashboard extends Component {
       showWinners: false,
       showLobby: true,
       currentHub: "hivemind.lobby",
-      gameID: "0"
+      gameID: "0",
+      round1Question: "",
+      round1Responses: ["", "", "", ""],
+      round2Question: "",
+      round2Responses: [],
+      round3Question: "",
+      round3Responses: [],
+      round4Question: "",
+      round5Responses: []
     };
   }
 
@@ -73,12 +81,15 @@ class Dashboard extends Component {
     this.loadGameController(p);
     this.loadAccounts(p);
   };
+
   setAccounts = (a) => {
     this.setState({ accounts: a });
   };
+
   setGameID = (id) => {
     this.setState({ gameID: id });
   };
+
   setConnectedWallet = (w) => {
     this.setState({ connectedWallet: w });
   };
@@ -260,21 +271,29 @@ class Dashboard extends Component {
               setGameID={this.setGameID}
             />
             <Question
+              question={this.state.round1Question}
+              responses={this.state.round1Responses}
               accounts={this.state.accounts}
               gameController={this.state.gameController}
               show={this.state.showRound1}
             />
             <Question
+              question={this.state.round2Question}
+              responses={this.state.round2Responses}
               accounts={this.state.accounts}
               gameController={this.state.gameController}
               show={this.state.showRound2}
             />
             <Question
+              question={this.state.round3Question}
+              responses={this.state.round3Responses}
               accounts={this.state.accounts}
               gameController={this.state.gameController}
               show={this.state.showRound3}
             />
             <Question
+              question={this.state.round4Question}
+              responses={this.state.round4Responses}
               accounts={this.state.accounts}
               gameController={this.state.gameController}
               show={this.state.showRound4}

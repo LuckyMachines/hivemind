@@ -36,6 +36,74 @@ const Question = (props) => {
     setSubmitLoading(false);
   };
 
+  const crowdResponseContent = (p) => {
+    return p.responses[2] == "" ? (
+      <>
+        <div className="ui two buttons">
+          <Button basic color="black">
+            {p.responses[0]}
+          </Button>
+          <Button basic color="black">
+            {p.responses[1]}
+          </Button>
+        </div>
+      </>
+    ) : (
+      <>
+        <div className="ui two buttons">
+          <Button basic color="black">
+            {p.responses[0]}
+          </Button>
+          <Button basic color="black">
+            {p.responses[1]}
+          </Button>
+        </div>
+        <div className="ui two buttons">
+          <Button basic color="black">
+            {p.responses[2]}
+          </Button>
+          <Button basic color="black">
+            {p.responses[3]}
+          </Button>
+        </div>
+      </>
+    );
+  };
+
+  const userResponseContent = (p) => {
+    return p.responses[2] == "" ? (
+      <>
+        <div className="ui two buttons">
+          <Button basic color="black">
+            {p.responses[0]}
+          </Button>
+          <Button basic color="black">
+            {p.responses[1]}
+          </Button>
+        </div>
+      </>
+    ) : (
+      <>
+        <div className="ui two buttons">
+          <Button basic color="black">
+            {p.responses[0]}
+          </Button>
+          <Button basic color="black">
+            {p.responses[1]}
+          </Button>
+        </div>
+        <div className="ui two buttons">
+          <Button basic color="black">
+            {p.responses[2]}
+          </Button>
+          <Button basic color="black">
+            {p.responses[3]}
+          </Button>
+        </div>
+      </>
+    );
+  };
+
   let content =
     props.show == false ? (
       ""
@@ -44,54 +112,16 @@ const Question = (props) => {
         <Card.Group>
           <Card>
             <Card.Content>
-              <Card.Header>
-                What is the best thing to eat for breakfast?
-              </Card.Header>
+              <Card.Header>{props.question}</Card.Header>
             </Card.Content>
-            <Card.Content extra>
-              <div className="ui two buttons">
-                <Button basic color="black">
-                  Cereal and Toast
-                </Button>
-                <Button basic color="black">
-                  Bacon and Eggs
-                </Button>
-              </div>
-              <div className="ui two buttons">
-                <Button basic color="black">
-                  Pancakes or Waffles
-                </Button>
-                <Button basic color="black">
-                  Nothing
-                </Button>
-              </div>
-            </Card.Content>
+            <Card.Content extra>{userResponseContent(props)}</Card.Content>
           </Card>
           <Card>
             <Card.Content>
               <Card.Header>What will the crowd choose?</Card.Header>
-              <Card.Meta>
-                What is the best thing to eat for breakfast?
-              </Card.Meta>
+              <Card.Meta>{props.question}</Card.Meta>
             </Card.Content>
-            <Card.Content extra>
-              <div className="ui two buttons">
-                <Button basic color="black">
-                  Cereal and Toast
-                </Button>
-                <Button basic color="black">
-                  Bacon and Eggs
-                </Button>
-              </div>
-              <div className="ui two buttons">
-                <Button basic color="black">
-                  Pancakes or Waffles
-                </Button>
-                <Button basic color="black">
-                  Nothing
-                </Button>
-              </div>
-            </Card.Content>
+            <Card.Content extra>{crowdResponseContent(props)}</Card.Content>
           </Card>
         </Card.Group>
         <br />
