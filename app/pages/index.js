@@ -8,6 +8,7 @@ import Lobby from "../components/Lobby";
 import Winners from "../components/Winners";
 import Addresses from "../../deployed-contracts.json";
 import GameController from "../../artifacts/contracts/GameController.sol/GameController.json";
+import GameRound from "../../artifacts/contracts/GameRound.sol/GameRound.json";
 import { ethers } from "ethers";
 
 const settings = require("../settings");
@@ -151,10 +152,42 @@ class Dashboard extends Component {
 
   submitChoices = async (playerChoice, crowdChoice) => {
     // send player choice, crowd choice, and secret phrase to contract
-    console.log(`${playerChoice}, ${crowdChoice}, ${this.state.secretPhrase}`);
+    // console.log(`${playerChoice}, ${crowdChoice}, ${this.state.secretPhrase}`);
+    const gc = this.state.gameController;
+    await gc.methods
+      .submitAnswers(
+        playerChoice,
+        crowdChoice,
+        this.state.secretPhrase,
+        this.state.gameID,
+        this.state.currentHub
+      )
+      .send({ from: this.state.accounts[0] });
+
+    let web3 = this.state.provider;
+    const gameRound = new web3.eth.Contract(
+      GameRound.abi,
+      Addresses.gameController
+    );
+
+    let hashedChoices = await gameRound.methods
+      .hashedAnswer(this.state.gameID, this.state.accounts[0])
+      .call();
+    console.log("Choices submitted:", hashedChoices);
   };
 
-  revealChoices = async () => {};
+  revealChoices = async () => {
+    const gc = this.state.gameController;
+    await gc.methods
+      .revealAnswers(
+        playerChoice,
+        crowdChoice,
+        this.state.secretPhrase,
+        this.state.gameID,
+        this.state.currentHub
+      )
+      .send({ from: this.state.accounts[0] });
+  };
 
   showHub = (hubAlias) => {
     this.setState({ currentHub: hubAlias });

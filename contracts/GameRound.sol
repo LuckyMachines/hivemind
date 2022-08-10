@@ -142,6 +142,7 @@ contract GameRound is Hub {
         (q, r) = QUESTIONS.getQuestionWithSeed(randomSeed);
         question[_gameID] = q;
         responses[_gameID] = r;
+        roundStartTime[_gameID] = block.timestamp;
         GAME_CONTROLLER.roundStart(
             hubName,
             block.timestamp,
