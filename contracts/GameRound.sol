@@ -13,6 +13,13 @@ contract GameRound is Hub {
     uint256 public roundTimeLimit = 300; // in seconds (5 minute default)
     uint256 internal _gameID;
 
+    enum GamePhase {
+        Pregame,
+        Question,
+        Reveal,
+        Completed
+    }
+
     Questions internal QUESTIONS;
     ScoreKeeper internal SCORE_KEEPER;
     GameController internal GAME_CONTROLLER;
@@ -22,7 +29,9 @@ contract GameRound is Hub {
     mapping(uint256 => string) internal question;
     mapping(uint256 => string[4]) internal responses;
     mapping(uint256 => uint256) public roundStartTime;
+    mapping(uint256 => uint256) public revealStartTime;
     mapping(uint256 => uint256[4]) public responseScores; // how many people chose each response
+    mapping(uint256 => GamePhase) public phase;
 
     // from game ID => player
     mapping(uint256 => mapping(address => bytes32)) public hashedAnswer;
@@ -65,6 +74,10 @@ contract GameRound is Hub {
         uint256 gameID
     ) public {
         require(
+            phase[gameID] == GamePhase.Question,
+            "Game not in question phase"
+        );
+        require(
             block.timestamp < roundStartTime[gameID] + roundTimeLimit,
             "Cannot submit answers. Round time limit has passed."
         );
@@ -81,11 +94,13 @@ contract GameRound is Hub {
         string memory secretPhrase,
         uint256 gameID
     ) public {
+        require(phase[gameID] == GamePhase.Reveal, "Game not in reveal phase");
         address player = tx.origin;
         require(
             !answersRevealed[gameID][player],
             "Player already revealed answers"
         );
+
         // These must be the exact same values as sent to submit answers or play is not valid
         bytes32 hashedReveal = keccak256(
             abi.encode(questionAnswer, crowdAnswer, secretPhrase)
@@ -113,6 +128,24 @@ contract GameRound is Hub {
 
         // TODO: store winner addresses in list that winner contract can access for prize distributions
         // should be in railcar info already...
+    }
+
+    // public functions
+    function checkPhase(uint256 gameID) public {
+        if (
+            phase[gameID] == GamePhase.Question &&
+            block.timestamp >= (roundStartTime[gameID] + roundTimeLimit)
+        ) {
+            revealStartTime[gameID] = block.timestamp;
+            // TODO: emit notification of reveal phase start
+            phase[gameID] = GamePhase.Reveal;
+        } else if (
+            phase[gameID] == GamePhase.Reveal &&
+            block.timestamp >= (revealStartTime[gameID] + roundTimeLimit)
+        ) {
+            phase[gameID] = GamePhase.Completed;
+            // TODO: emit notification of round ended
+        }
     }
 
     // Admin functions
@@ -143,6 +176,7 @@ contract GameRound is Hub {
         question[_gameID] = q;
         responses[_gameID] = r;
         roundStartTime[_gameID] = block.timestamp;
+        phase[_gameID] = GamePhase.Question;
         GAME_CONTROLLER.roundStart(
             hubName,
             block.timestamp,
