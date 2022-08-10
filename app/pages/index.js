@@ -37,7 +37,15 @@ class Dashboard extends Component {
       round3Question: "",
       round3Responses: ["", "", "", ""],
       round4Question: "",
-      round4Responses: ["", "", "", ""]
+      round4Responses: ["", "", "", ""],
+      round1PlayerChoice: "",
+      round1CrowdChoice: "",
+      round2PlayerChoice: "",
+      round2CrowdChoice: "",
+      round3PlayerChoice: "",
+      round3CrowdChoice: "",
+      round4PlayerChoice: "",
+      round4CrowdChoice: ""
     };
   }
 
@@ -94,6 +102,10 @@ class Dashboard extends Component {
     this.setState({ connectedWallet: w });
   };
 
+  setSecretPhrase = (phrase) => {
+    this.setState({ secretPhrase: phrase });
+  };
+
   roundStarted = (hubAlias, gameID, groupID, startTime) => {
     if (
       gameID == this.state.gameID &&
@@ -105,24 +117,40 @@ class Dashboard extends Component {
       this.loadQuestions(hubAlias);
       this.showHub(hubAlias);
     }
-    // console.log(`Game Started at hub: ${hubAlias}. Game ID: ${gameID} `);
   };
 
   loadQuestions = async (hubAlias) => {
-    let gc = this.state.gameController;
+    const gc = this.state.gameController;
+    const gcQuestion = await gc.methods
+      .getQuestion(hubAlias, this.state.gameID)
+      .call();
+    const question = gcQuestion.q;
+    const choices = gcQuestion.choices;
 
     switch (hubAlias) {
       case "hivemind.round1":
         this.setState({
-          round1Question: "Sample Round 1 Question",
-          round1Responses: ["Choice 1", "Choice 2", "Choice 3", "Choice 4"]
+          round1Question: question,
+          round1Responses: choices
         });
         break;
       case "hivemind.round2":
+        this.setState({
+          round2Question: question,
+          round2Responses: choices
+        });
         break;
       case "hivemind.round3":
+        this.setState({
+          round3Question: question,
+          round3Responses: choices
+        });
         break;
       case "hivemind.round4":
+        this.setState({
+          round4Question: question,
+          round4Responses: choices
+        });
         break;
       default:
         break;
@@ -284,7 +312,11 @@ class Dashboard extends Component {
               : "Not connected"}
           </Grid.Row>
           <Grid.Row style={{ backgroundColor: "#99ccff", color: "#001433" }}>
-            <SecretPhrase show={this.state.showSecretPhrase} />
+            <SecretPhrase
+              show={this.state.showSecretPhrase}
+              phrase={this.state.secretPhrase}
+              setPhrase={this.setSecretPhrase}
+            />
           </Grid.Row>
           <Grid.Row style={{ backgroundColor: "#99ccff", color: "#001433" }}>
             <Lobby
