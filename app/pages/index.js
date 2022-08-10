@@ -33,11 +33,11 @@ class Dashboard extends Component {
       round1Question: "",
       round1Responses: ["", "", "", ""],
       round2Question: "",
-      round2Responses: [],
+      round2Responses: ["", "", "", ""],
       round3Question: "",
-      round3Responses: [],
+      round3Responses: ["", "", "", ""],
       round4Question: "",
-      round5Responses: []
+      round4Responses: ["", "", "", ""]
     };
   }
 
@@ -100,9 +100,33 @@ class Dashboard extends Component {
       this.hubIsNew(this.state.currentHub, hubAlias)
     ) {
       console.log("Move to hub:", hubAlias);
+
+      // load questions / responses from specified hub
+      this.loadQuestions(hubAlias);
       this.showHub(hubAlias);
     }
     // console.log(`Game Started at hub: ${hubAlias}. Game ID: ${gameID} `);
+  };
+
+  loadQuestions = async (hubAlias) => {
+    let gc = this.state.gameController;
+
+    switch (hubAlias) {
+      case "hivemind.round1":
+        this.setState({
+          round1Question: "Sample Round 1 Question",
+          round1Responses: ["Choice 1", "Choice 2", "Choice 3", "Choice 4"]
+        });
+        break;
+      case "hivemind.round2":
+        break;
+      case "hivemind.round3":
+        break;
+      case "hivemind.round4":
+        break;
+      default:
+        break;
+    }
   };
 
   showHub = (hubAlias) => {

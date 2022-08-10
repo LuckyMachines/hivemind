@@ -127,6 +127,17 @@ contract GameController is AccessControlEnumerable {
         hubAlias = SCORE_KEEPER.latestRound(gameID);
     }
 
+    function getQuestion(string memory hubAlias, uint256 gameID)
+        public
+        view
+        returns (string memory q, string[4] memory choices)
+    {
+        return
+            GameRound(HUB_REGISTRY.addressFromName(hubAlias)).getQuestion(
+                gameID
+            );
+    }
+
     // Event triggers
     function roundStart(
         string memory hubAlias,
