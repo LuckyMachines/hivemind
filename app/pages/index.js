@@ -28,7 +28,8 @@ class Dashboard extends Component {
       showRound4: false,
       showWinners: false,
       showLobby: true,
-      currentHub: "hivemind.lobby"
+      currentHub: "hivemind.lobby",
+      gameID: "0"
     };
   }
 
@@ -57,6 +58,9 @@ class Dashboard extends Component {
     gc2.on("RoundStart", (hubAlias, startTime, gameID, groupID) => {
       this.roundStarted(hubAlias, gameID, groupID, startTime);
     });
+    // TODO: Subscribe to events:
+    // All players in for round (switch to reveal mode)
+    // Round Results are in... (Display question results / points / standings)
   }
 
   async loadAccounts(p) {
@@ -72,12 +76,18 @@ class Dashboard extends Component {
   setAccounts = (a) => {
     this.setState({ accounts: a });
   };
+  setGameID = (id) => {
+    this.setState({ gameID: id });
+  };
   setConnectedWallet = (w) => {
     this.setState({ connectedWallet: w });
   };
 
   roundStarted = (hubAlias, gameID, groupID, startTime) => {
-    if (this.hubIsNew(this.state.currentHub, hubAlias)) {
+    if (
+      gameID == this.state.gameID &&
+      this.hubIsNew(this.state.currentHub, hubAlias)
+    ) {
       console.log("Move to hub:", hubAlias);
       this.showHub(hubAlias);
     }
@@ -157,15 +167,6 @@ class Dashboard extends Component {
       default:
         break;
     }
-    /*
-    showSecretPhrase: false,
-      showRound1: false,
-      showRound2: false,
-      showRound3: false,
-      showRound4: false,
-      showWinners: false,
-      showLobby: true,
-    */
   };
 
   hubIsNew = (currentHubAlias, testHubAlias) => {
@@ -256,6 +257,7 @@ class Dashboard extends Component {
               gameController={this.state.gameController}
               show={this.state.showLobby}
               provider={this.state.provider}
+              setGameID={this.setGameID}
             />
             <Question
               accounts={this.state.accounts}

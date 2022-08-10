@@ -44,6 +44,7 @@ const Lobby = (props) => {
             .call();
           console.log("New game ID:", currentGameID);
           setGameID(currentGameID);
+          props.setGameID(currentGameID);
           const playerCount = await gameController.methods
             .getPlayerCount(currentGameID)
             .call();
