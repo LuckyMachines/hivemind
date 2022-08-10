@@ -32,6 +32,8 @@ contract GameRound is Hub {
     mapping(uint256 => uint256) public revealStartTime;
     mapping(uint256 => uint256[4]) public responseScores; // how many people chose each response
     mapping(uint256 => GamePhase) public phase;
+    mapping(uint256 => uint256) public totalResponses;
+    mapping(uint256 => uint256) public totalReveals;
 
     // from game ID => player
     mapping(uint256 => mapping(address => bytes32)) public hashedAnswer;
@@ -85,6 +87,10 @@ contract GameRound is Hub {
             abi.encode(questionAnswer, crowdAnswer, secretPhrase)
         );
         hashedAnswer[gameID][tx.origin] = inputHash;
+        totalResponses[gameID]++;
+        if (totalResponses[gameID] >= GAME_CONTROLLER.getPlayerCount(gameID)) {
+            updatePhase(gameID);
+        }
     }
 
     // reveal answers / first gets most points
@@ -122,29 +128,61 @@ contract GameRound is Hub {
             }
         }
 
+        totalReveals[gameID]++;
+        if (totalReveals[gameID] >= GAME_CONTROLLER.getPlayerCount(gameID)) {
+            updatePhase(gameID);
+        }
         // TODO: final answer should kick off calculating winner(s)
-
-        // Can use keeper for when last player doesn't anwer
-
-        // TODO: store winner addresses in list that winner contract can access for prize distributions
-        // should be in railcar info already...
     }
 
     // public functions
-    function checkPhase(uint256 gameID) public {
+
+    function needsUpdate(uint256 gameID) public view returns (bool) {
+        // TODO: also check for all players having submitted
         if (
-            phase[gameID] == GamePhase.Question &&
-            block.timestamp >= (roundStartTime[gameID] + roundTimeLimit)
+            (phase[gameID] == GamePhase.Question &&
+                block.timestamp >= (roundStartTime[gameID] + roundTimeLimit)) ||
+            (phase[gameID] == GamePhase.Reveal &&
+                block.timestamp >=
+                (revealStartTime[gameID] + roundTimeLimit)) ||
+            (totalResponses[gameID] >=
+                GAME_CONTROLLER.getPlayerCount(gameID)) ||
+            (totalReveals[gameID] >= GAME_CONTROLLER.getPlayerCount(gameID))
         ) {
-            revealStartTime[gameID] = block.timestamp;
-            // TODO: emit notification of reveal phase start
-            phase[gameID] = GamePhase.Reveal;
-        } else if (
-            phase[gameID] == GamePhase.Reveal &&
-            block.timestamp >= (revealStartTime[gameID] + roundTimeLimit)
-        ) {
-            phase[gameID] = GamePhase.Completed;
-            // TODO: emit notification of round ended
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function updatePhase(uint256 gameID) public {
+        if (phase[gameID] == GamePhase.Question) {
+            if (
+                block.timestamp >= (roundStartTime[gameID] + roundTimeLimit) ||
+                totalResponses[gameID] >= GAME_CONTROLLER.getPlayerCount(gameID)
+            ) {
+                revealStartTime[gameID] = block.timestamp;
+                phase[gameID] = GamePhase.Reveal;
+                GAME_CONTROLLER.revealStart(
+                    hubName,
+                    block.timestamp,
+                    gameID,
+                    GAME_CONTROLLER.getRailcarID(gameID)
+                );
+            }
+        } else if (phase[gameID] == GamePhase.Reveal) {
+            if (
+                block.timestamp >= (revealStartTime[gameID] + roundTimeLimit) ||
+                totalReveals[gameID] >= GAME_CONTROLLER.getPlayerCount(gameID)
+            ) {
+                phase[gameID] = GamePhase.Completed;
+                GAME_CONTROLLER.roundEnd(
+                    hubName,
+                    block.timestamp,
+                    gameID,
+                    GAME_CONTROLLER.getRailcarID(gameID)
+                );
+            }
         }
     }
 

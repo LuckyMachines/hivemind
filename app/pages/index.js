@@ -152,7 +152,7 @@ class Dashboard extends Component {
 
   submitChoices = async (playerChoice, crowdChoice) => {
     // send player choice, crowd choice, and secret phrase to contract
-    // console.log(`${playerChoice}, ${crowdChoice}, ${this.state.secretPhrase}`);
+    console.log(`${playerChoice}, ${crowdChoice}, ${this.state.secretPhrase}`);
     const gc = this.state.gameController;
     await gc.methods
       .submitAnswers(
@@ -163,12 +163,10 @@ class Dashboard extends Component {
         this.state.currentHub
       )
       .send({ from: this.state.accounts[0] });
+    console.log("Submitted Answers");
 
     let web3 = this.state.provider;
-    const gameRound = new web3.eth.Contract(
-      GameRound.abi,
-      Addresses.gameController
-    );
+    const gameRound = new web3.eth.Contract(GameRound.abi, Addresses.round1);
 
     let hashedChoices = await gameRound.methods
       .hashedAnswer(this.state.gameID, this.state.accounts[0])

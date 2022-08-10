@@ -141,6 +141,14 @@ contract GameController is AccessControlEnumerable {
         hubAlias = SCORE_KEEPER.latestRound(gameID);
     }
 
+    function getRailcarID(uint256 gameID)
+        public
+        view
+        returns (uinty256 railcarID)
+    {
+        railcarID = LOBBY.railcarID(gameID);
+    }
+
     function getQuestion(string memory hubAlias, uint256 gameID)
         public
         view
@@ -162,6 +170,24 @@ contract GameController is AccessControlEnumerable {
         emit RoundStart(hubAlias, timestamp, gameID, railcarID);
     }
 
+    function revealStart(
+        string memory hubAlias,
+        uint256 timestamp,
+        uint256 gameID,
+        uint256 railcarID
+    ) external onlyRole(EVENT_SENDER_ROLE) {
+        emit RevealStart(hubAlias, timestamp, gameID, railcarID);
+    }
+
+    function roundEnd(
+        string memory hubAlias,
+        uint256 timestamp,
+        uint256 gameID,
+        uint256 railcarID
+    ) external onlyRole(EVENT_SENDER_ROLE) {
+        emit RoundEnd(hubAlias, timestamp, gameID, railcarID);
+    }
+
     // Admin functions
     function addEventSender(address eventSenderAddress)
         public
@@ -173,6 +199,3 @@ contract GameController is AccessControlEnumerable {
     // set railcar operator to current hub at each entry
     // move railcar to next hub?
 }
-
-// trigger events from other contracts
-// submit moves from player / forward to appropriate contract
