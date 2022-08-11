@@ -17,6 +17,8 @@ contract ScoreKeeper is AccessControlEnumerable {
     // Mapping from player address
     mapping(address => uint256) public currentGameID;
     mapping(address => bool) public playerInActiveGame;
+    // Mapping from railcar ID
+    mapping(uint256 => uint256) public gameIDFromRailcar;
 
     constructor() {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
@@ -50,5 +52,15 @@ contract ScoreKeeper is AccessControlEnumerable {
     {
         currentGameID[playerAddress] = gameID;
         playerInActiveGame[playerAddress] = true;
+    }
+
+    function setGameID(
+        uint256 gameID,
+        address playerAddress,
+        uint256 railcarID
+    ) external onlyRole(SCORE_SETTER_ROLE) {
+        currentGameID[playerAddress] = gameID;
+        playerInActiveGame[playerAddress] = true;
+        gameIDFromRailcar[railcarID] = gameID;
     }
 }

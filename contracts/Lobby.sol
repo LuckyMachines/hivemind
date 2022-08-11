@@ -65,7 +65,11 @@ contract Lobby is Hub {
             }
             _needsNewGameID = false;
         }
-        SCORE_KEEPER.setGameID(_currentGameID, player);
+        SCORE_KEEPER.setGameID(
+            _currentGameID,
+            player,
+            railcarID[_currentGameID]
+        );
         playerCount[_currentGameID]++;
 
         if (playerCount[_currentGameID] == 2) {

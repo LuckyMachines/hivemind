@@ -8,7 +8,9 @@ import "./GameController.sol";
 import "hardhat/console.sol";
 
 contract GameRound is Hub {
-    uint256 constant maxPointsPerRound = 10000;
+    uint256 constant maxPointsPerRound = 1000;
+    uint256 constant submissionPoints = 100;
+    uint256 constant winningPoints = 3000;
     string public hubName;
     string public nextRoundHub;
     uint256 public roundTimeLimit = 300; // in seconds (5 minute default)
@@ -25,10 +27,14 @@ contract GameRound is Hub {
     GameController internal GAME_CONTROLLER;
     RailYard internal RAIL_YARD;
 
+    // mapping from railcar ID
+    mapping(uint256 => uint256) internal _gameID;
+
     // mapping from game ID
     mapping(uint256 => uint256) internal revealPoints;
     mapping(uint256 => string) internal question;
     mapping(uint256 => string[4]) internal responses;
+    mapping(uint256 => uint256[]) public winningChoiceIndex;
     mapping(uint256 => uint256) public roundStartTime;
     mapping(uint256 => uint256) public revealStartTime;
     mapping(uint256 => uint256[4]) public responseScores; // how many people chose each response
@@ -39,6 +45,7 @@ contract GameRound is Hub {
 
     // from game ID => player
     mapping(uint256 => mapping(address => bytes32)) public hashedAnswer;
+    mapping(uint256 => mapping(address => uint256)) public revealedIndex;
     mapping(uint256 => mapping(address => bool)) public answersRevealed;
     mapping(uint256 => mapping(address => bool)) public roundWinner;
 
@@ -94,6 +101,7 @@ contract GameRound is Hub {
         );
         hashedAnswer[gameID][player] = inputHash;
         totalResponses[gameID]++;
+        SCORE_KEEPER.increaseScore(submissionPoints, gameID, player);
         if (totalResponses[gameID] >= GAME_CONTROLLER.getPlayerCount(gameID)) {
             updatePhase(gameID);
         }
@@ -119,16 +127,18 @@ contract GameRound is Hub {
             abi.encode(questionAnswer, crowdAnswer, secretPhrase)
         );
         bool hashesMatch = hashedAnswer[gameID][player] == hashedReveal;
-
-        uint256 cIndex = indexOfResponse(gameID, crowdAnswer);
-        if (cIndex < 4) {
-            responseScores[gameID][cIndex] += 1;
-            answersRevealed[gameID][player] = true;
-            if (hashesMatch) {
-                roundWinner[gameID][player] = true;
+        if (hashesMatch) {
+            // submitted a valid reveal
+            uint256 cIndex = indexOfResponse(gameID, questionAnswer);
+            if (cIndex < 4) {
+                // if choice was valid, add to collective scores
+                responseScores[gameID][cIndex] += 1;
+                answersRevealed[gameID][player] = true;
+                revealedIndex[gameID][player] = cIndex;
 
                 uint256 currentRevealPoints = revealPoints[gameID];
                 SCORE_KEEPER.increaseScore(currentRevealPoints, gameID, player);
+
                 revealPoints[gameID] = currentRevealPoints > 0
                     ? currentRevealPoints - 1
                     : 0;
@@ -179,13 +189,20 @@ contract GameRound is Hub {
                 block.timestamp >= (revealStartTime[gameID] + roundTimeLimit) ||
                 totalReveals[gameID] >= GAME_CONTROLLER.getPlayerCount(gameID)
             ) {
+                uint256 railcarID = GAME_CONTROLLER.getRailcarID(gameID);
                 phase[gameID] = GamePhase.Completed;
+
+                // assign points to winners
+                findWinners(railcarID);
+
                 GAME_CONTROLLER.roundEnd(
                     hubName,
                     block.timestamp,
                     gameID,
-                    GAME_CONTROLLER.getRailcarID(gameID)
+                    railcarID
                 );
+
+                exitPlayersToNextRound(railcarID);
             }
         }
     }
@@ -204,14 +221,15 @@ contract GameRound is Hub {
         super._groupDidEnter(railcarID);
         // TODO:request randomness to use for question
         // Testing with timestamp as faux random
+        _gameID[railcarID] = SCORE_KEEPER.gameIDFromRailcar(railcarID);
+        railcar[_gameID[railcarID]] = railcarID;
         startNewRound(railcarID, block.timestamp);
     }
 
     // on randomness delivered...
     function startNewRound(uint256 railcarID, uint256 randomSeed) internal {
         // TODO: use actual randomness, pass any value for testing
-        uint256 gameID = RAIL_YARD.getRailcarIntStorage(railcarID)[0]; // get from railcar
-        revealPoints[gameID] = maxPointsPerRound;
+        uint256 gameID = _gameID[railcarID];
         string memory q;
         string[4] memory r;
         (q, r) = QUESTIONS.getQuestionWithSeed(randomSeed);
@@ -219,12 +237,17 @@ contract GameRound is Hub {
         responses[gameID] = r;
         roundStartTime[gameID] = block.timestamp;
         phase[gameID] = GamePhase.Question;
-        railcar[gameID] = railcarID;
-        GAME_CONTROLLER.roundStart(hubName, block.timestamp, gameID, railcarID);
+
+        GAME_CONTROLLER.roundStart(
+            hubName,
+            block.timestamp,
+            _gameID[railcarID],
+            railcarID
+        );
     }
 
-    function exitPlayersToNextRound() internal {
-        // _sendGroupToHub(uint256 railcarID, string memory hubName);
+    function exitPlayersToNextRound(uint256 railcarID) internal {
+        _sendGroupToHub(railcarID, nextRoundHub);
     }
 
     function playerIsInHub(uint256 gameID, address playerAddress)
@@ -260,5 +283,67 @@ contract GameRound is Hub {
         returns (bool)
     {
         return keccak256(abi.encode(s1)) == keccak256(abi.encode(s2));
+    }
+
+    function findWinners(uint256 railcarID) internal {
+        uint256 gameID = _gameID[railcarID];
+        if (
+            responseScores[gameID][0] >= responseScores[gameID][1] &&
+            responseScores[gameID][0] >= responseScores[gameID][2] &&
+            responseScores[gameID][0] >= responseScores[gameID][3]
+        ) {
+            winningChoiceIndex[gameID].push(0);
+        }
+        if (
+            responseScores[gameID][1] >= responseScores[gameID][0] &&
+            responseScores[gameID][1] >= responseScores[gameID][2] &&
+            responseScores[gameID][1] >= responseScores[gameID][3]
+        ) {
+            winningChoiceIndex[gameID].push(1);
+        }
+        if (
+            responseScores[gameID][2] >= responseScores[gameID][0] &&
+            responseScores[gameID][2] >= responseScores[gameID][1] &&
+            responseScores[gameID][2] >= responseScores[gameID][3]
+        ) {
+            winningChoiceIndex[gameID].push(2);
+        }
+        if (
+            responseScores[gameID][3] >= responseScores[gameID][0] &&
+            responseScores[gameID][3] >= responseScores[gameID][1] &&
+            responseScores[gameID][3] >= responseScores[gameID][2]
+        ) {
+            winningChoiceIndex[gameID].push(3);
+        }
+
+        address[] memory players = RAIL_YARD.getRailcarMembers(railcarID);
+        if (winningChoiceIndex[gameID].length == 4) {
+            // everyone wins
+            for (uint256 i = 0; i < players.length; i++) {
+                SCORE_KEEPER.increaseScore(winningPoints, gameID, players[i]);
+                roundWinner[gameID][players[i]] = true;
+            }
+        } else {
+            for (uint256 i = 0; i < players.length; i++) {
+                for (
+                    uint256 j = 0;
+                    j < winningChoiceIndex[gameID].length;
+                    j++
+                ) {
+                    if (
+                        revealedIndex[gameID][players[i]] ==
+                        winningChoiceIndex[gameID][j]
+                    ) {
+                        SCORE_KEEPER.increaseScore(
+                            winningPoints,
+                            gameID,
+                            players[i]
+                        );
+                        roundWinner[gameID][players[i]] = true;
+                        break;
+                    }
+                }
+            }
+        }
     }
 }

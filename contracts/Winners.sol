@@ -17,8 +17,6 @@ contract Winners is Hub {
     // game id => player address
     mapping(uint256 => mapping(address => bool)) playerPaid; // if player was paid for a given game
 
-    uint256 rolloverPool; // winnings not allocated to any parties
-
     constructor(
         string memory thisHub,
         address scoreKeeperAddress,

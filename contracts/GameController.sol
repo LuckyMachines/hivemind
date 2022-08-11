@@ -124,6 +124,14 @@ contract GameController is AccessControlEnumerable {
         gameID = SCORE_KEEPER.currentGameID(playerAddress);
     }
 
+    function getCurrentGame(uint256 railcarID)
+        public
+        view
+        returns (uint256 gameID)
+    {
+        gameID = SCORE_KEEPER.gameIDFromRailcar(railcarID);
+    }
+
     // Game specific functions
     function getPlayerCount(uint256 gameID)
         public

@@ -38,7 +38,11 @@ class Dashboard extends Component {
       round3Question: "",
       round3Responses: ["", "", "", ""],
       round4Question: "",
-      round4Responses: ["", "", "", ""]
+      round4Responses: ["", "", "", ""],
+      round1Button: "Submit Answers",
+      round2Button: "Submit Answers",
+      round3Button: "Submit Answers",
+      round4Button: "Submit Answers"
     };
   }
 
@@ -59,7 +63,7 @@ class Dashboard extends Component {
 
     let url = "http://127.0.0.1:8545";
     let p2 = new ethers.providers.JsonRpcProvider(url);
-    const gc2 = await new ethers.Contract(
+    const gc2 = new ethers.Contract(
       Addresses.gameController,
       GameController.abi,
       p2
@@ -67,7 +71,13 @@ class Dashboard extends Component {
     gc2.on("RoundStart", (hubAlias, startTime, gameID, groupID) => {
       this.roundStarted(hubAlias, gameID, groupID, startTime);
     });
-    // TODO: Subscribe to events:
+    gc2.on("RevealStart", (hubAlias, startTime, gameID, groupID) => {
+      this.revealStarted(hubAlias, gameID, groupID, startTime);
+    });
+    gc2.on("RoundEnd", (hubAlias, startTime, gameID, groupID) => {
+      this.roundEnded(hubAlias, gameID, groupID, startTime);
+    });
+    // TODO: respond to events:
     // All players in for round (switch to reveal mode)
     // Round Results are in... (Display question results / points / standings)
   }
@@ -105,10 +115,59 @@ class Dashboard extends Component {
       this.hubIsNew(this.state.currentHub, hubAlias)
     ) {
       console.log("Move to hub:", hubAlias);
-
       // load questions / responses from specified hub
-      this.loadQuestions(hubAlias);
       this.showHub(hubAlias);
+    }
+  };
+
+  revealStarted = (hubAlias, gameID, groupID, startTime) => {
+    if (gameID == this.state.gameID) {
+      console.log(
+        `Reveal Start: ${hubAlias}, ${startTime}, ${gameID}, ${groupID}`
+      );
+      switch (this.state.currentHub) {
+        case "hivemind.round1":
+          this.setState({ round1Button: "Reveal Answers" });
+          break;
+        case "hivemind.round2":
+          this.setState({ round2Button: "Reveal Answers" });
+          break;
+        case "hivemind.round3":
+          this.setState({ round3Button: "Reveal Answers" });
+          break;
+        case "hivemind.round4":
+          this.setState({ round4Button: "Reveal Answers" });
+          break;
+        case "hivemind.lobby":
+          switch (hubAlias) {
+            case "hivemind.round1":
+              this.setState({ round1Button: "Reveal Answers" });
+              break;
+            case "hivemind.round2":
+              this.setState({ round2Button: "Reveal Answers" });
+              break;
+            case "hivemind.round3":
+              this.setState({ round3Button: "Reveal Answers" });
+              break;
+            case "hivemind.round4":
+              this.setState({ round4Button: "Reveal Answers" });
+              break;
+            default:
+              break;
+          }
+          this.showHub(hubAlias);
+        default:
+          break;
+      }
+    }
+  };
+
+  roundEnded = (hubAlias, gameID, groupID, startTime) => {
+    if (gameID == this.state.gameID) {
+      console.log(
+        `Round End: ${hubAlias}, ${startTime}, ${gameID}, ${groupID}`
+      );
+      // query chain for results...
     }
   };
 
@@ -153,6 +212,22 @@ class Dashboard extends Component {
   submitChoices = async (playerChoice, crowdChoice) => {
     // send player choice, crowd choice, and secret phrase to contract
     console.log(`${playerChoice}, ${crowdChoice}, ${this.state.secretPhrase}`);
+    switch (this.state.currentHub) {
+      case "hivemind.round1":
+        this.setState({ round1Button: "Waiting for all players to answer" });
+        break;
+      case "hivemind.round2":
+        this.setState({ round2Button: "Waiting for all players to answer" });
+        break;
+      case "hivemind.round3":
+        this.setState({ round3Button: "Waiting for all players to answer" });
+        break;
+      case "hivemind.round4":
+        this.setState({ round4Button: "Waiting for all players to answer" });
+        break;
+      default:
+        break;
+    }
     const gc = this.state.gameController;
     await gc.methods
       .submitAnswers(
@@ -174,7 +249,23 @@ class Dashboard extends Component {
     console.log("Choices submitted:", hashedChoices);
   };
 
-  revealChoices = async () => {
+  revealChoices = async (playerChoice, crowdChoice) => {
+    switch (this.state.currentHub) {
+      case "hivemind.round1":
+        this.setState({ round1Button: "Waiting for all players to reveal" });
+        break;
+      case "hivemind.round2":
+        this.setState({ round2Button: "Waiting for all players to reveal" });
+        break;
+      case "hivemind.round3":
+        this.setState({ round3Button: "Waiting for all players to reveal" });
+        break;
+      case "hivemind.round4":
+        this.setState({ round4Button: "Waiting for all players to reveal" });
+        break;
+      default:
+        break;
+    }
     const gc = this.state.gameController;
     await gc.methods
       .revealAnswers(
@@ -187,9 +278,9 @@ class Dashboard extends Component {
       .send({ from: this.state.accounts[0] });
   };
 
-  showHub = (hubAlias) => {
+  showHub = async (hubAlias) => {
     this.setState({ currentHub: hubAlias });
-
+    await this.loadQuestions(hubAlias);
     switch (hubAlias) {
       case "hivemind.lobby":
         this.setState({
@@ -360,29 +451,37 @@ class Dashboard extends Component {
               question={this.state.round1Question}
               responses={this.state.round1Responses}
               show={this.state.showRound1}
+              buttonText={this.state.round1Button}
               provider={this.state.provider}
               submitChoices={this.submitChoices}
+              revealChoices={this.revealChoices}
             />
             <Question
               question={this.state.round2Question}
               responses={this.state.round2Responses}
               show={this.state.showRound2}
+              buttonText={this.state.round2Button}
               provider={this.state.provider}
               submitChoices={this.submitChoices}
+              revealChoices={this.revealChoices}
             />
             <Question
               question={this.state.round3Question}
               responses={this.state.round3Responses}
               show={this.state.showRound3}
+              buttonText={this.state.round3Button}
               provider={this.state.provider}
               submitChoices={this.submitChoices}
+              revealChoices={this.revealChoices}
             />
             <Question
               question={this.state.round4Question}
               responses={this.state.round4Responses}
               show={this.state.showRound4}
+              buttonText={this.state.round4Button}
               provider={this.state.provider}
               submitChoices={this.submitChoices}
+              revealChoices={this.revealChoices}
             />
             <Winners
               accounts={this.state.accounts}

@@ -93,6 +93,7 @@ async function main() {
     qp1.address,
     scoreKeeper.address,
     gameController.address,
+    railYard,
     hubRegistry,
     adminAddress
   );
@@ -105,6 +106,7 @@ async function main() {
     qp2.address,
     scoreKeeper.address,
     gameController.address,
+    railYard,
     hubRegistry,
     adminAddress
   );
@@ -117,6 +119,7 @@ async function main() {
     qp3.address,
     scoreKeeper.address,
     gameController.address,
+    railYard,
     hubRegistry,
     adminAddress
   );
@@ -125,10 +128,11 @@ async function main() {
   console.log("Deploying Round 4...");
   const round4 = await GameRound.deploy(
     "hivemind.round4",
-    "hivemind.round5",
+    "hivemind.winners",
     qp4.address,
     scoreKeeper.address,
     gameController.address,
+    railYard,
     hubRegistry,
     adminAddress
   );

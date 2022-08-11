@@ -14,13 +14,10 @@ const Question = (props) => {
     setSubmitLoading(true);
     if (web3) {
       try {
-        if (buttonText == "Submit Answers") {
+        if (props.buttonText == "Submit Answers") {
           props.submitChoices(playerChoice, crowdChoice);
-          setButtonText("Waiting for all players to answer");
-          // TODO: submit answers
-        } else if (buttonText == "Reveal Answers") {
-          // TODO: submit revealed answers (must be same as answers)
-          setButtonText("Waiting for all players to reveal");
+        } else if (props.buttonText == "Reveal Answers") {
+          props.revealChoices(playerChoice, crowdChoice);
         } else {
           console.log("This button does nothing, but have fun clicking away!");
         }
@@ -75,7 +72,7 @@ const Question = (props) => {
             {p.responses[1]}
           </Button>
         </div>
-        <div>
+        <div style={{ marginTop: "5px" }}>
           <Button
             color={
               crowdChoice == p.responses[2] ? selectedColor : unselectedColor
@@ -139,7 +136,7 @@ const Question = (props) => {
             {p.responses[1]}
           </Button>
         </div>
-        <div>
+        <div style={{ marginTop: "5px" }}>
           <Button
             color={
               playerChoice == p.responses[2] ? selectedColor : unselectedColor
@@ -188,7 +185,7 @@ const Question = (props) => {
           size="massive"
           onClick={() => submit()}
         >
-          {buttonText}
+          {props.buttonText}
         </Button>
         {props.children}
       </div>

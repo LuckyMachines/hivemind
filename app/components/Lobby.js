@@ -10,11 +10,6 @@ const Lobby = (props) => {
   const web3 = props.provider;
   const accounts = props.accounts;
   const gameController = props.gameController;
-  let eventOptions = {
-    address: [Addresses.gameController]
-  };
-
-  let subscription;
 
   const joinGame = async () => {
     setJoinGameLoading(true);
@@ -24,17 +19,7 @@ const Lobby = (props) => {
           let playerInGame = await gameController.methods
             .getIsInActiveGame(accounts[0])
             .call();
-          subscription = web3.eth.subscribe(
-            "logs",
-            eventOptions,
-            (err, event) => {
-              if (!err) {
-                console.log(event);
-              } else {
-                console.log(err.message);
-              }
-            }
-          );
+
           // TODO: set gas parameters
           if (!playerInGame) {
             await gameController.methods.joinGame().send({ from: accounts[0] });
