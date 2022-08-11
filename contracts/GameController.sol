@@ -170,6 +170,33 @@ contract GameController is AccessControlEnumerable {
             );
     }
 
+    function getPlayerGuess(
+        string memory hubAlias,
+        uint256 gameID,
+        address playerAddress
+    ) public view returns (uint256 guessIndex) {
+        guessIndex = GameRound(HUB_REGISTRY.addressFromName(hubAlias))
+            .revealedIndex(gameID, playerAddress);
+    }
+
+    function getResponseScores(string memory hubAlias, uint256 gameID)
+        public
+        view
+        returns (uint256[4] memory responseScores)
+    {
+        responseScores = GameRound(HUB_REGISTRY.addressFromName(hubAlias))
+            .getResponseScores(gameID);
+    }
+
+    function getWinningIndex(string memory hubAlias, uint256 gameID)
+        public
+        view
+        returns (uint256[] memory winningIndex)
+    {
+        winningIndex = GameRound(HUB_REGISTRY.addressFromName(hubAlias))
+            .getWinningChoiceIndex(gameID);
+    }
+
     // Event triggers
     function roundStart(
         string memory hubAlias,

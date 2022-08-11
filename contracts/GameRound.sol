@@ -8,7 +8,7 @@ import "./GameController.sol";
 import "hardhat/console.sol";
 
 contract GameRound is Hub {
-    uint256 constant maxPointsPerRound = 1000;
+    uint256 constant maxRevealBonus = 1000;
     uint256 constant submissionPoints = 100;
     uint256 constant winningPoints = 3000;
     string public hubName;
@@ -45,7 +45,7 @@ contract GameRound is Hub {
 
     // from game ID => player
     mapping(uint256 => mapping(address => bytes32)) public hashedAnswer;
-    mapping(uint256 => mapping(address => uint256)) public revealedIndex;
+    mapping(uint256 => mapping(address => uint256)) public revealedIndex; // index of crowd guess
     mapping(uint256 => mapping(address => bool)) public answersRevealed;
     mapping(uint256 => mapping(address => bool)) public roundWinner;
 
@@ -77,6 +77,22 @@ contract GameRound is Hub {
     {
         q = question[gameID];
         choices = responses[gameID];
+    }
+
+    function getResponseScores(uint256 gameID)
+        public
+        view
+        returns (uint256[4] memory)
+    {
+        return responseScores[gameID];
+    }
+
+    function getWinningChoiceIndex(uint256 gameID)
+        public
+        view
+        returns (uint256[] memory)
+    {
+        return winningChoiceIndex[gameID];
     }
 
     // submit answers (will be stored in secret)
@@ -127,22 +143,22 @@ contract GameRound is Hub {
             abi.encode(questionAnswer, crowdAnswer, secretPhrase)
         );
         bool hashesMatch = hashedAnswer[gameID][player] == hashedReveal;
-        if (hashesMatch) {
-            // submitted a valid reveal
-            uint256 cIndex = indexOfResponse(gameID, questionAnswer);
-            if (cIndex < 4) {
-                // if choice was valid, add to collective scores
-                responseScores[gameID][cIndex] += 1;
-                answersRevealed[gameID][player] = true;
-                revealedIndex[gameID][player] = cIndex;
+        require(hashesMatch, "revealed answers don't match original answers");
 
-                uint256 currentRevealPoints = revealPoints[gameID];
-                SCORE_KEEPER.increaseScore(currentRevealPoints, gameID, player);
+        uint256 pIndex = indexOfResponse(gameID, questionAnswer);
+        uint256 cIndex = indexOfResponse(gameID, crowdAnswer);
+        if (pIndex < 4) {
+            // if choice was valid, add to collective scores (player response counts)
+            responseScores[gameID][pIndex] += 1;
+            answersRevealed[gameID][player] = true;
+            revealedIndex[gameID][player] = cIndex;
 
-                revealPoints[gameID] = currentRevealPoints > 0
-                    ? currentRevealPoints - 1
-                    : 0;
-            }
+            uint256 currentRevealPoints = revealPoints[gameID];
+            SCORE_KEEPER.increaseScore(currentRevealPoints, gameID, player);
+
+            revealPoints[gameID] = currentRevealPoints > 0
+                ? currentRevealPoints - 4
+                : 0;
         }
 
         totalReveals[gameID]++;
@@ -237,6 +253,7 @@ contract GameRound is Hub {
         responses[gameID] = r;
         roundStartTime[gameID] = block.timestamp;
         phase[gameID] = GamePhase.Question;
+        revealPoints[gameID] = maxRevealBonus;
 
         GAME_CONTROLLER.roundStart(
             hubName,

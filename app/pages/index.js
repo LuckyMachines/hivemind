@@ -44,8 +44,8 @@ class Dashboard extends Component {
       currentHub: "hivemind.lobby",
       gameID: "0",
       playerScore: "0",
-      round1Question: "Loading",
-      round1Responses: ["Loading", "Loading", "Loading", "Loading"],
+      round1Question: "",
+      round1Responses: [],
       round2Question: "",
       round2Responses: [],
       round3Question: "",
@@ -56,6 +56,18 @@ class Dashboard extends Component {
       round2Button: "Submit Answers",
       round3Button: "Submit Answers",
       round4Button: "Submit Answers",
+      round1SubmittedGuess: "",
+      round2SubmittedGuess: "",
+      round3SubmittedGuess: "",
+      round4SubmittedGuess: "",
+      round1ResponseScores: ["-", "-", "-", "-"],
+      round2ResponseScores: ["-", "-", "-", "-"],
+      round3ResponseScores: ["-", "-", "-", "-"],
+      round4ResponseScores: ["-", "-", "-", "-"],
+      round1WinningIndex: [],
+      round2WinningIndex: [],
+      round3WinningIndex: [],
+      round4WinningIndex: [],
       title: "Lobby"
     };
   }
@@ -178,7 +190,9 @@ class Dashboard extends Component {
       console.log(
         `Round End: ${hubAlias}, ${startTime}, ${gameID}, ${groupID}`
       );
-      // query chain for results...
+      if (hubAlias == "hivemind.round4") {
+        this.showHub("hivemind.winners");
+      }
     }
   };
 
@@ -196,7 +210,7 @@ class Dashboard extends Component {
 
       // if question didn't load...
       if (question == "") {
-        await pause(2);
+        await pause(1);
       }
     }
 
@@ -230,12 +244,81 @@ class Dashboard extends Component {
     }
   };
 
-  updatePlayerScore = async () => {
+  updatePlayerScore = async (hubAlias) => {
     const gc = this.state.gameController;
     const score = await gc.methods
       .getScore(this.state.gameID, this.state.accounts[0])
       .call();
     this.setState({ playerScore: score });
+    let guess;
+    let responseScores;
+    let winningIndex;
+    if (hubAlias != "hivemind.round1") {
+      let previousHub;
+      switch (hubAlias) {
+        case "hivemind.round2":
+          previousHub = "hivemind.round1";
+          break;
+        case "hivemind.round3":
+          previousHub = "hivemind.round2";
+          break;
+        case "hivemind.round4":
+          previousHub = "hivemind.round3";
+          break;
+        case "hivemind.winners":
+          previousHub = "hivemind.round4";
+          break;
+        default:
+          break;
+      }
+      // if round 1, nothing to load
+      guess = await gc.methods
+        .getPlayerGuess(previousHub, this.state.gameID, this.state.accounts[0])
+        .call();
+      responseScores = await gc.methods
+        .getResponseScores(previousHub, this.state.gameID)
+        .call();
+      winningIndex = await gc.methods
+        .getWinningIndex(previousHub, this.state.gameID)
+        .call();
+    }
+    switch (hubAlias) {
+      case "hivemind.round2":
+        // update round 1 stats
+        this.setState({
+          round1SubmittedGuess: guess,
+          round1ResponseScores: responseScores,
+          round1WinningIndex: winningIndex
+        });
+        break;
+      case "hivemind.round3":
+        // update round 2 stats
+        this.setState({
+          round2SubmittedGuess: guess,
+          round2ResponseScores: responseScores,
+          round2WinningIndex: winningIndex
+        });
+        break;
+      case "hivemind.round4":
+        // update round 3 stats
+        this.setState({
+          round3SubmittedGuess: guess,
+          round3ResponseScores: responseScores,
+          round3WinningIndex: winningIndex
+        });
+        break;
+      case "hivemind.winners":
+        // update round 4 stats
+        this.setState({
+          round4SubmittedGuess: guess,
+          round4ResponseScores: responseScores,
+          round4WinningIndex: winningIndex
+        });
+        break;
+      case "hivemind.round1":
+      default:
+        break;
+    }
   };
 
   submitChoices = async (playerChoice, crowdChoice) => {
@@ -308,8 +391,10 @@ class Dashboard extends Component {
   };
 
   showHub = async (hubAlias) => {
-    await this.loadQuestions(hubAlias);
-    await this.updatePlayerScore();
+    if (hubAlias != "hivemind.winners" && hubAlias != "hivemind.lobby") {
+      await this.loadQuestions(hubAlias);
+    }
+    await this.updatePlayerScore(hubAlias);
     this.setState({ currentHub: hubAlias }, () => {
       switch (hubAlias) {
         case "hivemind.lobby":
@@ -540,7 +625,22 @@ class Dashboard extends Component {
             </Winners>
           </Grid.Row>
           <Grid.Row>
-            <Score show={this.state.showScore} score={this.state.playerScore} />
+            <Score
+              show={this.state.showScore}
+              score={this.state.playerScore}
+              guess1={this.state.round1SubmittedGuess}
+              guess2={this.state.round2SubmittedGuess}
+              guess3={this.state.round3SubmittedGuess}
+              guess4={this.state.round4SubmittedGuess}
+              responseScores1={this.state.round1ResponseScores}
+              responseScores2={this.state.round2ResponseScores}
+              responseScores3={this.state.round3ResponseScores}
+              responseScores4={this.state.round4ResponseScores}
+              winningIndex1={this.state.round1WinningIndex}
+              winningIndex2={this.state.round2WinningIndex}
+              winningIndex3={this.state.round3WinningIndex}
+              winningIndex4={this.state.round4WinningIndex}
+            />
           </Grid.Row>
         </Grid>
       </Layout>
