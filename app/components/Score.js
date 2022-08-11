@@ -8,7 +8,8 @@ const Score = (props) => {
     ) : (
       <div style={{ width: "60%", marginBottom: "-10px" }}>
         <p>
-          <strong>Score:</strong>xxxxxxx
+          <strong>Score: </strong>
+          {props.score}
         </p>
         {props.children}
       </div>

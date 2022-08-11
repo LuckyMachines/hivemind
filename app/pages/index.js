@@ -42,6 +42,7 @@ class Dashboard extends Component {
       showScore: false,
       currentHub: "hivemind.lobby",
       gameID: "0",
+      playerScore: "0",
       round1Question: "Loading",
       round1Responses: ["Loading", "Loading", "Loading", "Loading"],
       round2Question: "",
@@ -227,6 +228,14 @@ class Dashboard extends Component {
     }
   };
 
+  updatePlayerScore = async () => {
+    const gc = this.state.gameController;
+    const score = await gc.methods
+      .getScore(this.state.gameID, this.state.accounts[0])
+      .call();
+    this.setState({ playerScore: score });
+  };
+
   submitChoices = async (playerChoice, crowdChoice) => {
     // send player choice, crowd choice, and secret phrase to contract
     console.log(`${playerChoice}, ${crowdChoice}, ${this.state.secretPhrase}`);
@@ -298,6 +307,7 @@ class Dashboard extends Component {
 
   showHub = async (hubAlias) => {
     await this.loadQuestions(hubAlias);
+    await this.updatePlayerScore();
     this.setState({ currentHub: hubAlias }, () => {
       switch (hubAlias) {
         case "hivemind.lobby":
@@ -519,7 +529,7 @@ class Dashboard extends Component {
             </Winners>
           </Grid.Row>
           <Grid.Row>
-            <Score show={this.state.showScore} />
+            <Score show={this.state.showScore} score={this.state.playerScore} />
           </Grid.Row>
         </Grid>
       </Layout>

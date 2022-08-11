@@ -7,12 +7,20 @@ module.exports = {
   networks: {
     hardhat: {},
     hh: {
-      url: "http://127.0.0.1:8545",
+      url: process.env.HARDHAT_RPC_URL,
       accounts: [
         process.env.HARDHAT_PRIVATE_KEY_1,
         process.env.HARDHAT_PRIVATE_KEY_2,
         process.env.HARDHAT_PRIVATE_KEY_3
       ]
+    },
+    mumbai: {
+      url: process.env.MUMBAI_RPC_URL,
+      accounts: [process.env.MUMBAI_PRIVATE_KEY_1]
+    },
+    polygon: {
+      url: process.env.POLYGON_RPC_URL,
+      accounts: [process.env.POLYGON_PRIVATE_KEY_1]
     }
   },
   solidity: {
