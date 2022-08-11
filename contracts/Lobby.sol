@@ -19,6 +19,9 @@ contract Lobby is Hub {
     uint256 public joinCountdownStartTime;
     string public gameHub;
 
+    uint256 public entryFee;
+    uint256 public adminFee;
+
     // Mapping from game id
     mapping(uint256 => uint256) public playerCount;
     mapping(uint256 => uint256) public railcarID;
@@ -41,12 +44,13 @@ contract Lobby is Hub {
         gameHub = gameStartHub;
     }
 
-    function joinGame() public {
+    function joinGame() public payable {
         address player = tx.origin;
         require(
             !SCORE_KEEPER.playerInActiveGame(player),
             "player already in game"
         );
+        require(msg.value >= entryFee, "Minimum entry fee not sent");
         if (_needsNewGameID) {
             _currentGameID++;
             // Create railcar with game controller as owner, this as operator
@@ -64,6 +68,14 @@ contract Lobby is Hub {
                 _groupDidEnter(rid);
             }
             _needsNewGameID = false;
+        }
+        // add entry to pool and send to winners
+        uint256 poolValue = msg.value > adminFee ? msg.value - adminFee : 0;
+        if (poolValue > 0) {
+            payable(REGISTRY.addressFromName("hivemind.winners")).transfer(
+                poolValue
+            );
+            SCORE_KEEPER.increasePrizePool(poolValue, _currentGameID);
         }
         SCORE_KEEPER.setGameID(
             _currentGameID,
@@ -111,6 +123,27 @@ contract Lobby is Hub {
 
     function setPlayerLimit(uint256 limit) public onlyRole(DEFAULT_ADMIN_ROLE) {
         playerLimit = limit;
+    }
+
+    function setEntryFee(uint256 newEntryFee)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        entryFee = newEntryFee;
+    }
+
+    function setAdminFee(uint256 newAdminFee)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        adminFee = newAdminFee;
+    }
+
+    function withdraw(address withdrawAddress)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        payable(withdrawAddress).transfer(address(this).balance);
     }
 
     // Internal functions

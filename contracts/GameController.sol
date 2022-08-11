@@ -3,14 +3,17 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@luckymachines/railway/contracts/HubRegistry.sol";
+import "@luckymachines/railway/contracts/RailYard.sol";
 import "./Lobby.sol";
 import "./GameRound.sol";
 import "./ScoreKeeper.sol";
+import "./Winners.sol";
 
 contract GameController is AccessControlEnumerable {
     Lobby internal LOBBY;
     ScoreKeeper internal SCORE_KEEPER;
     HubRegistry internal HUB_REGISTRY;
+    RailYard internal RAIL_YARD;
 
     bytes32 public EVENT_SENDER_ROLE = keccak256("EVENT_SENDER_ROLE");
 
@@ -40,16 +43,18 @@ contract GameController is AccessControlEnumerable {
     constructor(
         address lobbyAddress,
         address scoreKeeperAddress,
+        address railYardAddress,
         address HubRegistryAddress
     ) {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         LOBBY = Lobby(lobbyAddress);
         SCORE_KEEPER = ScoreKeeper(scoreKeeperAddress);
+        RAIL_YARD = RailYard(railYardAddress);
         HUB_REGISTRY = HubRegistry(HubRegistryAddress);
     }
 
     // Player Interactions
-    function joinGame() public {
+    function joinGame() public payable {
         LOBBY.joinGame();
     }
 
@@ -134,6 +139,24 @@ contract GameController is AccessControlEnumerable {
         gameID = SCORE_KEEPER.gameIDFromRailcar(railcarID);
     }
 
+    function getFinalRanking(uint256 gameID)
+        public
+        view
+        returns (uint256 rank)
+    {
+        rank = Winners(HUB_REGISTRY.addressFromName("hivemind.winners"))
+            .getFinalRank(gameID, _msgSender());
+    }
+
+    function getFinalRanking(uint256 gameID, address playerAddress)
+        public
+        view
+        returns (uint256 rank)
+    {
+        rank = Winners(HUB_REGISTRY.addressFromName("hivemind.winners"))
+            .getFinalRank(gameID, playerAddress);
+    }
+
     // Game specific functions
     function getPlayerCount(uint256 gameID)
         public
@@ -157,6 +180,14 @@ contract GameController is AccessControlEnumerable {
         returns (uint256 railcarID)
     {
         railcarID = LOBBY.railcarID(gameID);
+    }
+
+    function getRailcarMembers(uint256 railcarID)
+        public
+        view
+        returns (address[] memory members)
+    {
+        members = RAIL_YARD.getRailcarMembers(railcarID);
     }
 
     function getQuestion(string memory hubAlias, uint256 gameID)

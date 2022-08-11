@@ -12,6 +12,7 @@ contract ScoreKeeper is AccessControlEnumerable {
 
     // Mapping from game ID
     mapping(uint256 => string) public latestRound;
+    mapping(uint256 => uint256) public prizePool;
     // Mapping from game ID => player address
     mapping(uint256 => mapping(address => uint256)) public playerScore;
     // Mapping from player address
@@ -37,6 +38,13 @@ contract ScoreKeeper is AccessControlEnumerable {
         address playerAddress
     ) external onlyRole(SCORE_SETTER_ROLE) {
         playerScore[gameID][playerAddress] += points;
+    }
+
+    function increasePrizePool(uint256 valueIncrease, uint256 gameID)
+        external
+        onlyRole(SCORE_SETTER_ROLE)
+    {
+        prizePool[gameID] += valueIncrease;
     }
 
     function setLatestRound(string memory hubName, uint256 gameID)

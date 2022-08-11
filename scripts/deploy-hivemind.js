@@ -82,6 +82,7 @@ async function main() {
   const gameController = await GameController.deploy(
     lobby.address,
     scoreKeeper.address,
+    railYard,
     hubRegistry
   );
   await gameController.deployed();
@@ -142,6 +143,7 @@ async function main() {
   const winners = await Winners.deploy(
     "hivemind.winners",
     scoreKeeper.address,
+    gameController.address,
     hubRegistry,
     adminAddress
   );

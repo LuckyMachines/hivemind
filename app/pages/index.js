@@ -44,6 +44,7 @@ class Dashboard extends Component {
       currentHub: "hivemind.lobby",
       gameID: "0",
       playerScore: "0",
+      playerRank: "?",
       round1Question: "",
       round1Responses: [],
       round2Question: "",
@@ -102,6 +103,9 @@ class Dashboard extends Component {
     });
     gc2.on("RoundEnd", (hubAlias, startTime, gameID, groupID) => {
       this.roundEnded(hubAlias, gameID, groupID, startTime);
+    });
+    gc2.on("EnterWinners", (startTime, gameID, groupID) => {
+      this.enterWinners(gameID, groupID, startTime);
     });
   }
 
@@ -190,10 +194,12 @@ class Dashboard extends Component {
       console.log(
         `Round End: ${hubAlias}, ${startTime}, ${gameID}, ${groupID}`
       );
-      if (hubAlias == "hivemind.round4") {
-        this.showHub("hivemind.winners");
-      }
     }
+  };
+
+  enterWinners = (gameID, groupID, startTime) => {
+    console.log(`Enter winners: ${gameID}, ${groupID}, ${startTime}`);
+    this.showHub("hivemind.winners");
   };
 
   loadQuestions = async (hubAlias) => {
@@ -309,10 +315,28 @@ class Dashboard extends Component {
         break;
       case "hivemind.winners":
         // update round 4 stats
+        let rank = "";
+        console.log("Loading final rank...");
+        while (rank == "") {
+          try {
+            rank = await gc.methods
+              .getFinalRanking(this.state.gameID, this.state.accounts[0])
+              .call();
+          } catch (err) {
+            console.log(err.message);
+            console.log("Error loading rank. Trying again...");
+          }
+          // if rank didn't load...
+          if (rank == "") {
+            await pause(5);
+          }
+        }
+
         this.setState({
           round4SubmittedGuess: guess,
           round4ResponseScores: responseScores,
-          round4WinningIndex: winningIndex
+          round4WinningIndex: winningIndex,
+          playerRank: rank
         });
         break;
       case "hivemind.round1":
@@ -620,9 +644,8 @@ class Dashboard extends Component {
               gameController={this.state.gameController}
               provider={this.state.provider}
               show={this.state.showWinners}
-            >
-              Winners
-            </Winners>
+              rank={this.state.playerRank}
+            />
           </Grid.Row>
           <Grid.Row>
             <Score
