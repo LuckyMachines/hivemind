@@ -165,7 +165,7 @@ async function main() {
   };
 
   try {
-    await fs.writeFileSync(
+    fs.writeFileSync(
       `${process.cwd()}/deployed-contracts.json`,
       JSON.stringify(deployedContractsJSON, null, 4)
     );

@@ -35,6 +35,8 @@ contract GameController is AccessControlEnumerable {
         uint256 groupID
     );
 
+    event EnterWinners(uint256 timestamp, uint256 gameID, uint256 groupID);
+
     constructor(
         address lobbyAddress,
         address scoreKeeperAddress,
@@ -194,6 +196,14 @@ contract GameController is AccessControlEnumerable {
         uint256 railcarID
     ) external onlyRole(EVENT_SENDER_ROLE) {
         emit RoundEnd(hubAlias, timestamp, gameID, railcarID);
+    }
+
+    function enterWinners(
+        uint256 timestamp,
+        uint256 gameID,
+        uint256 railcarID
+    ) external onlyRole(EVENT_SENDER_ROLE) {
+        emit EnterWinners(timestamp, gameID, railcarID);
     }
 
     // Admin functions

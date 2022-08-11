@@ -1,9 +1,9 @@
 import React, { useState } from "react";
+import "semantic-ui-css/semantic.min.css";
 import { Button, Card } from "semantic-ui-react";
 
 const Question = (props) => {
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [buttonText, setButtonText] = useState("Submit Answers");
   const [playerChoice, setPlayerChoice] = useState("");
   const [crowdChoice, setCrowdChoice] = useState("");
   const web3 = props.provider;

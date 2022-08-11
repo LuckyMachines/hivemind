@@ -5,6 +5,7 @@ import ConnectWallet from "../components/ConnectWallet";
 import Question from "../components/Question";
 import SecretPhrase from "../components/SecretPhrase";
 import Lobby from "../components/Lobby";
+import Score from "../components/Score";
 import Winners from "../components/Winners";
 import Addresses from "../../deployed-contracts.json";
 import GameController from "../../artifacts/contracts/GameController.sol/GameController.json";
@@ -12,6 +13,14 @@ import GameRound from "../../artifacts/contracts/GameRound.sol/GameRound.json";
 import { ethers } from "ethers";
 
 const settings = require("../settings");
+
+function pause(timeInSeconds) {
+  return new Promise((resolve) =>
+    setTimeout(() => {
+      resolve();
+    }, timeInSeconds * 1000)
+  );
+}
 
 class Dashboard extends Component {
   constructor(props) {
@@ -29,16 +38,17 @@ class Dashboard extends Component {
       showRound4: false,
       showWinners: false,
       showLobby: true,
+      showScore: false,
       currentHub: "hivemind.lobby",
       gameID: "0",
-      round1Question: "",
-      round1Responses: ["", "", "", ""],
+      round1Question: "Loading",
+      round1Responses: ["Loading", "Loading", "Loading", "Loading"],
       round2Question: "",
-      round2Responses: ["", "", "", ""],
+      round2Responses: [],
       round3Question: "",
-      round3Responses: ["", "", "", ""],
+      round3Responses: [],
       round4Question: "",
-      round4Responses: ["", "", "", ""],
+      round4Responses: [],
       round1Button: "Submit Answers",
       round2Button: "Submit Answers",
       round3Button: "Submit Answers",
@@ -173,11 +183,21 @@ class Dashboard extends Component {
 
   loadQuestions = async (hubAlias) => {
     const gc = this.state.gameController;
-    const gcQuestion = await gc.methods
-      .getQuestion(hubAlias, this.state.gameID)
-      .call();
-    const question = gcQuestion.q;
-    const choices = gcQuestion.choices;
+    let question = "";
+    let choices = [];
+    console.log("Loading question...");
+    while (question == "") {
+      const gcQuestion = await gc.methods
+        .getQuestion(hubAlias, this.state.gameID)
+        .call();
+      question = gcQuestion.q;
+      choices = gcQuestion.choices;
+
+      // if question didn't load...
+      if (question == "") {
+        await pause(2);
+      }
+    }
 
     switch (hubAlias) {
       case "hivemind.round1":
@@ -279,78 +299,86 @@ class Dashboard extends Component {
   };
 
   showHub = async (hubAlias) => {
-    this.setState({ currentHub: hubAlias });
     await this.loadQuestions(hubAlias);
-    switch (hubAlias) {
-      case "hivemind.lobby":
-        this.setState({
-          showSecretPhrase: false,
-          showRound1: false,
-          showRound2: false,
-          showRound3: false,
-          showRound4: false,
-          showWinners: false,
-          showLobby: true
-        });
-        break;
-      case "hivemind.round1":
-        this.setState({
-          showSecretPhrase: true,
-          showRound1: true,
-          showRound2: false,
-          showRound3: false,
-          showRound4: false,
-          showWinners: false,
-          showLobby: false
-        });
-        break;
-      case "hivemind.round2":
-        this.setState({
-          showSecretPhrase: true,
-          showRound1: false,
-          showRound2: true,
-          showRound3: false,
-          showRound4: false,
-          showWinners: false,
-          showLobby: false
-        });
-        break;
-      case "hivemind.round3":
-        this.setState({
-          showSecretPhrase: true,
-          showRound1: false,
-          showRound2: false,
-          showRound3: true,
-          showRound4: false,
-          showWinners: false,
-          showLobby: false
-        });
-        break;
-      case "hivemind.round4":
-        this.setState({
-          showSecretPhrase: true,
-          showRound1: false,
-          showRound2: false,
-          showRound3: false,
-          showRound4: true,
-          showWinners: false,
-          showLobby: false
-        });
-        break;
-      case "hivemind.winners":
-        this.setState({
-          showSecretPhrase: false,
-          showRound1: false,
-          showRound2: false,
-          showRound3: false,
-          showRound4: false,
-          showWinners: true,
-          showLobby: false
-        });
-        break;
-      default:
-        break;
-    }
+    this.setState({ currentHub: hubAlias }, () => {
+      switch (hubAlias) {
+        case "hivemind.lobby":
+          this.setState({
+            showSecretPhrase: false,
+            showRound1: false,
+            showRound2: false,
+            showRound3: false,
+            showRound4: false,
+            showWinners: false,
+            showLobby: true,
+            showScore: false
+          });
+          break;
+        case "hivemind.round1":
+          this.setState({
+            showSecretPhrase: true,
+            showRound1: true,
+            showRound2: false,
+            showRound3: false,
+            showRound4: false,
+            showWinners: false,
+            showLobby: false,
+            showScore: true
+          });
+
+          break;
+        case "hivemind.round2":
+          this.setState({
+            showSecretPhrase: true,
+            showRound1: false,
+            showRound2: true,
+            showRound3: false,
+            showRound4: false,
+            showWinners: false,
+            showLobby: false,
+            showScore: true
+          });
+          break;
+        case "hivemind.round3":
+          this.setState({
+            showSecretPhrase: true,
+            showRound1: false,
+            showRound2: false,
+            showRound3: true,
+            showRound4: false,
+            showWinners: false,
+            showLobby: false,
+            showScore: true
+          });
+          break;
+        case "hivemind.round4":
+          this.setState({
+            showSecretPhrase: true,
+            showRound1: false,
+            showRound2: false,
+            showRound3: false,
+            showRound4: true,
+            showWinners: false,
+            showLobby: false,
+            showScore: true
+          });
+          break;
+        case "hivemind.winners":
+          this.setState({
+            showSecretPhrase: false,
+            showRound1: false,
+            showRound2: false,
+            showRound3: false,
+            showRound4: false,
+            showWinners: true,
+            showLobby: false,
+            showScore: true
+          });
+          break;
+        default:
+          break;
+      }
+    });
   };
 
   hubIsNew = (currentHubAlias, testHubAlias) => {
@@ -407,7 +435,7 @@ class Dashboard extends Component {
 
   render() {
     return (
-      <Layout page="dashboard">
+      <Layout page="hivemind">
         <Grid centered style={{ paddingTop: "10px" }}>
           <Grid.Row color="black">
             <h1
@@ -491,6 +519,9 @@ class Dashboard extends Component {
             >
               Winners
             </Winners>
+          </Grid.Row>
+          <Grid.Row>
+            <Score show={this.state.showScore} />
           </Grid.Row>
         </Grid>
       </Layout>
