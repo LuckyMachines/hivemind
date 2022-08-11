@@ -11,6 +11,7 @@ import Addresses from "../../deployed-contracts.json";
 import GameController from "../../artifacts/contracts/GameController.sol/GameController.json";
 import GameRound from "../../artifacts/contracts/GameRound.sol/GameRound.json";
 import { ethers } from "ethers";
+require("dotenv").config();
 
 const settings = require("../settings");
 
@@ -71,7 +72,7 @@ class Dashboard extends Component {
     );
     this.setState({ gameController: gameController });
 
-    let url = "http://127.0.0.1:8545";
+    let url = process.env.HARDHAT_RPC_URL;
     let p2 = new ethers.providers.JsonRpcProvider(url);
     const gc2 = new ethers.Contract(
       Addresses.gameController,
@@ -87,9 +88,6 @@ class Dashboard extends Component {
     gc2.on("RoundEnd", (hubAlias, startTime, gameID, groupID) => {
       this.roundEnded(hubAlias, gameID, groupID, startTime);
     });
-    // TODO: respond to events:
-    // All players in for round (switch to reveal mode)
-    // Round Results are in... (Display question results / points / standings)
   }
 
   async loadAccounts(p) {
