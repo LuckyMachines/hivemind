@@ -3,6 +3,7 @@ import { Grid, Button } from "semantic-ui-react";
 import Layout from "../components/Layout";
 import ConnectWallet from "../components/ConnectWallet";
 import Question from "../components/Question";
+import Title from "../components/Title";
 import SecretPhrase from "../components/SecretPhrase";
 import Lobby from "../components/Lobby";
 import Score from "../components/Score";
@@ -54,7 +55,8 @@ class Dashboard extends Component {
       round1Button: "Submit Answers",
       round2Button: "Submit Answers",
       round3Button: "Submit Answers",
-      round4Button: "Submit Answers"
+      round4Button: "Submit Answers",
+      title: "Lobby"
     };
   }
 
@@ -319,7 +321,8 @@ class Dashboard extends Component {
             showRound4: false,
             showWinners: false,
             showLobby: true,
-            showScore: false
+            showScore: false,
+            title: "Lobby"
           });
           break;
         case "hivemind.round1":
@@ -331,7 +334,8 @@ class Dashboard extends Component {
             showRound4: false,
             showWinners: false,
             showLobby: false,
-            showScore: true
+            showScore: true,
+            title: "Round 1"
           });
 
           break;
@@ -344,7 +348,8 @@ class Dashboard extends Component {
             showRound4: false,
             showWinners: false,
             showLobby: false,
-            showScore: true
+            showScore: true,
+            title: "Round 2"
           });
           break;
         case "hivemind.round3":
@@ -356,7 +361,8 @@ class Dashboard extends Component {
             showRound4: false,
             showWinners: false,
             showLobby: false,
-            showScore: true
+            showScore: true,
+            title: "Round 3"
           });
           break;
         case "hivemind.round4":
@@ -368,7 +374,8 @@ class Dashboard extends Component {
             showRound4: true,
             showWinners: false,
             showLobby: false,
-            showScore: true
+            showScore: true,
+            title: "Round 4"
           });
           break;
         case "hivemind.winners":
@@ -380,7 +387,8 @@ class Dashboard extends Component {
             showRound4: false,
             showWinners: true,
             showLobby: false,
-            showScore: true
+            showScore: true,
+            title: "Game Results"
           });
           break;
         default:
@@ -467,6 +475,9 @@ class Dashboard extends Component {
             {this.state.connectedWallet
               ? `Connected: ${this.state.connectedWallet}`
               : "Not connected"}
+          </Grid.Row>
+          <Grid.Row style={{ backgroundColor: "#99ccff", color: "#001433" }}>
+            <Title title={this.state.title} />
           </Grid.Row>
           <Grid.Row style={{ backgroundColor: "#99ccff", color: "#001433" }}>
             <SecretPhrase

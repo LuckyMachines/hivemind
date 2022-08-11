@@ -53,7 +53,7 @@ const Lobby = (props) => {
     props.show == false ? (
       ""
     ) : (
-      <div>
+      <div style={{ marginTop: "-40px" }}>
         <p>
           <strong>
             Game ID: {gameID}

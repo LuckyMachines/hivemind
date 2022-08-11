@@ -6,7 +6,7 @@ const SecretPhrase = (props) => {
     props.show == false ? (
       ""
     ) : (
-      <div style={{ width: "60%", marginBottom: "-10px" }}>
+      <div style={{ width: "60%", margin: "-10px" }}>
         <Input
           fluid
           placeholder="Enter a secret phrase..."
