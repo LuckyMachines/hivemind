@@ -108,6 +108,31 @@ contract Winners is Hub {
             "incorrect player score submitted"
         );
 
+        uint256 payoutAmount = getPayoutAmount(gameID, finalScore);
+
+        // only payout what hasn't been paid from pool
+        uint256 remainingPool = prizePool - prizePoolPaidAmount[gameID];
+        if (payoutAmount > remainingPool) {
+            payoutAmount = remainingPool;
+        }
+        claimant.transfer(payoutAmount);
+        prizePoolPaidAmount[gameID] += payoutAmount;
+        playerPaid[gameID][claimant] = true;
+        if (prizePoolPaidAmount[gameID] >= prizePool) {
+            gameHasWinnings[gameID] = false;
+        }
+    }
+
+    function getPayoutAmount(uint256 gameID, uint256 finalScore)
+        public
+        view
+        returns (uint256 payoutAmount)
+    {
+        payoutAmount = 0;
+        uint256 prizePool = SCORE_KEEPER.prizePool(gameID);
+        if (prizePool == 0) {
+            return payoutAmount;
+        }
         uint256 totalPlayers = GAME_CONTROLLER.getPlayerCount(gameID);
         uint256[] memory scores;
         if (totalPlayers == 2) {
@@ -246,24 +271,11 @@ contract Winners is Hub {
             payoutAmounts[1] = prizePool - payoutAmounts[0];
         }
 
-        uint256 payoutAmount;
         for (uint256 i = 0; i < scores.length; i++) {
             if (finalScore == scores[i]) {
                 payoutAmount = payoutAmounts[i];
                 break;
             }
-        }
-
-        // only payout what hasn't been paid from pool
-        uint256 remainingPool = prizePool - prizePoolPaidAmount[gameID];
-        if (payoutAmount > remainingPool) {
-            payoutAmount = remainingPool;
-        }
-        claimant.transfer(payoutAmount);
-        prizePoolPaidAmount[gameID] += payoutAmount;
-        playerPaid[gameID][claimant] = true;
-        if (prizePoolPaidAmount[gameID] >= prizePool) {
-            gameHasWinnings[gameID] = false;
         }
     }
 

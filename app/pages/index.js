@@ -375,7 +375,7 @@ class Dashboard extends Component {
         break;
     }
     const gc = this.state.gameController;
-    await gc.methods
+    const tx = await gc.methods
       .submitAnswers(
         playerChoice,
         crowdChoice,
@@ -384,7 +384,7 @@ class Dashboard extends Component {
         this.state.currentHub
       )
       .send({ from: this.state.accounts[0] });
-    console.log("Submitted Answers");
+    console.log("Submitted Answers. Gas Used:", tx.gasUsed);
 
     let web3 = this.state.provider;
     const gameRound = new web3.eth.Contract(GameRound.abi, Addresses.round1);
@@ -413,7 +413,7 @@ class Dashboard extends Component {
         break;
     }
     const gc = this.state.gameController;
-    await gc.methods
+    const tx = await gc.methods
       .revealAnswers(
         playerChoice,
         crowdChoice,
@@ -422,6 +422,7 @@ class Dashboard extends Component {
         this.state.currentHub
       )
       .send({ from: this.state.accounts[0] });
+    console.log("Answer revealed. Gas used:", tx.gasUsed);
   };
 
   // TODO: pickup with these 3 functions
@@ -433,7 +434,22 @@ class Dashboard extends Component {
     // Claim prize
     // Reset game locally, go back to lobby
     console.log("Claim prize...");
-    // TODO: claim prize before resetting locally
+    const gc = this.state.gameController;
+    const payoutAmount = await gc.methods
+      .checkPayout(this.state.accounts[0])
+      .call();
+    if (Number(payoutAmount) > 0) {
+      gc.methods
+        .claimPrize(this.state.gameID, this.state.playerScore)
+        .send({ from: this.state.accounts[0] });
+      console.log(
+        `Claimed prize: ${
+          (this.state.provider.eth.fromWei(payoutAmount), "ether")
+        } MATIC`
+      );
+    } else {
+      console.log("Sorry, no payout available for this game.");
+    }
     await this.resetGame();
     this.showHub("hivemind.lobby");
   };

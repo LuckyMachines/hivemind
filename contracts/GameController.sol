@@ -88,6 +88,30 @@ contract GameController is AccessControlEnumerable {
         );
     }
 
+    function checkPayout() public view returns (uint256 payoutAmount) {
+        uint256 gameID = getCurrentGame(_msgSender());
+        payoutAmount = _winnersHub().getPayoutAmount(
+            gameID,
+            getScore(gameID, _msgSender())
+        );
+    }
+
+    function checkPayout(address playerAddress)
+        public
+        view
+        returns (uint256 payoutAmount)
+    {
+        uint256 gameID = getCurrentGame(playerAddress);
+        payoutAmount = _winnersHub().getPayoutAmount(
+            gameID,
+            getScore(gameID, playerAddress)
+        );
+    }
+
+    function claimPrize(uint256 gameID, uint256 finalScore) public {
+        _winnersHub().claimWinnings(gameID, finalScore);
+    }
+
     function abandonActiveGame() public {
         SCORE_KEEPER.removePlayerFromActiveGame(_msgSender());
     }
@@ -148,8 +172,7 @@ contract GameController is AccessControlEnumerable {
         view
         returns (uint256 rank)
     {
-        rank = Winners(HUB_REGISTRY.addressFromName("hivemind.winners"))
-            .getFinalRank(gameID, _msgSender());
+        rank = _winnersHub().getFinalRank(gameID, _msgSender());
     }
 
     function getFinalRanking(uint256 gameID, address playerAddress)
@@ -157,8 +180,7 @@ contract GameController is AccessControlEnumerable {
         view
         returns (uint256 rank)
     {
-        rank = Winners(HUB_REGISTRY.addressFromName("hivemind.winners"))
-            .getFinalRank(gameID, playerAddress);
+        rank = _winnersHub().getFinalRank(gameID, playerAddress);
     }
 
     // Game specific functions
@@ -232,6 +254,10 @@ contract GameController is AccessControlEnumerable {
             .getWinningChoiceIndex(gameID);
     }
 
+    function getPrizePool(uint256 gameID) public view returns (uint256 pool) {
+        pool = SCORE_KEEPER.prizePool(gameID);
+    }
+
     // Event triggers
     function roundStart(
         string memory hubAlias,
@@ -274,6 +300,11 @@ contract GameController is AccessControlEnumerable {
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
         grantRole(EVENT_SENDER_ROLE, eventSenderAddress);
+    }
+
+    // Internal functions
+    function _winnersHub() internal view returns (Winners winnersHub) {
+        winnersHub = Winners(HUB_REGISTRY.addressFromName("hivemind.winners"));
     }
 
     // set railcar operator to current hub at each entry

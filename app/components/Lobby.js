@@ -22,7 +22,10 @@ const Lobby = (props) => {
 
           // TODO: set gas parameters
           if (!playerInGame) {
-            await gameController.methods.joinGame().send({ from: accounts[0] });
+            const tx = await gameController.methods
+              .joinGame()
+              .send({ from: accounts[0] });
+            console.log("Gas used to join game:", tx.gasUsed);
           }
           const currentGameID = await gameController.methods
             .getCurrentGame(accounts[0])
