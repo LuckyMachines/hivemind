@@ -4,8 +4,8 @@ import { Button, Card } from "semantic-ui-react";
 
 const Question = (props) => {
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [playerChoice, setPlayerChoice] = useState("");
-  const [crowdChoice, setCrowdChoice] = useState("");
+  //const [playerChoice, setPlayerChoice] = useState("");
+  //const [crowdChoice, setCrowdChoice] = useState("");
   const web3 = props.provider;
   const unselectedColor = "grey";
   const selectedColor = "blue";
@@ -30,13 +30,21 @@ const Question = (props) => {
     setSubmitLoading(false);
   };
 
+  const setPlayerChoice = (choice) => {
+    props.setPlayerChoice(choice);
+  };
+
+  const setCrowdChoice = (choice) => {
+    props.setCrowdChoice(choice);
+  };
+
   const crowdResponseContent = (p) => {
     return p.responses[2] == "" ? (
       <>
         <div>
           <Button
             color={
-              crowdChoice == p.responses[0] ? selectedColor : unselectedColor
+              p.crowdChoice == p.responses[0] ? selectedColor : unselectedColor
             }
             onClick={() => setCrowdChoice(p.responses[0])}
           >
@@ -44,7 +52,7 @@ const Question = (props) => {
           </Button>
           <Button
             color={
-              crowdChoice == p.responses[1] ? selectedColor : unselectedColor
+              p.crowdChoice == p.responses[1] ? selectedColor : unselectedColor
             }
             onClick={() => setCrowdChoice(p.responses[1])}
           >
@@ -57,7 +65,7 @@ const Question = (props) => {
         <div>
           <Button
             color={
-              crowdChoice == p.responses[0] ? selectedColor : unselectedColor
+              p.crowdChoice == p.responses[0] ? selectedColor : unselectedColor
             }
             onClick={() => setCrowdChoice(p.responses[0])}
           >
@@ -65,7 +73,7 @@ const Question = (props) => {
           </Button>
           <Button
             color={
-              crowdChoice == p.responses[1] ? selectedColor : unselectedColor
+              p.crowdChoice == p.responses[1] ? selectedColor : unselectedColor
             }
             onClick={() => setCrowdChoice(p.responses[1])}
           >
@@ -75,7 +83,7 @@ const Question = (props) => {
         <div style={{ marginTop: "5px" }}>
           <Button
             color={
-              crowdChoice == p.responses[2] ? selectedColor : unselectedColor
+              p.crowdChoice == p.responses[2] ? selectedColor : unselectedColor
             }
             onClick={() => setCrowdChoice(p.responses[2])}
           >
@@ -83,7 +91,7 @@ const Question = (props) => {
           </Button>
           <Button
             color={
-              crowdChoice == p.responses[3] ? selectedColor : unselectedColor
+              p.crowdChoice == p.responses[3] ? selectedColor : unselectedColor
             }
             onClick={() => setCrowdChoice(p.responses[3])}
           >
@@ -100,7 +108,7 @@ const Question = (props) => {
         <div>
           <Button
             color={
-              playerChoice == p.responses[0] ? selectedColor : unselectedColor
+              p.playerChoice == p.responses[0] ? selectedColor : unselectedColor
             }
             onClick={() => setPlayerChoice(p.responses[0])}
           >
@@ -108,7 +116,7 @@ const Question = (props) => {
           </Button>
           <Button
             color={
-              playerChoice == p.responses[1] ? selectedColor : unselectedColor
+              p.playerChoice == p.responses[1] ? selectedColor : unselectedColor
             }
             onClick={() => setPlayerChoice(p.responses[1])}
           >
@@ -121,7 +129,7 @@ const Question = (props) => {
         <div>
           <Button
             color={
-              playerChoice == p.responses[0] ? selectedColor : unselectedColor
+              p.playerChoice == p.responses[0] ? selectedColor : unselectedColor
             }
             onClick={() => setPlayerChoice(p.responses[0])}
           >
@@ -129,7 +137,7 @@ const Question = (props) => {
           </Button>
           <Button
             color={
-              playerChoice == p.responses[1] ? selectedColor : unselectedColor
+              p.playerChoice == p.responses[1] ? selectedColor : unselectedColor
             }
             onClick={() => setPlayerChoice(p.responses[1])}
           >
@@ -139,7 +147,7 @@ const Question = (props) => {
         <div style={{ marginTop: "5px" }}>
           <Button
             color={
-              playerChoice == p.responses[2] ? selectedColor : unselectedColor
+              p.playerChoice == p.responses[2] ? selectedColor : unselectedColor
             }
             onClick={() => setPlayerChoice(p.responses[2])}
           >
@@ -147,7 +155,7 @@ const Question = (props) => {
           </Button>
           <Button
             color={
-              playerChoice == p.responses[3] ? selectedColor : unselectedColor
+              p.playerChoice == p.responses[3] ? selectedColor : unselectedColor
             }
             onClick={() => setPlayerChoice(p.responses[3])}
           >

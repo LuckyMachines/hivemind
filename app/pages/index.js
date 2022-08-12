@@ -54,6 +54,14 @@ class Dashboard extends Component {
       round3Responses: [],
       round4Question: "",
       round4Responses: [],
+      round1PlayerChoice: "",
+      round2PlayerChoice: "",
+      round3PlayerChoice: "",
+      round4PlayerChoice: "",
+      round1CrowdChoice: "",
+      round2CrowdChoice: "",
+      round3CrowdChoice: "",
+      round4CrowdChoice: "",
       round1Button: "Submit Answers",
       round2Button: "Submit Answers",
       round3Button: "Submit Answers",
@@ -144,6 +152,44 @@ class Dashboard extends Component {
 
   setSecretPhrase = (phrase) => {
     this.setState({ secretPhrase: phrase });
+  };
+
+  setPlayerChoice = (choice) => {
+    switch (this.state.currentHub) {
+      case "hivemind.round1":
+        this.setState({ round1PlayerChoice: choice });
+        break;
+      case "hivemind.round2":
+        this.setState({ round2PlayerChoice: choice });
+        break;
+      case "hivemind.round3":
+        this.setState({ round3PlayerChoice: choice });
+        break;
+      case "hivemind.round4":
+        this.setState({ round4PlayerChoice: choice });
+        break;
+      default:
+        break;
+    }
+  };
+
+  setCrowdChoice = (choice) => {
+    switch (this.state.currentHub) {
+      case "hivemind.round1":
+        this.setState({ round1CrowdChoice: choice });
+        break;
+      case "hivemind.round2":
+        this.setState({ round2CrowdChoice: choice });
+        break;
+      case "hivemind.round3":
+        this.setState({ round3CrowdChoice: choice });
+        break;
+      case "hivemind.round4":
+        this.setState({ round4CrowdChoice: choice });
+        break;
+      default:
+        break;
+    }
   };
 
   roundStarted = (hubAlias, gameID, groupID, startTime) => {
@@ -481,6 +527,14 @@ class Dashboard extends Component {
       round2SubmittedGuess: "",
       round3SubmittedGuess: "",
       round4SubmittedGuess: "",
+      round1PlayerChoice: "",
+      round2PlayerChoice: "",
+      round3PlayerChoice: "",
+      round4PlayerChoice: "",
+      round1CrowdChoice: "",
+      round2CrowdChoice: "",
+      round3CrowdChoice: "",
+      round4CrowdChoice: "",
       round1ResponseScores: ["-", "-", "-", "-"],
       round2ResponseScores: ["-", "-", "-", "-"],
       round3ResponseScores: ["-", "-", "-", "-"],
@@ -720,6 +774,10 @@ class Dashboard extends Component {
               show={this.state.showRound1}
               buttonText={this.state.round1Button}
               provider={this.state.provider}
+              playerChoice={this.state.round1PlayerChoice}
+              crowdChoice={this.state.round1CrowdChoice}
+              setPlayerChoice={this.setPlayerChoice}
+              setCrowdChoice={this.setCrowdChoice}
               submitChoices={this.submitChoices}
               revealChoices={this.revealChoices}
             />
@@ -729,6 +787,10 @@ class Dashboard extends Component {
               show={this.state.showRound2}
               buttonText={this.state.round2Button}
               provider={this.state.provider}
+              playerChoice={this.state.round2PlayerChoice}
+              crowdChoice={this.state.round2CrowdChoice}
+              setPlayerChoice={this.setPlayerChoice}
+              setCrowdChoice={this.setCrowdChoice}
               submitChoices={this.submitChoices}
               revealChoices={this.revealChoices}
             />
@@ -738,6 +800,10 @@ class Dashboard extends Component {
               show={this.state.showRound3}
               buttonText={this.state.round3Button}
               provider={this.state.provider}
+              playerChoice={this.state.round3PlayerChoice}
+              crowdChoice={this.state.round3CrowdChoice}
+              setPlayerChoice={this.setPlayerChoice}
+              setCrowdChoice={this.setCrowdChoice}
               submitChoices={this.submitChoices}
               revealChoices={this.revealChoices}
             />
@@ -747,6 +813,10 @@ class Dashboard extends Component {
               show={this.state.showRound4}
               buttonText={this.state.round4Button}
               provider={this.state.provider}
+              playerChoice={this.state.round4PlayerChoice}
+              crowdChoice={this.state.round4CrowdChoice}
+              setPlayerChoice={this.setPlayerChoice}
+              setCrowdChoice={this.setCrowdChoice}
               submitChoices={this.submitChoices}
               revealChoices={this.revealChoices}
             />
