@@ -192,6 +192,7 @@ async function main() {
   await scoreKeeper.grantScoreSetterRole(round2.address);
   await scoreKeeper.grantScoreSetterRole(round3.address);
   await scoreKeeper.grantScoreSetterRole(round4.address);
+  await scoreKeeper.grantScoreSetterRole(winners.address);
 
   console.log("Adding event senders...");
   await gameController.addEventSender(round1.address);

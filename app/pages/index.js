@@ -42,7 +42,8 @@ class Dashboard extends Component {
       showLobby: true,
       showScore: false,
       currentHub: "hivemind.lobby",
-      gameID: "0",
+      gameID: "(Not in game)",
+      playersInGame: "(Not in game)",
       playerScore: "0",
       playerRank: "?",
       round1Question: "",
@@ -57,6 +58,7 @@ class Dashboard extends Component {
       round2Button: "Submit Answers",
       round3Button: "Submit Answers",
       round4Button: "Submit Answers",
+      lobbyButton: "Join Game",
       round1SubmittedGuess: "",
       round2SubmittedGuess: "",
       round3SubmittedGuess: "",
@@ -126,6 +128,14 @@ class Dashboard extends Component {
 
   setGameID = (id) => {
     this.setState({ gameID: id });
+  };
+
+  setPlayersInGame = (numPlayers) => {
+    this.setState({ playersInGame: numPlayers });
+  };
+
+  setLobbyButton = (buttonText) => {
+    this.setState({ lobbyButton: buttonText });
   };
 
   setConnectedWallet = (w) => {
@@ -423,19 +433,61 @@ class Dashboard extends Component {
     // Claim prize
     // Reset game locally, go back to lobby
     console.log("Claim prize...");
+    // TODO: claim prize before resetting locally
+    await this.resetGame();
+    this.showHub("hivemind.lobby");
   };
 
   resetGame = async () => {
     // reset locally, will not exit an already in-progress game, need to call abandon game for that'
     console.log("Reset game (locally)...");
+    this.setState({
+      secretPhrase: "",
+      currentHub: "hivemind.lobby",
+      gameID: "(Not in game)",
+      playersInGame: "(Not in game)",
+      playerScore: "0",
+      playerRank: "?",
+      round1Question: "",
+      round1Responses: [],
+      round2Question: "",
+      round2Responses: [],
+      round3Question: "",
+      round3Responses: [],
+      round4Question: "",
+      round4Responses: [],
+      round1Button: "Submit Answers",
+      round2Button: "Submit Answers",
+      round3Button: "Submit Answers",
+      round4Button: "Submit Answers",
+      lobbyButton: "Join Game",
+      round1SubmittedGuess: "",
+      round2SubmittedGuess: "",
+      round3SubmittedGuess: "",
+      round4SubmittedGuess: "",
+      round1ResponseScores: ["-", "-", "-", "-"],
+      round2ResponseScores: ["-", "-", "-", "-"],
+      round3ResponseScores: ["-", "-", "-", "-"],
+      round4ResponseScores: ["-", "-", "-", "-"],
+      round1WinningIndex: [],
+      round2WinningIndex: [],
+      round3WinningIndex: [],
+      round4WinningIndex: []
+    });
   };
 
   resetAndJoinNewGame = async () => {
     console.log("Reset and join new game...");
+    await this.resetGame();
+    this.showHub("hivemind.lobby");
   };
 
   abandonGame = async () => {
     console.log("Abandon game...");
+    const gc = this.state.gameController;
+    await gc.methods.abandonActiveGame().send({ from: this.state.accounts[0] });
+    await this.resetGame();
+    this.showHub("hivemind.lobby");
   };
   //
   ///
@@ -454,7 +506,9 @@ class Dashboard extends Component {
     if (hubAlias != "hivemind.winners" && hubAlias != "hivemind.lobby") {
       await this.loadQuestions(hubAlias);
     }
-    await this.updatePlayerScore(hubAlias);
+    if (hubAlias != "hivemind.lobby") {
+      await this.updatePlayerScore(hubAlias);
+    }
     this.setState({ currentHub: hubAlias }, () => {
       switch (hubAlias) {
         case "hivemind.lobby":
@@ -637,7 +691,12 @@ class Dashboard extends Component {
               gameController={this.state.gameController}
               show={this.state.showLobby}
               provider={this.state.provider}
+              gameID={this.state.gameID}
+              playersInGame={this.state.playersInGame}
+              lobbyButton={this.state.lobbyButton}
               setGameID={this.setGameID}
+              setPlayersInGame={this.setPlayersInGame}
+              setLobbyButton={this.setLobbyButton}
             />
             <Question
               question={this.state.round1Question}
