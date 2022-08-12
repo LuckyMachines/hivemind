@@ -414,6 +414,42 @@ class Dashboard extends Component {
       .send({ from: this.state.accounts[0] });
   };
 
+  // TODO: pickup with these 3 functions
+  ////
+  ///
+  //
+  //
+  claimPrize = async () => {
+    // Claim prize
+    // Reset game locally, go back to lobby
+    console.log("Claim prize...");
+  };
+
+  resetGame = async () => {
+    // reset locally, will not exit an already in-progress game, need to call abandon game for that'
+    console.log("Reset game (locally)...");
+  };
+
+  resetAndJoinNewGame = async () => {
+    console.log("Reset and join new game...");
+  };
+
+  abandonGame = async () => {
+    console.log("Abandon game...");
+  };
+  //
+  ///
+  ////
+  /////
+  //////
+  ////////
+  /////////
+  /////////
+  //////
+  ////
+  ///
+  //
+
   showHub = async (hubAlias) => {
     if (hubAlias != "hivemind.winners" && hubAlias != "hivemind.lobby") {
       await this.loadQuestions(hubAlias);
@@ -645,6 +681,8 @@ class Dashboard extends Component {
               provider={this.state.provider}
               show={this.state.showWinners}
               rank={this.state.playerRank}
+              claimPrize={this.claimPrize}
+              joinNewGame={this.resetAndJoinNewGame}
             />
           </Grid.Row>
           <Grid.Row>

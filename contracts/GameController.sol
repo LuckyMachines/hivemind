@@ -88,6 +88,10 @@ contract GameController is AccessControlEnumerable {
         );
     }
 
+    function abandonActiveGame() public {
+        SCORE_KEEPER.removePlayerFromActiveGame(_msgSender());
+    }
+
     // Game Summary Functions
     // Player specific functions
     // called directly by player or by passing player address as last argument

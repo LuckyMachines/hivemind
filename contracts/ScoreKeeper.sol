@@ -71,4 +71,12 @@ contract ScoreKeeper is AccessControlEnumerable {
         playerInActiveGame[playerAddress] = true;
         gameIDFromRailcar[railcarID] = gameID;
     }
+
+    function removePlayerFromActiveGame(address playerAddress)
+        external
+        onlyRole(SCORE_SETTER_ROLE)
+    {
+        currentGameID[playerAddress] = 0;
+        playerInActiveGame[playerAddress] = false;
+    }
 }

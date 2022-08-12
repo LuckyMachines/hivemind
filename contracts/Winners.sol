@@ -40,6 +40,7 @@ contract Winners is Hub {
         if (SCORE_KEEPER.prizePool(gameID) > 0) {
             gameHasUnpaidWinnings[gameID] = true;
         }
+        // Saves top scores + removes players from game
         saveTopScores(railcarID, gameID);
         GAME_CONTROLLER.enterWinners(block.timestamp, gameID, railcarID);
     }
@@ -114,6 +115,7 @@ contract Winners is Hub {
             uint256 score = SCORE_KEEPER.playerScore(gameID, players[i]);
             allScores[i] = score;
             addressFromScore[gameID][score].push(players[i]);
+            SCORE_KEEPER.removePlayerFromActiveGame(players[i]);
         }
         // sort scores
         quickSort(allScores, int256(0), int256(allScores.length - 1));
