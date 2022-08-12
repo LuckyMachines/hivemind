@@ -254,10 +254,17 @@ contract Winners is Hub {
             }
         }
 
+        // only payout what hasn't been paid from pool
+        uint256 remainingPool = prizePool - prizePoolPaidAmount[gameID];
+        if (payoutAmount > remainingPool) {
+            payoutAmount = remainingPool;
+        }
         claimant.transfer(payoutAmount);
+        prizePoolPaidAmount[gameID] += payoutAmount;
         playerPaid[gameID][claimant] = true;
-
-        // if all prize money claimed, set hasUnpaidWinnings[gameID] = false;
+        if (prizePoolPaidAmount[gameID] >= prizePool) {
+            gameHasWinnings[gameID] = false;
+        }
     }
 
     function saveTopScores(uint256 railcarID, uint256 gameID) public {
