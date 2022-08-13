@@ -9,11 +9,12 @@ import "hardhat/console.sol";
 
 contract GameRound is Hub {
     uint256 constant maxRevealBonus = 1000;
+    uint256 constant maxFastRevealBonus = 1000;
     uint256 constant submissionPoints = 100;
     uint256 constant winningPoints = 3000;
     string public hubName;
     string public nextRoundHub;
-    uint256 public roundTimeLimit = 600; // in seconds (10 minute default)
+    uint256 public roundTimeLimit = 900; // in seconds (15 minute default)
 
     enum GamePhase {
         Pregame,
@@ -152,8 +153,13 @@ contract GameRound is Hub {
             responseScores[gameID][pIndex] += 1;
             answersRevealed[gameID][player] = true;
             revealedIndex[gameID][player] = cIndex;
-
-            uint256 currentRevealPoints = revealPoints[gameID];
+            uint256 timeSinceRevealStart = block.timestamp -
+                revealStartTime[gameID];
+            uint256 fastRevealBonus = maxFastRevealBonus > timeSinceRevealStart
+                ? maxFastRevealBonus - timeSinceRevealStart
+                : 0;
+            uint256 currentRevealPoints = revealPoints[gameID] +
+                fastRevealBonus;
             SCORE_KEEPER.increaseScore(currentRevealPoints, gameID, player);
 
             revealPoints[gameID] = currentRevealPoints > 0

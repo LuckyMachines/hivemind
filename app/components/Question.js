@@ -15,9 +15,9 @@ const Question = (props) => {
     if (web3) {
       try {
         if (props.buttonText == "Submit Answers") {
-          props.submitChoices(playerChoice, crowdChoice);
+          props.submitChoices(props.playerChoice, props.crowdChoice);
         } else if (props.buttonText == "Reveal Answers") {
-          props.revealChoices(playerChoice, crowdChoice);
+          props.revealChoices(props.playerChoice, props.crowdChoice);
         } else {
           console.log("This button does nothing, but have fun clicking away!");
         }
