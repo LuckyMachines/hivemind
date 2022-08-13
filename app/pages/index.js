@@ -313,8 +313,8 @@ class Dashboard extends Component {
       .call();
     this.setState({ playerScore: score });
     let guess;
-    let responseScores;
-    let winningIndex;
+    let responseScores = "";
+    let winningIndex = "";
     if (hubAlias != "hivemind.round1") {
       let previousHub;
       switch (hubAlias) {
@@ -334,15 +334,39 @@ class Dashboard extends Component {
           break;
       }
       // if round 1, nothing to load
-      guess = await gc.methods
-        .getPlayerGuess(previousHub, this.state.gameID, this.state.accounts[0])
-        .call();
-      responseScores = await gc.methods
-        .getResponseScores(previousHub, this.state.gameID)
-        .call();
-      winningIndex = await gc.methods
-        .getWinningIndex(previousHub, this.state.gameID)
-        .call();
+      console.log("Loading final results...");
+      while (winningIndex == "") {
+        try {
+          winningIndex = await gc.methods
+            .getWinningIndex(previousHub, this.state.gameID)
+            .call();
+        } catch (err) {
+          console.log(err.message);
+        }
+        if (!winningIndex) {
+          await pause(5);
+        } else {
+          while (responseScores == "") {
+            try {
+              responseScores = await gc.methods
+                .getResponseScores(previousHub, this.state.gameID)
+                .call();
+              guess = await gc.methods
+                .getPlayerGuess(
+                  previousHub,
+                  this.state.gameID,
+                  this.state.accounts[0]
+                )
+                .call();
+            } catch (err) {
+              console.log(err.message);
+            }
+            if (!responseScores) {
+              await pause(5);
+            }
+          }
+        }
+      }
     }
     switch (hubAlias) {
       case "hivemind.round2":
