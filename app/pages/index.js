@@ -12,6 +12,7 @@ import Addresses from "../../deployed-contracts.json";
 import GameController from "../../artifacts/contracts/GameController.sol/GameController.json";
 import GameRound from "../../artifacts/contracts/GameRound.sol/GameRound.json";
 import { ethers } from "ethers";
+
 require("dotenv").config();
 
 const settings = require("../settings");
@@ -40,7 +41,10 @@ class Dashboard extends Component {
       showRound4: false,
       showWinners: false,
       showLobby: true,
-      showScore: false,
+      showScoreRound2: false,
+      showScoreRound3: false,
+      showScoreRound4: false,
+      showScoreWinners: false,
       currentHub: "hivemind.lobby",
       gameID: "(Not in game)",
       playersInGame: "(Not in game)",
@@ -66,6 +70,10 @@ class Dashboard extends Component {
       round2Button: "Submit Answers",
       round3Button: "Submit Answers",
       round4Button: "Submit Answers",
+      round1InputLocked: false,
+      round2InputLocked: false,
+      round3InputLocked: false,
+      round4InputLocked: false,
       lobbyButton: "Join Game",
       round1SubmittedGuess: "",
       round2SubmittedGuess: "",
@@ -85,6 +93,17 @@ class Dashboard extends Component {
 
   async componentDidMount() {
     this._isMounted = true;
+    this.FX_ROUND_1 = new Audio("sfx/round1.m4a");
+    this.FX_ROUND_2 = new Audio("sfx/round2.m4a");
+    this.FX_ROUND_3 = new Audio("sfx/round3.m4a");
+    this.FX_ROUND_4 = new Audio("sfx/round4.m4a");
+    this.FX_GAME_FINISH = new Audio("sfx/gameFinish.m4a");
+    this.FX_ROUND_1.load();
+    this.FX_ROUND_2.load();
+    this.FX_ROUND_3.load();
+    this.FX_ROUND_4.load();
+    this.FX_GAME_FINISH.load();
+    window.hivemind = this;
   }
 
   componentWillUnmount() {
@@ -192,7 +211,7 @@ class Dashboard extends Component {
     }
   };
 
-  roundStarted = (hubAlias, gameID, groupID, startTime) => {
+  roundStarted = async (hubAlias, gameID, groupID, startTime) => {
     if (
       gameID == this.state.gameID &&
       this.hubIsNew(this.state.currentHub, hubAlias)
@@ -210,30 +229,50 @@ class Dashboard extends Component {
       );
       switch (this.state.currentHub) {
         case "hivemind.round1":
-          this.setState({ round1Button: "Reveal Answers" });
+          this.setState({
+            round1Button: "Reveal Answers"
+          });
           break;
         case "hivemind.round2":
-          this.setState({ round2Button: "Reveal Answers" });
+          this.setState({
+            round2Button: "Reveal Answers"
+          });
           break;
         case "hivemind.round3":
-          this.setState({ round3Button: "Reveal Answers" });
+          this.setState({
+            round3Button: "Reveal Answers"
+          });
           break;
         case "hivemind.round4":
-          this.setState({ round4Button: "Reveal Answers" });
+          this.setState({
+            round4Button: "Reveal Answers"
+          });
           break;
         case "hivemind.lobby":
           switch (hubAlias) {
             case "hivemind.round1":
-              this.setState({ round1Button: "Reveal Answers" });
+              this.setState({
+                round1Button: "Reveal Answers",
+                round1InputLocked: false
+              });
               break;
             case "hivemind.round2":
-              this.setState({ round2Button: "Reveal Answers" });
+              this.setState({
+                round2Button: "Reveal Answers",
+                round2InputLocked: false
+              });
               break;
             case "hivemind.round3":
-              this.setState({ round3Button: "Reveal Answers" });
+              this.setState({
+                round3Button: "Reveal Answers",
+                round3InputLocked: false
+              });
               break;
             case "hivemind.round4":
-              this.setState({ round4Button: "Reveal Answers" });
+              this.setState({
+                round4Button: "Reveal Answers",
+                round4InputLocked: false
+              });
               break;
             default:
               break;
@@ -308,14 +347,8 @@ class Dashboard extends Component {
 
   updatePlayerScore = async (hubAlias) => {
     const gc = this.state.gameController;
-    const score = await gc.methods
-      .getScore(this.state.gameID, this.state.accounts[0])
-      .call();
-    this.setState({ playerScore: score });
-    let guess;
-    let responseScores = "";
-    let winningIndex = "";
-    if (hubAlias != "hivemind.round1") {
+    console.log("Updating player score...");
+    if (hubAlias != "hivemind.round1" && this.state.gameID != "(Not in game)") {
       let previousHub;
       switch (hubAlias) {
         case "hivemind.round2":
@@ -334,7 +367,59 @@ class Dashboard extends Component {
           break;
       }
       // if round 1, nothing to load
-      console.log("Loading final results...");
+      let guess = "";
+      let responseScores = "";
+      let winningIndex = "";
+      let score = "";
+      const totalPlayers = await gc.methods
+        .getPlayerCount(this.state.gameID)
+        .call();
+
+      console.log("Loading round results...");
+
+      while (responseScores == "") {
+        try {
+          responseScores = await gc.methods
+            .getResponseScores(previousHub, this.state.gameID)
+            .call();
+          // console.log("Response scores:", responseScores);
+          if (responseScores != "") {
+            if (
+              Number(responseScores[0]) +
+                Number(responseScores[1]) +
+                Number(responseScores[2]) +
+                Number(responseScores[3]) <
+              Number(totalPlayers)
+            ) {
+              responseScores = "";
+            }
+          }
+        } catch (err) {
+          console.log(err.message);
+        }
+        if (!responseScores) {
+          await pause(5);
+        }
+      }
+
+      while (score == "") {
+        try {
+          score = await gc.methods
+            .getScore(this.state.gameID, this.state.accounts[0])
+            .call();
+        } catch (err) {
+          console.log(err.message);
+        }
+        if (score == "") {
+          await pause(5);
+        }
+      }
+      score = await gc.methods
+        .getScore(this.state.gameID, this.state.accounts[0])
+        .call();
+
+      this.setState({ playerScore: score });
+
       while (winningIndex == "") {
         try {
           winningIndex = await gc.methods
@@ -346,11 +431,8 @@ class Dashboard extends Component {
         if (!winningIndex) {
           await pause(5);
         } else {
-          while (responseScores == "") {
+          while (guess == "") {
             try {
-              responseScores = await gc.methods
-                .getResponseScores(previousHub, this.state.gameID)
-                .call();
               guess = await gc.methods
                 .getPlayerGuess(
                   previousHub,
@@ -361,147 +443,169 @@ class Dashboard extends Component {
             } catch (err) {
               console.log(err.message);
             }
-            if (!responseScores) {
-              await pause(5);
+            if (!guess) {
+              await pause(3);
             }
           }
         }
       }
-    }
-    switch (hubAlias) {
-      case "hivemind.round2":
-        // update round 1 stats
-        this.setState({
-          round1SubmittedGuess: guess,
-          round1ResponseScores: responseScores,
-          round1WinningIndex: winningIndex
-        });
-        break;
-      case "hivemind.round3":
-        // update round 2 stats
-        this.setState({
-          round2SubmittedGuess: guess,
-          round2ResponseScores: responseScores,
-          round2WinningIndex: winningIndex
-        });
-        break;
-      case "hivemind.round4":
-        // update round 3 stats
-        this.setState({
-          round3SubmittedGuess: guess,
-          round3ResponseScores: responseScores,
-          round3WinningIndex: winningIndex
-        });
-        break;
-      case "hivemind.winners":
-        // update round 4 stats
-        let rank = "";
-        console.log("Loading final rank...");
-        while (rank == "") {
-          try {
-            rank = await gc.methods
-              .getFinalRanking(this.state.gameID, this.state.accounts[0])
-              .call();
-          } catch (err) {
-            console.log(err.message);
-            console.log("Error loading rank. Trying again...");
-          }
-          // if rank didn't load...
-          if (rank == "") {
-            await pause(5);
-          }
-        }
 
-        this.setState({
-          round4SubmittedGuess: guess,
-          round4ResponseScores: responseScores,
-          round4WinningIndex: winningIndex,
-          playerRank: rank
-        });
-        break;
-      case "hivemind.round1":
-      default:
-        break;
+      switch (hubAlias) {
+        case "hivemind.round2":
+          // update round 1 stats
+          this.setState({
+            round1SubmittedGuess: guess,
+            round1ResponseScores: responseScores,
+            round1WinningIndex: winningIndex
+          });
+          break;
+        case "hivemind.round3":
+          // update round 2 stats
+          this.setState({
+            round2SubmittedGuess: guess,
+            round2ResponseScores: responseScores,
+            round2WinningIndex: winningIndex
+          });
+          break;
+        case "hivemind.round4":
+          // update round 3 stats
+          this.setState({
+            round3SubmittedGuess: guess,
+            round3ResponseScores: responseScores,
+            round3WinningIndex: winningIndex
+          });
+          break;
+        case "hivemind.winners":
+          // update round 4 stats
+          let rank = "";
+          console.log("Loading final rank...");
+          while (rank == "") {
+            try {
+              rank = await gc.methods
+                .getFinalRanking(this.state.gameID, this.state.accounts[0])
+                .call();
+            } catch (err) {
+              console.log(err.message);
+              console.log("Error loading rank. Trying again...");
+            }
+            // if rank didn't load...
+            if (rank == "") {
+              await pause(5);
+            }
+          }
+          this.setState({
+            round4SubmittedGuess: guess,
+            round4ResponseScores: responseScores,
+            round4WinningIndex: winningIndex,
+            playerRank: rank
+          });
+          break;
+        default:
+          break;
+      }
     }
   };
 
   submitChoices = async (playerChoice, crowdChoice) => {
     // send player choice, crowd choice, and secret phrase to contract
     console.log(`${playerChoice}, ${crowdChoice}, ${this.state.secretPhrase}`);
-    switch (this.state.currentHub) {
-      case "hivemind.round1":
-        this.setState({ round1Button: "Waiting for all players to answer" });
-        break;
-      case "hivemind.round2":
-        this.setState({ round2Button: "Waiting for all players to answer" });
-        break;
-      case "hivemind.round3":
-        this.setState({ round3Button: "Waiting for all players to answer" });
-        break;
-      case "hivemind.round4":
-        this.setState({ round4Button: "Waiting for all players to answer" });
-        break;
-      default:
-        break;
-    }
     const gc = this.state.gameController;
-    const tx = await gc.methods
-      .submitAnswers(
-        playerChoice,
-        crowdChoice,
-        this.state.secretPhrase,
-        this.state.gameID,
-        this.state.currentHub
-      )
-      .send({ from: this.state.accounts[0] });
-    console.log("Submitted Answers. Gas Used:", tx.gasUsed);
+    try {
+      const tx = await gc.methods
+        .submitAnswers(
+          playerChoice,
+          crowdChoice,
+          this.state.secretPhrase,
+          this.state.gameID,
+          this.state.currentHub
+        )
+        .send({ from: this.state.accounts[0] });
+      console.log("Submitted Answers. Gas Used:", tx.gasUsed);
 
-    let web3 = this.state.provider;
-    const gameRound = new web3.eth.Contract(GameRound.abi, Addresses.round1);
+      switch (this.state.currentHub) {
+        case "hivemind.round1":
+          this.setState({
+            round1Button: "Waiting for all players to answer",
+            round1InputLocked: true
+          });
+          break;
+        case "hivemind.round2":
+          this.setState({
+            round2Button: "Waiting for all players to answer",
+            round2InputLocked: true
+          });
+          break;
+        case "hivemind.round3":
+          this.setState({
+            round3Button: "Waiting for all players to answer",
+            round3InputLocked: true
+          });
+          break;
+        case "hivemind.round4":
+          this.setState({
+            round4Button: "Waiting for all players to answer",
+            round4InputLocked: true
+          });
+          break;
+        default:
+          break;
+      }
 
-    let hashedChoices = await gameRound.methods
-      .hashedAnswer(this.state.gameID, this.state.accounts[0])
-      .call();
-    console.log("Choices submitted:", hashedChoices);
+      let web3 = this.state.provider;
+      const gameRound = new web3.eth.Contract(GameRound.abi, Addresses.round1);
+
+      let hashedChoices = await gameRound.methods
+        .hashedAnswer(this.state.gameID, this.state.accounts[0])
+        .call();
+      console.log("Choices submitted:", hashedChoices);
+    } catch (err) {
+      console.log("Error submitting choices:", err.message);
+    }
   };
 
   revealChoices = async (playerChoice, crowdChoice) => {
-    switch (this.state.currentHub) {
-      case "hivemind.round1":
-        this.setState({ round1Button: "Waiting for all players to reveal" });
-        break;
-      case "hivemind.round2":
-        this.setState({ round2Button: "Waiting for all players to reveal" });
-        break;
-      case "hivemind.round3":
-        this.setState({ round3Button: "Waiting for all players to reveal" });
-        break;
-      case "hivemind.round4":
-        this.setState({ round4Button: "Waiting for all players to reveal" });
-        break;
-      default:
-        break;
-    }
     const gc = this.state.gameController;
-    const tx = await gc.methods
-      .revealAnswers(
-        playerChoice,
-        crowdChoice,
-        this.state.secretPhrase,
-        this.state.gameID,
-        this.state.currentHub
-      )
-      .send({ from: this.state.accounts[0] });
-    console.log("Answer revealed. Gas used:", tx.gasUsed);
+    try {
+      const tx = await gc.methods
+        .revealAnswers(
+          playerChoice,
+          crowdChoice,
+          this.state.secretPhrase,
+          this.state.gameID,
+          this.state.currentHub
+        )
+        .send({ from: this.state.accounts[0] });
+      console.log("Answer revealed. Gas used:", tx.gasUsed);
+      switch (this.state.currentHub) {
+        case "hivemind.round1":
+          this.setState({
+            round1Button: "Waiting for all players to reveal"
+          });
+          break;
+        case "hivemind.round2":
+          this.setState({
+            round2Button: "Waiting for all players to reveal"
+          });
+          break;
+        case "hivemind.round3":
+          this.setState({
+            round3Button: "Waiting for all players to reveal"
+          });
+          break;
+        case "hivemind.round4":
+          this.setState({
+            round4Button: "Waiting for all players to reveal"
+          });
+          break;
+        default:
+          break;
+      }
+    } catch (err) {
+      console.log("Error revealing choices:", err.message);
+    }
   };
 
-  // TODO: pickup with these 3 functions
-  ////
-  ///
-  //
-  //
   claimPrize = async () => {
-    // Claim prize
     // Reset game locally, go back to lobby
     console.log("Claim prize...");
     const gc = this.state.gameController;
@@ -546,6 +650,10 @@ class Dashboard extends Component {
       round2Button: "Submit Answers",
       round3Button: "Submit Answers",
       round4Button: "Submit Answers",
+      round1InputLocked: false,
+      round2InputLocked: false,
+      round3InputLocked: false,
+      round4InputLocked: false,
       lobbyButton: "Join Game",
       round1SubmittedGuess: "",
       round2SubmittedGuess: "",
@@ -583,24 +691,12 @@ class Dashboard extends Component {
     await this.resetGame();
     this.showHub("hivemind.lobby");
   };
-  //
-  ///
-  ////
-  /////
-  //////
-  ////////
-  /////////
-  /////////
-  //////
-  ////
-  ///
-  //
 
   showHub = async (hubAlias) => {
     if (hubAlias != "hivemind.winners" && hubAlias != "hivemind.lobby") {
       await this.loadQuestions(hubAlias);
     }
-    if (hubAlias != "hivemind.lobby") {
+    if (hubAlias != "hivemind.lobby" && hubAlias != "hivemind.round1") {
       await this.updatePlayerScore(hubAlias);
     }
     this.setState({ currentHub: hubAlias }, () => {
@@ -614,7 +710,10 @@ class Dashboard extends Component {
             showRound4: false,
             showWinners: false,
             showLobby: true,
-            showScore: false,
+            showScoreRound2: false,
+            showScoreRound3: false,
+            showScoreRound4: false,
+            showScoreWinners: false,
             title: "Lobby"
           });
           break;
@@ -627,10 +726,14 @@ class Dashboard extends Component {
             showRound4: false,
             showWinners: false,
             showLobby: false,
-            showScore: true,
-            title: "Round 1"
+            showScoreRound2: false,
+            showScoreRound3: false,
+            showScoreRound4: false,
+            showScoreWinners: false,
+            title: "Round 1",
+            round1InputLocked: false
           });
-
+          this.FX_ROUND_1.play();
           break;
         case "hivemind.round2":
           this.setState({
@@ -641,9 +744,14 @@ class Dashboard extends Component {
             showRound4: false,
             showWinners: false,
             showLobby: false,
-            showScore: true,
-            title: "Round 2"
+            showScoreRound2: true,
+            showScoreRound3: false,
+            showScoreRound4: false,
+            showScoreWinners: false,
+            title: "Round 2",
+            round2InputLocked: false
           });
+          this.FX_ROUND_2.play();
           break;
         case "hivemind.round3":
           this.setState({
@@ -654,9 +762,14 @@ class Dashboard extends Component {
             showRound4: false,
             showWinners: false,
             showLobby: false,
-            showScore: true,
-            title: "Round 3"
+            showScoreRound2: false,
+            showScoreRound3: true,
+            showScoreRound4: false,
+            showScoreWinners: false,
+            title: "Round 3",
+            round3InputLocked: false
           });
+          this.FX_ROUND_3.play();
           break;
         case "hivemind.round4":
           this.setState({
@@ -667,9 +780,14 @@ class Dashboard extends Component {
             showRound4: true,
             showWinners: false,
             showLobby: false,
-            showScore: true,
-            title: "Round 4"
+            showScoreRound2: false,
+            showScoreRound3: false,
+            showScoreRound4: true,
+            showScoreWinners: false,
+            title: "Round 4",
+            round4InputLocked: false
           });
+          this.FX_ROUND_4.play();
           break;
         case "hivemind.winners":
           this.setState({
@@ -680,9 +798,14 @@ class Dashboard extends Component {
             showRound4: false,
             showWinners: true,
             showLobby: false,
-            showScore: true,
+            showScoreRound2: false,
+            showScoreRound3: false,
+            showScoreRound4: false,
+            showScoreWinners: true,
             title: "Game Results"
           });
+          this.FX_GAME_FINISH.play();
+          console.log("Play game finish");
           break;
         default:
           break;
@@ -800,6 +923,7 @@ class Dashboard extends Component {
               provider={this.state.provider}
               playerChoice={this.state.round1PlayerChoice}
               crowdChoice={this.state.round1CrowdChoice}
+              inputLocked={this.state.round1InputLocked}
               setPlayerChoice={this.setPlayerChoice}
               setCrowdChoice={this.setCrowdChoice}
               submitChoices={this.submitChoices}
@@ -813,6 +937,7 @@ class Dashboard extends Component {
               provider={this.state.provider}
               playerChoice={this.state.round2PlayerChoice}
               crowdChoice={this.state.round2CrowdChoice}
+              inputLocked={this.state.round2InputLocked}
               setPlayerChoice={this.setPlayerChoice}
               setCrowdChoice={this.setCrowdChoice}
               submitChoices={this.submitChoices}
@@ -826,6 +951,7 @@ class Dashboard extends Component {
               provider={this.state.provider}
               playerChoice={this.state.round3PlayerChoice}
               crowdChoice={this.state.round3CrowdChoice}
+              inputLocked={this.state.round3InputLocked}
               setPlayerChoice={this.setPlayerChoice}
               setCrowdChoice={this.setCrowdChoice}
               submitChoices={this.submitChoices}
@@ -839,6 +965,7 @@ class Dashboard extends Component {
               provider={this.state.provider}
               playerChoice={this.state.round4PlayerChoice}
               crowdChoice={this.state.round4CrowdChoice}
+              inputLocked={this.state.round4InputLocked}
               setPlayerChoice={this.setPlayerChoice}
               setCrowdChoice={this.setCrowdChoice}
               submitChoices={this.submitChoices}
@@ -856,20 +983,40 @@ class Dashboard extends Component {
           </Grid.Row>
           <Grid.Row>
             <Score
-              show={this.state.showScore}
+              show={this.state.showScoreRound2}
               score={this.state.playerScore}
-              guess1={this.state.round1SubmittedGuess}
-              guess2={this.state.round2SubmittedGuess}
-              guess3={this.state.round3SubmittedGuess}
-              guess4={this.state.round4SubmittedGuess}
-              responseScores1={this.state.round1ResponseScores}
-              responseScores2={this.state.round2ResponseScores}
-              responseScores3={this.state.round3ResponseScores}
-              responseScores4={this.state.round4ResponseScores}
-              winningIndex1={this.state.round1WinningIndex}
-              winningIndex2={this.state.round2WinningIndex}
-              winningIndex3={this.state.round3WinningIndex}
-              winningIndex4={this.state.round4WinningIndex}
+              guess={this.state.round1SubmittedGuess}
+              responseScores={this.state.round1ResponseScores}
+              winningIndex={this.state.round1WinningIndex}
+              question={this.state.round1Question}
+              responses={this.state.round1Responses}
+            />
+            <Score
+              show={this.state.showScoreRound3}
+              score={this.state.playerScore}
+              guess={this.state.round2SubmittedGuess}
+              responseScores={this.state.round2ResponseScores}
+              winningIndex={this.state.round2WinningIndex}
+              question={this.state.round2Question}
+              responses={this.state.round2Responses}
+            />
+            <Score
+              show={this.state.showScoreRound4}
+              score={this.state.playerScore}
+              guess={this.state.round3SubmittedGuess}
+              responseScores={this.state.round3ResponseScores}
+              winningIndex={this.state.round3WinningIndex}
+              question={this.state.round3Question}
+              responses={this.state.round3Responses}
+            />
+            <Score
+              show={this.state.showScoreWinners}
+              score={this.state.playerScore}
+              guess={this.state.round4SubmittedGuess}
+              responseScores={this.state.round4ResponseScores}
+              winningIndex={this.state.round4WinningIndex}
+              question={this.state.round4Question}
+              responses={this.state.round4Responses}
             />
           </Grid.Row>
         </Grid>

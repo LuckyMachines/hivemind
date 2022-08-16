@@ -47,6 +47,7 @@ const Question = (props) => {
               p.crowdChoice == p.responses[0] ? selectedColor : unselectedColor
             }
             onClick={() => setCrowdChoice(p.responses[0])}
+            disabled={p.inputLocked}
           >
             {p.responses[0]}
           </Button>
@@ -55,6 +56,7 @@ const Question = (props) => {
               p.crowdChoice == p.responses[1] ? selectedColor : unselectedColor
             }
             onClick={() => setCrowdChoice(p.responses[1])}
+            disabled={p.inputLocked}
           >
             {p.responses[1]}
           </Button>
@@ -68,6 +70,7 @@ const Question = (props) => {
               p.crowdChoice == p.responses[0] ? selectedColor : unselectedColor
             }
             onClick={() => setCrowdChoice(p.responses[0])}
+            disabled={p.inputLocked}
           >
             {p.responses[0]}
           </Button>
@@ -76,6 +79,7 @@ const Question = (props) => {
               p.crowdChoice == p.responses[1] ? selectedColor : unselectedColor
             }
             onClick={() => setCrowdChoice(p.responses[1])}
+            disabled={p.inputLocked}
           >
             {p.responses[1]}
           </Button>
@@ -86,6 +90,7 @@ const Question = (props) => {
               p.crowdChoice == p.responses[2] ? selectedColor : unselectedColor
             }
             onClick={() => setCrowdChoice(p.responses[2])}
+            disabled={p.inputLocked}
           >
             {p.responses[2]}
           </Button>
@@ -94,6 +99,7 @@ const Question = (props) => {
               p.crowdChoice == p.responses[3] ? selectedColor : unselectedColor
             }
             onClick={() => setCrowdChoice(p.responses[3])}
+            disabled={p.inputLocked}
           >
             {p.responses[3]}
           </Button>
@@ -111,6 +117,7 @@ const Question = (props) => {
               p.playerChoice == p.responses[0] ? selectedColor : unselectedColor
             }
             onClick={() => setPlayerChoice(p.responses[0])}
+            disabled={p.inputLocked}
           >
             {p.responses[0]}
           </Button>
@@ -119,6 +126,7 @@ const Question = (props) => {
               p.playerChoice == p.responses[1] ? selectedColor : unselectedColor
             }
             onClick={() => setPlayerChoice(p.responses[1])}
+            disabled={p.inputLocked}
           >
             {p.responses[1]}
           </Button>
@@ -132,6 +140,7 @@ const Question = (props) => {
               p.playerChoice == p.responses[0] ? selectedColor : unselectedColor
             }
             onClick={() => setPlayerChoice(p.responses[0])}
+            disabled={p.inputLocked}
           >
             {p.responses[0]}
           </Button>
@@ -140,6 +149,7 @@ const Question = (props) => {
               p.playerChoice == p.responses[1] ? selectedColor : unselectedColor
             }
             onClick={() => setPlayerChoice(p.responses[1])}
+            disabled={p.inputLocked}
           >
             {p.responses[1]}
           </Button>
@@ -150,6 +160,7 @@ const Question = (props) => {
               p.playerChoice == p.responses[2] ? selectedColor : unselectedColor
             }
             onClick={() => setPlayerChoice(p.responses[2])}
+            disabled={p.inputLocked}
           >
             {p.responses[2]}
           </Button>
@@ -158,6 +169,7 @@ const Question = (props) => {
               p.playerChoice == p.responses[3] ? selectedColor : unselectedColor
             }
             onClick={() => setPlayerChoice(p.responses[3])}
+            disabled={p.inputLocked}
           >
             {p.responses[3]}
           </Button>

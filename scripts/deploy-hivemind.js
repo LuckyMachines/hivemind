@@ -8,7 +8,6 @@ const adminAddress = settings.adminAddress; // using hardhat account 0
 const hubRegistry = deployedContracts.hubRegistry;
 const railYard = deployedContracts.railYard;
 
-// TODO: read in from csv files
 const csvToArrays = (input, numColumnsToUse) => {
   // Setup output array with correct number of sub-arrays
   let outputArray = [];
@@ -260,6 +259,7 @@ async function main() {
   await scoreKeeper.grantScoreSetterRole(round3.address);
   await scoreKeeper.grantScoreSetterRole(round4.address);
   await scoreKeeper.grantScoreSetterRole(winners.address);
+  await scoreKeeper.grantScoreSetterRole(gameController.address);
 
   console.log("Adding event senders...");
   await gameController.addEventSender(round1.address);

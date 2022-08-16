@@ -14,7 +14,7 @@ contract GameRound is Hub {
     uint256 constant winningPoints = 3000;
     string public hubName;
     string public nextRoundHub;
-    uint256 public roundTimeLimit = 900; // in seconds (15 minute default)
+    uint256 public roundTimeLimit = 86400; // in seconds (24 hour default)
 
     enum GamePhase {
         Pregame,

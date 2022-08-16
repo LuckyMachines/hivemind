@@ -1,69 +1,81 @@
 import React from "react";
-import { Input } from "semantic-ui-react";
+import { Progress } from "semantic-ui-react";
 
 const Score = (props) => {
+  const r1 = Number(props.responseScores[0]);
+  const r2 = Number(props.responseScores[1]);
+  const r3 = Number(props.responseScores[2]);
+  const r4 = Number(props.responseScores[3]);
+  const totalResponses = r1 + r2 + r3 + r4;
+  const responsePercentages = [
+    (r1 / totalResponses) * 100,
+    (r2 / totalResponses) * 100,
+    (r3 / totalResponses) * 100,
+    (r4 / totalResponses) * 100
+  ];
+  // console.log(
+  //   `Values: ${props.responseScores[0]},${props.responseScores[1]},${props.responseScores[2]},${props.responseScores[3]}`
+  // );
+  // console.log("Percentages:", responsePercentages);
+
+  let responseView = (p) => {
+    return p.responses[2] == "" ? (
+      <>
+        <Progress
+          progress
+          percent={responsePercentages[0]}
+          label={props.responses[0]}
+        />
+        <Progress
+          progress
+          percent={responsePercentages[1]}
+          label={props.responses[1]}
+          style={{ marginBottom: "50px" }}
+        />
+      </>
+    ) : (
+      <>
+        <Progress
+          progress
+          percent={responsePercentages[0]}
+          label={props.responses[0]}
+        />
+        <Progress
+          progress
+          percent={responsePercentages[1]}
+          label={props.responses[1]}
+        />
+        <Progress
+          progress
+          percent={responsePercentages[2]}
+          label={props.responses[2]}
+        />
+        <Progress
+          progress
+          percent={responsePercentages[3]}
+          label={props.responses[3]}
+          style={{ marginBottom: "50px" }}
+        />
+      </>
+    );
+  };
+
   let content =
     props.show == false ? (
       ""
     ) : (
       <div style={{ width: "60%", marginBottom: "-10px" }}>
-        <p>
+        <span>
           <strong>Score: </strong>
           {props.score}
+        </span>
+        <h3>
+          <strong>{props.question}</strong>
           <br />
-          <strong>Round 1 Guess: {"["}</strong>
-          {props.guess1}
-          <strong>{"] | "}Response Scores:</strong> <strong>{"[0] - "}</strong>
-          {props.responseScores1[0]}
-          <strong>{", [1] - "}</strong>
-          {props.responseScores1[1]}
-          <strong>{", [2] - "}</strong>
-          {props.responseScores1[2]}
-          <strong>{", [3] - "}</strong>
-          {props.responseScores1[3]}
-          <strong>{" | "}Winning Index:</strong>
-          {props.winningIndex1}
-          <br />
-          <strong>Round 2 Guess: {"["}</strong>
-          {props.guess2}
-          <strong>{"] | "}Response Scores:</strong> <strong>{"[0] - "}</strong>
-          {props.responseScores2[0]}
-          <strong>{", [1] - "}</strong>
-          {props.responseScores2[1]}
-          <strong>{", [2] - "}</strong>
-          {props.responseScores2[2]}
-          <strong>{", [3] - "}</strong>
-          {props.responseScores2[3]}
-          <strong>{" | "}Winning Index:</strong>
-          {props.winningIndex2}
-          <br />
-          <strong>Round 3 Guess: {"["}</strong>
-          {props.guess3}
-          <strong>{"] | "}Response Scores:</strong> <strong>{"[0] - "}</strong>
-          {props.responseScores3[0]}
-          <strong>{", [1] - "}</strong>
-          {props.responseScores3[1]}
-          <strong>{", [2] - "}</strong>
-          {props.responseScores3[2]}
-          <strong>{", [3] - "}</strong>
-          {props.responseScores3[3]}
-          <strong>{" | "}Winning Index:</strong>
-          {props.winningIndex3}
-          <br />
-          <strong>Round 4 Guess: {"["}</strong>
-          {props.guess4}
-          <strong>{"] | "}Response Scores:</strong> <strong>{"[0] - "}</strong>
-          {props.responseScores4[0]}
-          <strong>{", [1] - "}</strong>
-          {props.responseScores4[1]}
-          <strong>{", [2] - "}</strong>
-          {props.responseScores4[2]}
-          <strong>{", [3] - "}</strong>
-          {props.responseScores4[3]}
-          <strong>{" | "}Winning Index:</strong>
-          {props.winningIndex4}
-          <br />
-        </p>
+          <strong>"{props.responses[Number(props.guess)]}"</strong>
+        </h3>
+
+        {responseView(props)}
         {props.children}
       </div>
     );
