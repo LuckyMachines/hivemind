@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Grid, Button } from "semantic-ui-react";
+import { Grid } from "semantic-ui-react";
 import Layout from "../components/Layout";
 import ConnectWallet from "../components/ConnectWallet";
 import Question from "../components/Question";
@@ -11,7 +11,7 @@ import Winners from "../components/Winners";
 import Addresses from "../../deployed-contracts.json";
 import GameController from "../../artifacts/contracts/GameController.sol/GameController.json";
 import GameRound from "../../artifacts/contracts/GameRound.sol/GameRound.json";
-import { ethers } from "ethers";
+// import { ethers } from "ethers";
 
 require("dotenv").config();
 
@@ -346,6 +346,7 @@ class Dashboard extends Component {
   };
 
   roundStarted = async (hubAlias, gameID, groupID, startTime) => {
+    console.log("Round started:", hubAlias);
     if (
       gameID == this.state.gameID &&
       this.hubIsNew(this.state.currentHub, hubAlias)
@@ -1162,9 +1163,9 @@ class Dashboard extends Component {
               responses={this.state.round4Responses}
             />
           </Grid.Row>
-          <Grid.Row>
+          {/* <Grid.Row>
             <span onClick={this.abandonGame}>abandon game</span>
-          </Grid.Row>
+          </Grid.Row> */}
         </Grid>
       </Layout>
     );

@@ -25,7 +25,8 @@ const Lobby = (props) => {
           // TODO: set gas parameters
           if (!playerInGame) {
             const tx = await gameController.methods.joinGame().send({
-              from: accounts[0]
+              from: accounts[0],
+              maxFeePerGas: settings.gasPrice
             });
             console.log("Gas used to join game:", tx.gasUsed);
           }
@@ -59,11 +60,7 @@ const Lobby = (props) => {
     ) : (
       <div style={{ marginTop: "-40px" }}>
         <p>
-          <strong>
-            Game ID: {props.gameID}
-            <br />
-            Players in game: {props.playersInGame}
-          </strong>
+          <strong>Game ID: {props.gameID}</strong>
         </p>
         <Button onClick={joinGame} loading={joinGameLoading}>
           {props.lobbyButton}

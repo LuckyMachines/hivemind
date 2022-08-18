@@ -32,7 +32,7 @@ contract GameRound is Hub, VRFConsumerBaseV2 {
     uint256 constant winningPoints = 3000;
     string public hubName;
     string public nextRoundHub;
-    uint256 public roundTimeLimit = 86400; // in seconds (24 hour default)
+    uint256 public roundTimeLimit = 300; // in seconds (5 minute default)
 
     enum GamePhase {
         Pregame,

@@ -22,6 +22,8 @@ contract Lobby is Hub {
     uint256 public entryFee;
     uint256 public adminFee;
 
+    uint256 constant HUNDRED_YEARS = 3153600000;
+
     // Mapping from game id
     mapping(uint256 => uint256) public playerCount;
     mapping(uint256 => uint256) public railcarID;
@@ -42,6 +44,7 @@ contract Lobby is Hub {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _needsNewGameID = true;
         gameHub = gameStartHub;
+        joinCountdownStartTime = block.timestamp + HUNDRED_YEARS;
     }
 
     function joinGame() public payable {
@@ -109,10 +112,7 @@ contract Lobby is Hub {
 
         _sendGroupToHub(railcarID[_currentGameID], gameHub);
         _needsNewGameID = true;
-        joinCountdownStartTime = 0;
-
-        // can only call if game is ready to start
-        // anyone can call this
+        joinCountdownStartTime = block.timestamp + HUNDRED_YEARS;
     }
 
     // Admin functions
