@@ -1,4 +1,5 @@
 require("@nomicfoundation/hardhat-toolbox");
+require("@nomiclabs/hardhat-etherscan");
 require("@openzeppelin/hardhat-upgrades");
 require("dotenv").config();
 
@@ -21,6 +22,10 @@ module.exports = {
     polygon: {
       url: process.env.POLYGON_RPC_URL,
       accounts: [process.env.POLYGON_PRIVATE_KEY_1]
+    },
+    goerli: {
+      url: process.env.GOERLI_RPC_URL,
+      accounts: [process.env.GOERLI_PRIVATE_KEY_1]
     }
   },
   solidity: {
@@ -30,6 +35,12 @@ module.exports = {
         enabled: true,
         runs: 200
       }
+    }
+  },
+  etherscan: {
+    apiKey: {
+      goerli: "QKEP4PUXN6P9ZCPYXE52R2MCKEX89GWGY8",
+      polygonMumbai: "NR92TZ2YMUY1CU4NJU1D4VRHK9RTA4GVP3"
     }
   }
 };

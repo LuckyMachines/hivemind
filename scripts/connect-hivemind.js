@@ -1,14 +1,26 @@
 // `npx hardhat run scripts/deploy-hivemind.js`
 const { ethers } = require("hardhat");
 const deployedContracts = require("../deployed-contracts.json");
+const settings = require("../hivemind-settings.json");
+const adminAddress = settings.adminAddress;
 
 async function main() {
+  const QUEUE_TYPE_ROUND_1 = 1;
+  const QUEUE_TYPE_ROUND_2 = 2;
+  const QUEUE_TYPE_ROUND_3 = 3;
+  const QUEUE_TYPE_ROUND_4 = 4;
+
   const Lobby = await ethers.getContractFactory("Lobby");
   const lobby = Lobby.attach(deployedContracts.lobby);
 
   const GameController = await ethers.getContractFactory("GameController");
   const gameController = GameController.attach(
     deployedContracts.gameController
+  );
+
+  const HivemindKeeper = await ethers.getContractFactory("HivemindKeeper");
+  const hivemindKeeper = HivemindKeeper.attach(
+    deployedContracts.hivemindKeeper
   );
 
   const Questions = await ethers.getContractFactory("Questions");
@@ -29,57 +41,124 @@ async function main() {
   const Winners = await ethers.getContractFactory("Winners");
   const winners = Winners.attach(deployedContracts.winners);
 
-  const Registry = await ethers.getContractFactory("HubRegistry");
-  const registry = Registry.attach(deployedContracts.hubRegistry);
-
   console.log("Setting game controller address on Lobby...");
-  await lobby.setGameControllerAddress(gameController.address);
+  let tx;
+  tx = await lobby.setGameControllerAddress(gameController.address);
+  await tx.wait();
+
+  console.log("Setting keeper address on Rounds...");
+  console.log("Round 1");
+  tx = await round1.setHivemindKeeper(hivemindKeeper.address);
+  console.log("Round 2");
+  tx = await round2.setHivemindKeeper(hivemindKeeper.address);
+  console.log("Round 3");
+  tx = await round3.setHivemindKeeper(hivemindKeeper.address);
+  console.log("Round 4");
+  tx = await round4.setHivemindKeeper(hivemindKeeper.address);
+
+  console.log("Setting queue types on Rounds...");
+  console.log("Round 1");
+  tx = await round1.setQueueType(QUEUE_TYPE_ROUND_1);
+  console.log("Round 2");
+  tx = await round2.setQueueType(QUEUE_TYPE_ROUND_2);
+  console.log("Round 3");
+  tx = await round3.setQueueType(QUEUE_TYPE_ROUND_3);
+  console.log("Round 4");
+  tx = await round4.setQueueType(QUEUE_TYPE_ROUND_4);
 
   console.log("Setting game round roles...");
-  await qp1.grantGameRoundRole(round1.address);
-  await qp2.grantGameRoundRole(round2.address);
-  await qp3.grantGameRoundRole(round3.address);
-  await qp4.grantGameRoundRole(round4.address);
+  console.log("QP1 => Round 1");
+  tx = await qp1.grantGameRoundRole(round1.address);
+  await tx.wait();
+  console.log("QP2 => Round 2");
+  tx = await qp2.grantGameRoundRole(round2.address);
+  await tx.wait();
+  console.log("QP3 => Round 3");
+  tx = await qp3.grantGameRoundRole(round3.address);
+  await tx.wait();
+  console.log("QP4 => Round 4");
+  tx = await qp4.grantGameRoundRole(round4.address);
+  await tx.wait();
 
   console.log("Authorizing score keepers...");
-  await scoreKeeper.grantScoreSetterRole(lobby.address);
-  await scoreKeeper.grantScoreSetterRole(round1.address);
-  await scoreKeeper.grantScoreSetterRole(round2.address);
-  await scoreKeeper.grantScoreSetterRole(round3.address);
-  await scoreKeeper.grantScoreSetterRole(round4.address);
-  await scoreKeeper.grantScoreSetterRole(winners.address);
-  await scoreKeeper.grantScoreSetterRole(gameController.address);
+  console.log("Lobby");
+  tx = await scoreKeeper.grantScoreSetterRole(lobby.address);
+  await tx.wait();
+  console.log("Round 1");
+  tx = await scoreKeeper.grantScoreSetterRole(round1.address);
+  await tx.wait();
+  console.log("Round 2");
+  tx = await scoreKeeper.grantScoreSetterRole(round2.address);
+  await tx.wait();
+  console.log("Round 3");
+  tx = await scoreKeeper.grantScoreSetterRole(round3.address);
+  await tx.wait();
+  console.log("Round 4");
+  tx = await scoreKeeper.grantScoreSetterRole(round4.address);
+  await tx.wait();
+  console.log("Winners");
+  tx = await scoreKeeper.grantScoreSetterRole(winners.address);
+  await tx.wait();
+  console.log("Game Controller");
+  tx = await scoreKeeper.grantScoreSetterRole(gameController.address);
+  await tx.wait();
 
   console.log("Adding event senders...");
-  await gameController.addEventSender(round1.address);
-  await gameController.addEventSender(round2.address);
-  await gameController.addEventSender(round3.address);
-  await gameController.addEventSender(round4.address);
-  await gameController.addEventSender(winners.address);
+  console.log("Round 1");
+  tx = await gameController.addEventSender(round1.address);
+  await tx.wait();
+  console.log("Round 2");
+  tx = await gameController.addEventSender(round2.address);
+  await tx.wait();
+  console.log("Round 3");
+  tx = await gameController.addEventSender(round3.address);
+  await tx.wait();
+  console.log("Round 4");
+  tx = await gameController.addEventSender(round4.address);
+  await tx.wait();
+  console.log("Winners");
+  tx = await gameController.addEventSender(winners.address);
+  await tx.wait();
 
-  console.log("Getting hub IDs...");
-  const lobbyID = await registry.idFromName("hivemind.lobby");
-  const round1ID = await registry.idFromName("hivemind.round1");
-  const round2ID = await registry.idFromName("hivemind.round2");
-  const round3ID = await registry.idFromName("hivemind.round3");
-  const round4ID = await registry.idFromName("hivemind.round4");
-  const winnersID = await registry.idFromName("hivemind.winners");
+  console.log("Adding Queue Roles...");
+  console.log("Lobby");
+  tx = await hivemindKeeper.addQueueRole(lobby.address);
+  await tx.wait();
+  console.log("Round 1");
+  tx = await hivemindKeeper.addQueueRole(round1.address);
+  await tx.wait();
+  console.log("Round 2");
+  tx = await hivemindKeeper.addQueueRole(round2.address);
+  await tx.wait();
+  console.log("Round 3");
+  tx = await hivemindKeeper.addQueueRole(round3.address);
+  await tx.wait();
+  console.log("Round 4");
+  tx = await hivemindKeeper.addQueueRole(round4.address);
+  await tx.wait();
+  console.log("Winners");
+  tx = await hivemindKeeper.addQueueRole(winners.address);
+  await tx.wait();
 
-  console.log("Opening connections to hubs...");
-  await lobby.setAllowAllInputs(true);
-  await round1.setInputsAllowed([lobbyID], [true]);
-  await round2.setInputsAllowed([round1ID], [true]);
-  await round3.setInputsAllowed([round2ID], [true]);
-  await round4.setInputsAllowed([round3ID], [true]);
-  await winners.setInputsAllowed([round4ID], [true]);
-
-  console.log("Connecting hubs...");
-  await lobby.addHubConnections([round1ID]);
-  await round1.addHubConnections([round2ID, lobbyID]);
-  await round2.addHubConnections([round3ID, lobbyID]);
-  await round3.addHubConnections([round4ID, lobbyID]);
-  await round4.addHubConnections([winnersID, lobbyID]);
-  await winners.addHubConnections([lobbyID]);
+  console.log("Setting keeper role");
+  console.log("Round 1 (Admin)");
+  tx = await round1.addKeeper(adminAddress);
+  await tx.wait();
+  console.log("Round 1");
+  tx = await round1.addKeeper(hivemindKeeper.address);
+  await tx.wait();
+  console.log("Round 2");
+  tx = await round2.addKeeper(hivemindKeeper.address);
+  await tx.wait();
+  console.log("Round 3");
+  tx = await round3.addKeeper(hivemindKeeper.address);
+  await tx.wait();
+  console.log("Round 4");
+  tx = await round4.addKeeper(hivemindKeeper.address);
+  await tx.wait();
+  // console.log("Winners");
+  // tx = await winners.addKeeper(hivemindKeeper.address);
+  // await tx.wait();
 
   console.log("All done");
 }

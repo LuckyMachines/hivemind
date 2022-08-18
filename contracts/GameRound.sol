@@ -2,12 +2,30 @@
 pragma solidity ^0.8.9;
 import "@luckymachines/railway/contracts/Hub.sol";
 import "@luckymachines/railway/contracts/RailYard.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
+import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "./Questions.sol";
 import "./ScoreKeeper.sol";
 import "./GameController.sol";
-import "hardhat/console.sol";
+import "./HivemindKeeper.sol";
 
-contract GameRound is Hub {
+contract GameRound is Hub, VRFConsumerBaseV2 {
+    // VRF settings
+    VRFCoordinatorV2Interface COORDINATOR;
+    uint32 constant callbackGasLimit = 200000;
+    uint64 s_subscriptionId;
+    bytes32 keyHash;
+    address vrfCoordinator;
+    uint16 constant requestConfirmations = 3;
+    uint32 constant numWords = 1;
+
+    bytes32 public KEEPER_ROLE = keccak256("KEEPER_ROLE");
+
+    // Mapping from request id
+    mapping(uint256 => uint256) railcarRequestID;
+
+    uint256 _queueType;
+
     uint256 constant maxRevealBonus = 1000;
     uint256 constant maxFastRevealBonus = 1000;
     uint256 constant submissionPoints = 100;
@@ -27,12 +45,12 @@ contract GameRound is Hub {
     ScoreKeeper internal SCORE_KEEPER;
     GameController internal GAME_CONTROLLER;
     RailYard internal RAIL_YARD;
+    HivemindKeeper internal HIVEMIND_KEEPER;
 
     // mapping from railcar ID
     mapping(uint256 => uint256) internal _gameID;
 
     // mapping from game ID
-    mapping(uint256 => uint256) internal revealPoints;
     mapping(uint256 => string) internal question;
     mapping(uint256 => string[4]) internal responses;
     mapping(uint256 => uint256[]) public winningChoiceIndex;
@@ -43,6 +61,7 @@ contract GameRound is Hub {
     mapping(uint256 => uint256) public totalResponses;
     mapping(uint256 => uint256) public totalReveals;
     mapping(uint256 => uint256) public railcar;
+    mapping(uint256 => uint256) public questionSeed;
 
     // from game ID => player
     mapping(uint256 => mapping(address => bytes32)) public hashedAnswer;
@@ -58,8 +77,15 @@ contract GameRound is Hub {
         address gameControllerAddress,
         address railYardAddress,
         address hubRegistryAddress,
-        address hubAdmin
-    ) Hub(hubRegistryAddress, hubAdmin) {
+        address hubAdmin,
+        address _vrfCoordinator,
+        bytes32 _keyHash,
+        uint64 _subscriptionID
+    ) Hub(hubRegistryAddress, hubAdmin) VRFConsumerBaseV2(_vrfCoordinator) {
+        // VRF
+        COORDINATOR = VRFCoordinatorV2Interface(_vrfCoordinator);
+        s_subscriptionId = _subscriptionID;
+        keyHash = _keyHash;
         uint256 hubID = REGISTRY.idFromAddress(address(this));
         REGISTRY.setName(thisHub, hubID);
         hubName = thisHub;
@@ -68,6 +94,20 @@ contract GameRound is Hub {
         SCORE_KEEPER = ScoreKeeper(scoreKeeperAddress);
         GAME_CONTROLLER = GameController(gameControllerAddress);
         RAIL_YARD = RailYard(railYardAddress);
+    }
+
+    function setHivemindKeeper(address hivemindKeeperAddress)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        HIVEMIND_KEEPER = HivemindKeeper(hivemindKeeperAddress);
+    }
+
+    function setQueueType(uint256 queueType)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        _queueType = queueType;
     }
 
     // Player functions
@@ -158,13 +198,7 @@ contract GameRound is Hub {
             uint256 fastRevealBonus = maxFastRevealBonus > timeSinceRevealStart
                 ? maxFastRevealBonus - timeSinceRevealStart
                 : 0;
-            uint256 currentRevealPoints = revealPoints[gameID] +
-                fastRevealBonus;
-            SCORE_KEEPER.increaseScore(currentRevealPoints, gameID, player);
-
-            revealPoints[gameID] = currentRevealPoints > 0
-                ? currentRevealPoints - 4
-                : 0;
+            SCORE_KEEPER.increaseScore(fastRevealBonus, gameID, player);
         }
 
         totalReveals[gameID]++;
@@ -174,16 +208,13 @@ contract GameRound is Hub {
     }
 
     // Public functions
+
     function needsUpdate(uint256 gameID) public view returns (bool) {
         if (
             (phase[gameID] == GamePhase.Question &&
                 block.timestamp >= (roundStartTime[gameID] + roundTimeLimit)) ||
             (phase[gameID] == GamePhase.Reveal &&
-                block.timestamp >=
-                (revealStartTime[gameID] + roundTimeLimit)) ||
-            (totalResponses[gameID] >=
-                GAME_CONTROLLER.getPlayerCount(gameID)) ||
-            (totalReveals[gameID] >= GAME_CONTROLLER.getPlayerCount(gameID))
+                block.timestamp >= (revealStartTime[gameID] + roundTimeLimit))
         ) {
             return true;
         } else {
@@ -229,44 +260,56 @@ contract GameRound is Hub {
         }
     }
 
-    // Admin functions
-
-    function setQuestionsAddress(address questionsAddress)
-        public
-        onlyRole(DEFAULT_ADMIN_ROLE)
+    // VRF Functions
+    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords)
+        internal
+        override
     {
-        QUESTIONS = Questions(questionsAddress);
+        uint256 gameID = _gameID[railcarRequestID[requestId]];
+        questionSeed[gameID] = randomWords[0];
+        HIVEMIND_KEEPER.addActionToQueue(
+            HivemindKeeper.Action.StartRound,
+            HivemindKeeper.Queue(_queueType),
+            gameID
+        );
     }
 
     // Internal
     function _groupDidEnter(uint256 railcarID) internal override {
         super._groupDidEnter(railcarID);
-        // TODO:request randomness to use for question
-        // Testing with timestamp as faux random
-        _gameID[railcarID] = SCORE_KEEPER.gameIDFromRailcar(railcarID);
-        railcar[_gameID[railcarID]] = railcarID;
-        startNewRound(railcarID, block.timestamp);
+        uint256 gameID = SCORE_KEEPER.gameIDFromRailcar(railcarID);
+        _gameID[railcarID] = gameID;
+        railcar[gameID] = railcarID;
+        phase[gameID] = GamePhase.Question;
+        SCORE_KEEPER.setLatestRound(hubName, gameID);
+        roundStartTime[gameID] = block.timestamp;
+        uint256 requestID = COORDINATOR.requestRandomWords(
+            keyHash,
+            s_subscriptionId,
+            requestConfirmations,
+            callbackGasLimit,
+            numWords
+        );
+        railcarRequestID[requestID] = railcarID;
+
+        // Test with timestamp as faux randomness
+        // questionSeed[gameID] = block.timestamp;
+        // startNewRound(gameID);
     }
 
-    // on randomness delivered...
-    function startNewRound(uint256 railcarID, uint256 randomSeed) internal {
-        // TODO: use actual randomness, pass any value for testing
-        uint256 gameID = _gameID[railcarID];
-        string memory q;
-        string[4] memory r;
-        (q, r) = QUESTIONS.getQuestionWithSeed(randomSeed);
-        question[gameID] = q;
-        responses[gameID] = r;
-        roundStartTime[gameID] = block.timestamp;
-        phase[gameID] = GamePhase.Question;
-        revealPoints[gameID] = maxRevealBonus;
+    // after randomness delivered...
+    function startNewRound(uint256 gameID) public onlyRole(KEEPER_ROLE) {
+        if (questionSeed[gameID] != 0) {
+            (question[gameID], responses[gameID]) = QUESTIONS
+                .getQuestionWithSeed(questionSeed[gameID]);
 
-        GAME_CONTROLLER.roundStart(
-            hubName,
-            block.timestamp,
-            _gameID[railcarID],
-            railcarID
-        );
+            GAME_CONTROLLER.roundStart(
+                hubName,
+                block.timestamp,
+                gameID,
+                railcar[gameID]
+            );
+        }
     }
 
     function exitPlayersToNextRound(uint256 railcarID) internal {
@@ -368,5 +411,21 @@ contract GameRound is Hub {
                 }
             }
         }
+    }
+
+    // Admin functions
+
+    function setQuestionsAddress(address questionsAddress)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        QUESTIONS = Questions(questionsAddress);
+    }
+
+    function addKeeper(address keeperAddress)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        grantRole(KEEPER_ROLE, keeperAddress);
     }
 }

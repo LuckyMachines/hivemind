@@ -17,6 +17,8 @@ require("dotenv").config();
 
 const settings = require("../settings");
 
+let gc2;
+
 function pause(timeInSeconds) {
   return new Promise((resolve) =>
     setTimeout(() => {
@@ -117,13 +119,14 @@ class Dashboard extends Component {
     );
     this.setState({ gameController: gameController });
 
-    let url = process.env.HARDHAT_RPC_URL;
+    /*
+    Event subscription option 1: good locally, not on testnets
+    // const url = process.env.MUMBAI_RPC_URL;
+    const url = process.env.GOERLI_RPC_URL;
     let p2 = new ethers.providers.JsonRpcProvider(url);
-    const gc2 = new ethers.Contract(
-      Addresses.gameController,
-      GameController.abi,
-      p2
-    );
+    gc2 = new ethers.Contract(Addresses.gameController, GameController.abi, p2);
+    console.log("Subscribing to events...");
+    console.log("GC2:", gc2);
     gc2.on("RoundStart", (hubAlias, startTime, gameID, groupID) => {
       this.roundStarted(hubAlias, gameID, groupID, startTime);
     });
@@ -136,6 +139,26 @@ class Dashboard extends Component {
     gc2.on("EnterWinners", (startTime, gameID, groupID) => {
       this.enterWinners(gameID, groupID, startTime);
     });
+    */
+    /*
+    Event subscription option 2
+    let options = {
+      fromBlock: 0,
+      address: [
+        Addresses.round1,
+        Addresses.round2,
+        Addresses.round3,
+        Addresses.round4,
+        Addresses.winners
+      ], //Only get events from specific addresses
+      topics: [settings.roundStartSubscriptionTopic] //What topics to subscribe to
+    };
+
+    let subscription = p.eth.subscribe("logs", options, (err, event) => {
+      //if (!err) console.log(event);
+    });
+    subscription.on("data", (event) => console.log(event));
+    */
   }
 
   async loadAccounts(p) {
@@ -155,6 +178,117 @@ class Dashboard extends Component {
 
   setGameID = (id) => {
     this.setState({ gameID: id });
+    let options = {
+      filter: {
+        gameID: [id]
+      },
+      fromBlock: 0
+    };
+
+    this.state.provider.eth.clearSubscriptions();
+
+    this.state.gameController.events
+      .RoundStart(options)
+      .on("data", (event) =>
+        this.roundStarted(
+          event.returnValues.hubAlias,
+          event.returnValues.gameID,
+          event.returnValues.groupID,
+          event.returnValues.startTime
+        )
+      );
+
+    this.state.gameController.events
+      .RevealStart(options)
+      .on("data", (event) =>
+        this.revealStarted(
+          event.returnValues.hubAlias,
+          event.returnValues.gameID,
+          event.returnValues.groupID,
+          event.returnValues.startTime
+        )
+      );
+
+    this.state.gameController.events
+      .RoundEnd(options)
+      .on("data", (event) =>
+        this.roundEnded(
+          event.returnValues.hubAlias,
+          event.returnValues.gameID,
+          event.returnValues.groupID,
+          event.returnValues.startTime
+        )
+      );
+
+    this.state.gameController.events
+      .EnterWinners(options)
+      .on("data", (event) =>
+        this.enterWinners(
+          event.returnValues.startTime,
+          event.returnValues.gameID,
+          event.returnValues.groupID
+        )
+      );
+    // subscribe to events now that we have a game ID
+    /*
+    // Event option 3: listening to past events, not good for real time updates
+    let options = {
+      filter: {
+        gameID: [id]
+      },
+      fromBlock: 0, //Number || "earliest" || "pending" || "latest"
+      toBlock: "latest"
+    };
+    
+    this.state.gameController
+      .getPastEvents("RoundStart", options)
+      .then((results) =>
+        this.roundStarted(
+          results[0].returnValues.hubAlias,
+          results[0].returnValues.gameID,
+          results[0].returnValues.groupID,
+          results[0].returnValues.startTime
+        )
+      )
+      .catch((err) => {});
+
+    this.state.gameController
+      .getPastEvents("RevealStart", options)
+      .then((results) =>
+        this.revealStarted(
+          results[0].returnValues.hubAlias,
+          results[0].returnValues.gameID,
+          results[0].returnValues.groupID,
+          results[0].returnValues.startTime
+        )
+      )
+      .catch((err) => {
+        console.log(err.message);
+      });
+
+    this.state.gameController
+      .getPastEvents("RoundEnd", options)
+      .then((results) =>
+        this.roundEnded(
+          results[0].returnValues.hubAlias,
+          results[0].returnValues.gameID,
+          results[0].returnValues.groupID,
+          results[0].returnValues.startTime
+        )
+      )
+      .catch((err) => {});
+
+    this.state.gameController
+      .getPastEvents("EnterWinners", options)
+      .then((results) =>
+        this.enterWinners(
+          results[0].returnValues.startTime,
+          results[0].returnValues.gameID,
+          results[0].returnValues.groupID
+        )
+      )
+      .catch((err) => {});
+      */
   };
 
   setPlayersInGame = (numPlayers) => {
@@ -223,6 +357,9 @@ class Dashboard extends Component {
   };
 
   revealStarted = (hubAlias, gameID, groupID, startTime) => {
+    // console.log(
+    //   `Reveal event: ${hubAlias}, ${gameID}, ${groupID}, ${startTime}`
+    // );
     if (gameID == this.state.gameID) {
       console.log(
         `Reveal Start: ${hubAlias}, ${startTime}, ${gameID}, ${groupID}`
@@ -277,7 +414,9 @@ class Dashboard extends Component {
             default:
               break;
           }
-          this.showHub(hubAlias);
+          if (this.state.currentHub != hubAlias) {
+            this.showHub(hubAlias);
+          }
         default:
           break;
       }
@@ -686,131 +825,135 @@ class Dashboard extends Component {
 
   abandonGame = async () => {
     console.log("Abandon game...");
-    const gc = this.state.gameController;
-    await gc.methods.abandonActiveGame().send({ from: this.state.accounts[0] });
+    await this.state.gameController.methods
+      .abandonActiveGame()
+      .send({ from: this.state.accounts[0] });
     await this.resetGame();
     this.showHub("hivemind.lobby");
   };
 
   showHub = async (hubAlias) => {
-    if (hubAlias != "hivemind.winners" && hubAlias != "hivemind.lobby") {
-      await this.loadQuestions(hubAlias);
-    }
-    if (hubAlias != "hivemind.lobby" && hubAlias != "hivemind.round1") {
-      await this.updatePlayerScore(hubAlias);
-    }
-    this.setState({ currentHub: hubAlias }, () => {
-      switch (hubAlias) {
-        case "hivemind.lobby":
-          this.setState({
-            showSecretPhrase: false,
-            showRound1: false,
-            showRound2: false,
-            showRound3: false,
-            showRound4: false,
-            showWinners: false,
-            showLobby: true,
-            showScoreRound2: false,
-            showScoreRound3: false,
-            showScoreRound4: false,
-            showScoreWinners: false,
-            title: "Lobby"
-          });
-          break;
-        case "hivemind.round1":
-          this.setState({
-            showSecretPhrase: true,
-            showRound1: true,
-            showRound2: false,
-            showRound3: false,
-            showRound4: false,
-            showWinners: false,
-            showLobby: false,
-            showScoreRound2: false,
-            showScoreRound3: false,
-            showScoreRound4: false,
-            showScoreWinners: false,
-            title: "Round 1",
-            round1InputLocked: false
-          });
-          this.FX_ROUND_1.play();
-          break;
-        case "hivemind.round2":
-          this.setState({
-            showSecretPhrase: true,
-            showRound1: false,
-            showRound2: true,
-            showRound3: false,
-            showRound4: false,
-            showWinners: false,
-            showLobby: false,
-            showScoreRound2: true,
-            showScoreRound3: false,
-            showScoreRound4: false,
-            showScoreWinners: false,
-            title: "Round 2",
-            round2InputLocked: false
-          });
-          this.FX_ROUND_2.play();
-          break;
-        case "hivemind.round3":
-          this.setState({
-            showSecretPhrase: true,
-            showRound1: false,
-            showRound2: false,
-            showRound3: true,
-            showRound4: false,
-            showWinners: false,
-            showLobby: false,
-            showScoreRound2: false,
-            showScoreRound3: true,
-            showScoreRound4: false,
-            showScoreWinners: false,
-            title: "Round 3",
-            round3InputLocked: false
-          });
-          this.FX_ROUND_3.play();
-          break;
-        case "hivemind.round4":
-          this.setState({
-            showSecretPhrase: true,
-            showRound1: false,
-            showRound2: false,
-            showRound3: false,
-            showRound4: true,
-            showWinners: false,
-            showLobby: false,
-            showScoreRound2: false,
-            showScoreRound3: false,
-            showScoreRound4: true,
-            showScoreWinners: false,
-            title: "Round 4",
-            round4InputLocked: false
-          });
-          this.FX_ROUND_4.play();
-          break;
-        case "hivemind.winners":
-          this.setState({
-            showSecretPhrase: false,
-            showRound1: false,
-            showRound2: false,
-            showRound3: false,
-            showRound4: false,
-            showWinners: true,
-            showLobby: false,
-            showScoreRound2: false,
-            showScoreRound3: false,
-            showScoreRound4: false,
-            showScoreWinners: true,
-            title: "Game Results"
-          });
-          this.FX_GAME_FINISH.play();
-          console.log("Play game finish");
-          break;
-        default:
-          break;
+    if (hubAlias != this.state.currentHub) {
+      if (hubAlias != "hivemind.winners" && hubAlias != "hivemind.lobby") {
+        await this.loadQuestions(hubAlias);
       }
-    });
+      if (hubAlias != "hivemind.lobby" && hubAlias != "hivemind.round1") {
+        await this.updatePlayerScore(hubAlias);
+      }
+
+      this.setState({ currentHub: hubAlias }, () => {
+        switch (hubAlias) {
+          case "hivemind.lobby":
+            this.setState({
+              showSecretPhrase: false,
+              showRound1: false,
+              showRound2: false,
+              showRound3: false,
+              showRound4: false,
+              showWinners: false,
+              showLobby: true,
+              showScoreRound2: false,
+              showScoreRound3: false,
+              showScoreRound4: false,
+              showScoreWinners: false,
+              title: "Lobby"
+            });
+            break;
+          case "hivemind.round1":
+            this.setState({
+              showSecretPhrase: true,
+              showRound1: true,
+              showRound2: false,
+              showRound3: false,
+              showRound4: false,
+              showWinners: false,
+              showLobby: false,
+              showScoreRound2: false,
+              showScoreRound3: false,
+              showScoreRound4: false,
+              showScoreWinners: false,
+              title: "Round 1",
+              round1InputLocked: false
+            });
+            this.FX_ROUND_1.play();
+            break;
+          case "hivemind.round2":
+            this.setState({
+              showSecretPhrase: true,
+              showRound1: false,
+              showRound2: true,
+              showRound3: false,
+              showRound4: false,
+              showWinners: false,
+              showLobby: false,
+              showScoreRound2: true,
+              showScoreRound3: false,
+              showScoreRound4: false,
+              showScoreWinners: false,
+              title: "Round 2",
+              round2InputLocked: false
+            });
+            this.FX_ROUND_2.play();
+            break;
+          case "hivemind.round3":
+            this.setState({
+              showSecretPhrase: true,
+              showRound1: false,
+              showRound2: false,
+              showRound3: true,
+              showRound4: false,
+              showWinners: false,
+              showLobby: false,
+              showScoreRound2: false,
+              showScoreRound3: true,
+              showScoreRound4: false,
+              showScoreWinners: false,
+              title: "Round 3",
+              round3InputLocked: false
+            });
+            this.FX_ROUND_3.play();
+            break;
+          case "hivemind.round4":
+            this.setState({
+              showSecretPhrase: true,
+              showRound1: false,
+              showRound2: false,
+              showRound3: false,
+              showRound4: true,
+              showWinners: false,
+              showLobby: false,
+              showScoreRound2: false,
+              showScoreRound3: false,
+              showScoreRound4: true,
+              showScoreWinners: false,
+              title: "Round 4",
+              round4InputLocked: false
+            });
+            this.FX_ROUND_4.play();
+            break;
+          case "hivemind.winners":
+            this.setState({
+              showSecretPhrase: false,
+              showRound1: false,
+              showRound2: false,
+              showRound3: false,
+              showRound4: false,
+              showWinners: true,
+              showLobby: false,
+              showScoreRound2: false,
+              showScoreRound3: false,
+              showScoreRound4: false,
+              showScoreWinners: true,
+              title: "Game Results"
+            });
+            this.FX_GAME_FINISH.play();
+            console.log("Play game finish");
+            break;
+          default:
+            break;
+        }
+      });
+    }
   };
 
   hubIsNew = (currentHubAlias, testHubAlias) => {
@@ -1018,6 +1161,9 @@ class Dashboard extends Component {
               question={this.state.round4Question}
               responses={this.state.round4Responses}
             />
+          </Grid.Row>
+          <Grid.Row>
+            <span onClick={this.abandonGame}>abandon game</span>
           </Grid.Row>
         </Grid>
       </Layout>

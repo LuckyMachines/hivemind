@@ -1,4 +1,5 @@
 {
-    "providerUrl": "http://127.0.0.1:8545",
-    "projectTitle": "Hivemind"
+    "projectTitle": "Hivemind",
+    "gasPrice": "40000000000",
+    "gasLimit": "2000000"
 }

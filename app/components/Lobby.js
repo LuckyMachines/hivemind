@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Button, Card } from "semantic-ui-react";
 import Addresses from "../../deployed-contracts.json";
+const settings = require("../settings");
+require("dotenv").config();
 
 const Lobby = (props) => {
   const [joinGameLoading, setJoinGameLoading] = useState(false);
@@ -22,9 +24,9 @@ const Lobby = (props) => {
 
           // TODO: set gas parameters
           if (!playerInGame) {
-            const tx = await gameController.methods
-              .joinGame()
-              .send({ from: accounts[0] });
+            const tx = await gameController.methods.joinGame().send({
+              from: accounts[0]
+            });
             console.log("Gas used to join game:", tx.gasUsed);
           }
           const currentGameID = await gameController.methods

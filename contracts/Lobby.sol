@@ -96,12 +96,21 @@ contract Lobby is Hub {
         }
     }
 
+    function canStart() public view returns (bool) {
+        return _canStartGame();
+    }
+
+    function currentGame() public view returns (uint256) {
+        return _currentGameID;
+    }
+
     function startGame() public {
-        if (_canStartGame()) {
-            _sendGroupToHub(railcarID[_currentGameID], gameHub);
-            _needsNewGameID = true;
-            joinCountdownStartTime = 0;
-        }
+        require(_canStartGame(), "unable to start game");
+
+        _sendGroupToHub(railcarID[_currentGameID], gameHub);
+        _needsNewGameID = true;
+        joinCountdownStartTime = 0;
+
         // can only call if game is ready to start
         // anyone can call this
     }
@@ -147,15 +156,22 @@ contract Lobby is Hub {
     }
 
     // Internal functions
-    function _canStartGame() internal view returns (bool canStart) {
+    function _canStartGame() internal view returns (bool canStartGame) {
+        canStartGame = false;
         if (
             block.timestamp >= (joinCountdownStartTime + timeLimitToJoin) ||
             playerCount[_currentGameID] >= playerLimit
         ) {
-            canStart = true;
-        } else {
-            canStart = false;
+            if (!_needsNewGameID) {
+                // if this is false we have an unstarted game
+                // if true, _currentGameID will not be an active game
+                canStartGame = true;
+            }
         }
+    }
+
+    function _groupCanExit(uint256) internal pure override returns (bool) {
+        return true;
     }
 }
 

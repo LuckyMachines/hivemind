@@ -105,12 +105,6 @@ async function main() {
   //
   const Questions = await ethers.getContractFactory("Questions");
   const ScoreKeeper = await ethers.getContractFactory("ScoreKeeper");
-  const Lobby = await ethers.getContractFactory("Lobby");
-  const GameRound = await ethers.getContractFactory("GameRound");
-  const Winners = await ethers.getContractFactory("Winners");
-  const GameController = await ethers.getContractFactory("GameController");
-
-  // TODO: grantScoreSetterRole() for all rounds & lobby
 
   console.log("Deploying Question Pack 1...");
   const qp1 = await Questions.deploy(questions1, responses1);
@@ -132,99 +126,10 @@ async function main() {
   const scoreKeeper = await ScoreKeeper.deploy();
   await scoreKeeper.deployed();
 
-  console.log("Deploying Lobby...");
-  const lobby = await Lobby.deploy(
-    "hivemind.lobby",
-    scoreKeeper.address,
-    railYard,
-    "hivemind.round1",
-    hubRegistry,
-    adminAddress
-  );
-  await lobby.deployed();
-
-  console.log("Deploying Game Controller...");
-  const gameController = await GameController.deploy(
-    lobby.address,
-    scoreKeeper.address,
-    railYard,
-    hubRegistry
-  );
-  await gameController.deployed();
-
-  console.log("Deploying Round 1...");
-  const round1 = await GameRound.deploy(
-    "hivemind.round1",
-    "hivemind.round2",
-    qp1.address,
-    scoreKeeper.address,
-    gameController.address,
-    railYard,
-    hubRegistry,
-    adminAddress
-  );
-  await round1.deployed();
-
-  console.log("Deploying Round 2...");
-  const round2 = await GameRound.deploy(
-    "hivemind.round2",
-    "hivemind.round3",
-    qp2.address,
-    scoreKeeper.address,
-    gameController.address,
-    railYard,
-    hubRegistry,
-    adminAddress
-  );
-  await round2.deployed();
-
-  console.log("Deploying Round 3...");
-  const round3 = await GameRound.deploy(
-    "hivemind.round3",
-    "hivemind.round4",
-    qp3.address,
-    scoreKeeper.address,
-    gameController.address,
-    railYard,
-    hubRegistry,
-    adminAddress
-  );
-  await round3.deployed();
-
-  console.log("Deploying Round 4...");
-  const round4 = await GameRound.deploy(
-    "hivemind.round4",
-    "hivemind.winners",
-    qp4.address,
-    scoreKeeper.address,
-    gameController.address,
-    railYard,
-    hubRegistry,
-    adminAddress
-  );
-  await round4.deployed();
-
-  console.log("Deploying Winners...");
-  const winners = await Winners.deploy(
-    "hivemind.winners",
-    scoreKeeper.address,
-    gameController.address,
-    hubRegistry,
-    adminAddress
-  );
-  await winners.deployed();
-
   let deployedContractsJSON = {
     hubRegistry: hubRegistry,
     railYard: railYard,
-    gameController: gameController.address,
     scoreKeeper: scoreKeeper.address,
-    lobby: lobby.address,
-    round1: round1.address,
-    round2: round2.address,
-    round3: round3.address,
-    round4: round4.address,
-    winners: winners.address,
     questionPack1: qp1.address,
     questionPack2: qp2.address,
     questionPack3: qp3.address,

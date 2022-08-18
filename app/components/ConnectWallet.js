@@ -3,9 +3,10 @@ import { Button } from "semantic-ui-react";
 import Web3 from "web3";
 
 const ConnectWallet = (props) => {
-  const REQUIRED_CHAIN_ID = "0x7a69"; // hardhat
+  // const REQUIRED_CHAIN_ID = "0x7a69"; // hardhat
   // const REQUIRED_CHAIN_ID = "0x89"; // polygon
   // const REQUIRED_CHAIN_ID = "0x13881"; // mumbai
+  const REQUIRED_CHAIN_ID = "0x5"; // goerli
   let provider;
   let accounts;
   const [connectWalletLoading, setConnectedWalletLoading] = useState(false);
