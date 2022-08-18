@@ -1,7 +1,7 @@
 {
     "adminAddress": "0x7E0023bCA4AB785b56E081c37719BA85078c80ed",
-    "vrfCoordinator": "0x2Ca8E0C643bDe4C2E08ab1fA0da3401AdAD7734D",
-    "vrfKeyHash": "0x79d3d8832d904592c0bf9818b621522c988bb8b0c05cdc3b15aea1b6e8db0c15",
-    "vrfSubscriptionID": "177",
+    "vrfCoordinator": "0x7a1BaC17Ccc5b313516C5E16fb24f7659aA5ebed",
+    "vrfKeyHash": "0x4b09e658ed251bcafeebbc69400383d49f344ace09b9576fe248bb02c003fe9f",
+    "vrfSubscriptionID": "1436",
     "roundStartSubscriptionTopic": "0xb8e739e183816db7efb807c19f755ee2640f56c3421352fdd1f89f809dc114af"
 }

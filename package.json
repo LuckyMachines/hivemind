@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "deploy": "npx hardhat run --network hh scripts/deploy-registry.js;npx hardhat run --network hh scripts/deploy-rail-yard.js;npx hardhat run --network hh scripts/deploy-hivemind-core.js;npx hardhat run --network hh scripts/deploy-hivemind-game.js;npx hardhat run --network hh scripts/connect-hivemind.js",
-    "deploy-goerli": "npx hardhat run --network goerli scripts/deploy-registry.js;npx hardhat run --network goerli scripts/deploy-rail-yard.js;npx hardhat run --network goerli scripts/deploy-hivemind-core.js;npx hardhat run --network goerli scripts/deploy-hivemind-game.js;npx hardhat run --network goerli scripts/connect-hivemind.js;npx hardhat run --network goerli scripts/railway-connections.js"
+    "deploy-goerli": "npx hardhat run --network goerli scripts/deploy-registry.js;npx hardhat run --network goerli scripts/deploy-rail-yard.js;npx hardhat run --network goerli scripts/deploy-hivemind-core.js;npx hardhat run --network goerli scripts/deploy-hivemind-game.js;npx hardhat run --network goerli scripts/connect-hivemind.js;npx hardhat run --network goerli scripts/railway-connections.js",
+    "deploy-mumbai": "npx hardhat run --network mumbai scripts/deploy-registry.js;npx hardhat run --network mumbai scripts/deploy-rail-yard.js;npx hardhat run --network mumbai scripts/deploy-hivemind-core.js;npx hardhat run --network mumbai scripts/deploy-hivemind-game.js;npx hardhat run --network mumbai scripts/connect-hivemind.js;npx hardhat run --network mumbai scripts/railway-connections.js"
   },
   "repository": {
     "type": "git",
