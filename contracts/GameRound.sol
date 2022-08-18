@@ -248,6 +248,11 @@ contract GameRound is Hub, VRFConsumerBaseV2 {
                 // assign points to winners
                 findWinners(railcarID);
 
+                HIVEMIND_KEEPER.deregisterGameRound(
+                    gameID,
+                    HivemindKeeper.Queue(_queueType)
+                );
+
                 GAME_CONTROLLER.roundEnd(
                     hubName,
                     block.timestamp,
@@ -302,6 +307,11 @@ contract GameRound is Hub, VRFConsumerBaseV2 {
         if (questionSeed[gameID] != 0) {
             (question[gameID], responses[gameID]) = QUESTIONS
                 .getQuestionWithSeed(questionSeed[gameID]);
+
+            HIVEMIND_KEEPER.registerGameRound(
+                gameID,
+                HivemindKeeper.Queue(_queueType)
+            );
 
             GAME_CONTROLLER.roundStart(
                 hubName,

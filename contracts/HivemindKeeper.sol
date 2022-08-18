@@ -43,8 +43,10 @@ contract HivemindKeeper is KeeperCompatibleInterface, AccessControlEnumerable {
     Winners WINNERS;
     // Mapping from Queue enum
     mapping(Queue => uint256[]) public queue; // index of games that need update
+    mapping(Queue => uint256) public queueIndex; // index of queue to be passed for certain upkeeps
     // Mapping from Queue enum => game id
     mapping(Queue => mapping(uint256 => Action)) public action; // Action to be performed on queue for game
+    uint256[2][] public registeredGameRounds;
 
     constructor(
         address lobbyAddress,
@@ -61,6 +63,12 @@ contract HivemindKeeper is KeeperCompatibleInterface, AccessControlEnumerable {
         ROUND_3 = GameRound(round3Address);
         ROUND_4 = GameRound(round4Address);
         WINNERS = Winners(winnersAddress);
+        queueIndex[Queue.Lobby] = LOBBY_INDEX;
+        queueIndex[Queue.Round1] = ROUND_1_INDEX;
+        queueIndex[Queue.Round2] = ROUND_2_INDEX;
+        queueIndex[Queue.Round3] = ROUND_3_INDEX;
+        queueIndex[Queue.Round4] = ROUND_4_INDEX;
+        queueIndex[Queue.Winners] = WINNERS_INDEX;
     }
 
     // Queue Role functions
@@ -70,6 +78,45 @@ contract HivemindKeeper is KeeperCompatibleInterface, AccessControlEnumerable {
         uint256 gameID
     ) public onlyRole(QUEUE_ROLE) {
         _addActionToQueue(actionType, queueType, gameID);
+    }
+
+    function registerGameRound(uint256 gameID, Queue roundQueue)
+        public
+        onlyRole(QUEUE_ROLE)
+    {
+        registeredGameRounds.push([gameID, uint256(roundQueue)]);
+    }
+
+    function deregisterGameRound(uint256 gameID, Queue roundQueue)
+        public
+        onlyRole(QUEUE_ROLE)
+    {
+        int256 indexMatch = -1;
+        for (uint256 i = 0; i < registeredGameRounds.length; i++) {
+            if (
+                registeredGameRounds[i][0] == gameID &&
+                registeredGameRounds[i][1] == uint256(roundQueue)
+            ) {
+                indexMatch = int256(i);
+                break;
+            }
+            if (registeredGameRounds[i][0] == 0) {
+                break;
+            }
+        }
+        if (indexMatch > -1) {
+            uint256 index = uint256(indexMatch);
+            //delete registeredGameRounds[index];
+
+            for (uint256 j = index; j < registeredGameRounds.length - 1; j++) {
+                registeredGameRounds[j] = registeredGameRounds[j + 1];
+                if (registeredGameRounds[j][0] == 0 && gameID != 0) {
+                    // we are past the end of the values we want
+                    break;
+                }
+            }
+            delete registeredGameRounds[registeredGameRounds.length - 1];
+        }
     }
 
     // Chainlink Keeper functions
@@ -83,10 +130,10 @@ contract HivemindKeeper is KeeperCompatibleInterface, AccessControlEnumerable {
         performData = bytes("");
         Queue _queue;
         Action _action;
-        uint256 queueIndex;
+        uint256 _queueIndex;
         bool needsUpdate;
         uint256 gameID;
-        (needsUpdate, queueIndex, _action, gameID) = _queueNeedsUpdate(
+        (needsUpdate, _queueIndex, _action, gameID) = _queueNeedsUpdate(
             Queue.Lobby
         );
         if (needsUpdate) {
@@ -95,13 +142,13 @@ contract HivemindKeeper is KeeperCompatibleInterface, AccessControlEnumerable {
             performData = abi.encode(
                 uint256(_queue),
                 uint256(_action),
-                queueIndex,
+                _queueIndex,
                 gameID
             );
             // save everything to performData
             return (upkeepNeeded, performData);
         }
-        (needsUpdate, queueIndex, _action, gameID) = _queueNeedsUpdate(
+        (needsUpdate, _queueIndex, _action, gameID) = _queueNeedsUpdate(
             Queue.Round1
         );
         if (needsUpdate) {
@@ -110,13 +157,13 @@ contract HivemindKeeper is KeeperCompatibleInterface, AccessControlEnumerable {
             performData = abi.encode(
                 uint256(_queue),
                 uint256(_action),
-                queueIndex,
+                _queueIndex,
                 gameID
             );
             // save everything to performData
             return (upkeepNeeded, performData);
         }
-        (needsUpdate, queueIndex, _action, gameID) = _queueNeedsUpdate(
+        (needsUpdate, _queueIndex, _action, gameID) = _queueNeedsUpdate(
             Queue.Round2
         );
         if (needsUpdate) {
@@ -125,13 +172,13 @@ contract HivemindKeeper is KeeperCompatibleInterface, AccessControlEnumerable {
             performData = abi.encode(
                 uint256(_queue),
                 uint256(_action),
-                queueIndex,
+                _queueIndex,
                 gameID
             );
             // save everything to performData
             return (upkeepNeeded, performData);
         }
-        (needsUpdate, queueIndex, _action, gameID) = _queueNeedsUpdate(
+        (needsUpdate, _queueIndex, _action, gameID) = _queueNeedsUpdate(
             Queue.Round3
         );
         if (needsUpdate) {
@@ -140,13 +187,13 @@ contract HivemindKeeper is KeeperCompatibleInterface, AccessControlEnumerable {
             performData = abi.encode(
                 uint256(_queue),
                 uint256(_action),
-                queueIndex,
+                _queueIndex,
                 gameID
             );
             // save everything to performData
             return (upkeepNeeded, performData);
         }
-        (needsUpdate, queueIndex, _action, gameID) = _queueNeedsUpdate(
+        (needsUpdate, _queueIndex, _action, gameID) = _queueNeedsUpdate(
             Queue.Round4
         );
         if (needsUpdate) {
@@ -155,13 +202,13 @@ contract HivemindKeeper is KeeperCompatibleInterface, AccessControlEnumerable {
             performData = abi.encode(
                 uint256(_queue),
                 uint256(_action),
-                queueIndex,
+                _queueIndex,
                 gameID
             );
             // save everything to performData
             return (upkeepNeeded, performData);
         }
-        (needsUpdate, queueIndex, _action, gameID) = _queueNeedsUpdate(
+        (needsUpdate, _queueIndex, _action, gameID) = _queueNeedsUpdate(
             Queue.Winners
         );
         if (needsUpdate) {
@@ -170,7 +217,7 @@ contract HivemindKeeper is KeeperCompatibleInterface, AccessControlEnumerable {
             performData = abi.encode(
                 uint256(_queue),
                 uint256(_action),
-                queueIndex,
+                _queueIndex,
                 gameID
             );
             // save everything to performData
@@ -232,10 +279,9 @@ contract HivemindKeeper is KeeperCompatibleInterface, AccessControlEnumerable {
             } else if (q == Queue.Round1) {
                 // Round 1
                 if (a == Action.StartRound) {
-                    // Start Round
                     ROUND_1.startNewRound(_gameID);
                 } else if (a == Action.UpdatePhase) {
-                    // Start Reveal
+                    ROUND_1.updatePhase(_gameID);
                 } else if (a == Action.Clean) {
                     // Clean Queue
                 }
@@ -243,8 +289,9 @@ contract HivemindKeeper is KeeperCompatibleInterface, AccessControlEnumerable {
                 // Round 2
                 if (a == Action.StartRound) {
                     // Start Round
+                    ROUND_2.startNewRound(_gameID);
                 } else if (a == Action.UpdatePhase) {
-                    // Start Reveal
+                    ROUND_2.updatePhase(_gameID);
                 } else if (a == Action.Clean) {
                     // Clean Queue
                 }
@@ -252,8 +299,9 @@ contract HivemindKeeper is KeeperCompatibleInterface, AccessControlEnumerable {
                 // Round 3
                 if (a == Action.StartRound) {
                     // Start Round
+                    ROUND_3.startNewRound(_gameID);
                 } else if (a == Action.UpdatePhase) {
-                    // Start Reveal
+                    ROUND_3.updatePhase(_gameID);
                 } else if (a == Action.Clean) {
                     // Clean Queue
                 }
@@ -261,8 +309,9 @@ contract HivemindKeeper is KeeperCompatibleInterface, AccessControlEnumerable {
                 // Round 4
                 if (a == Action.StartRound) {
                     // Start Round
+                    ROUND_4.startNewRound(_gameID);
                 } else if (a == Action.UpdatePhase) {
-                    // Start Reveal
+                    ROUND_4.updatePhase(_gameID);
                 } else if (a == Action.Clean) {
                     // Clean Queue
                 }
@@ -351,37 +400,73 @@ contract HivemindKeeper is KeeperCompatibleInterface, AccessControlEnumerable {
             return (needsUpdate, index, queueAction, LOBBY.currentGame());
         }
 
-        // TODO:
         // Game Rounds
+        for (uint256 i = 0; i < registeredGameRounds.length; i++) {
+            if (
+                registeredGameRounds[i][0] > 0 && registeredGameRounds[i][1] > 0
+            ) {
+                needsUpdate = _checkGameRoundNeedsUpdate(
+                    registeredGameRounds[i][0],
+                    Queue(registeredGameRounds[i][1])
+                );
+            }
+            if (needsUpdate) {
+                index = queueIndex[Queue(registeredGameRounds[i][1])];
+                queueAction = Action.UpdatePhase;
+                return (
+                    needsUpdate,
+                    index,
+                    queueAction,
+                    registeredGameRounds[i][0]
+                );
+            }
+        }
+    }
+
+    function _checkGameRoundNeedsUpdate(uint256 gameID, Queue roundQueue)
+        internal
+        view
+        returns (bool needsUpdate)
+    {
+        needsUpdate = false;
+        if (roundQueue == Queue.Round1) {
+            needsUpdate = ROUND_1.needsUpdate(gameID);
+        } else if (roundQueue == Queue.Round2) {
+            needsUpdate = ROUND_2.needsUpdate(gameID);
+        } else if (roundQueue == Queue.Round3) {
+            needsUpdate = ROUND_3.needsUpdate(gameID);
+        } else if (roundQueue == Queue.Round4) {
+            needsUpdate = ROUND_4.needsUpdate(gameID);
+        }
     }
 
     function _verifyCanUpdate(
         Queue queueType,
         Action queueAction,
-        uint256 queueIndex,
+        uint256 _queueIndex,
         uint256 gameID
     ) internal view returns (bool canUpdate) {
         canUpdate = false;
         if (queueAction != Action.None) {
-            if (queueIndex == LOBBY_INDEX) {
+            if (_queueIndex == LOBBY_INDEX) {
                 canUpdate = LOBBY.canStart();
             } else if (
-                queueIndex < LOBBY_INDEX &&
-                queue[queueType][queueIndex] != 0 &&
-                queue[queueType][queueIndex] == gameID
+                _queueIndex < LOBBY_INDEX &&
+                queue[queueType][_queueIndex] != 0 &&
+                queue[queueType][_queueIndex] == gameID
             ) {
                 canUpdate = true;
             } else if (
-                queueIndex == ROUND_1_INDEX ||
-                queueIndex == ROUND_2_INDEX ||
-                queueIndex == ROUND_3_INDEX ||
-                queueIndex == ROUND_4_INDEX
+                _queueIndex == ROUND_1_INDEX ||
+                _queueIndex == ROUND_2_INDEX ||
+                _queueIndex == ROUND_3_INDEX ||
+                _queueIndex == ROUND_4_INDEX
             ) {
                 // This can always be true, if not possible to update,
                 // this will complete without updating anything
                 // and be removed from the queue
                 canUpdate = true;
-            } else if (queueIndex == WINNERS_INDEX) {
+            } else if (_queueIndex == WINNERS_INDEX) {
                 // TODO:
                 // Check if this can be updated...
                 canUpdate = true;
