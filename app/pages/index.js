@@ -176,7 +176,7 @@ class Dashboard extends Component {
     this.setState({ accounts: a });
   };
 
-  setGameID = (id) => {
+  setGameID = async (id) => {
     this.setState({ gameID: id });
     let options = {
       filter: {
@@ -184,7 +184,16 @@ class Dashboard extends Component {
       },
       fromBlock: 0
     };
-
+    try {
+      let currentRound = await this.state.gameController.methods
+        .getLatestRound(id)
+        .call();
+      await this.showHub(currentRound);
+    } catch (err) {
+      {
+        console.log("Error loading railcar:", err.message);
+      }
+    }
     this.state.provider.eth.clearSubscriptions();
 
     this.state.gameController.events
@@ -347,6 +356,7 @@ class Dashboard extends Component {
 
   roundStarted = async (hubAlias, gameID, groupID, startTime) => {
     console.log("Round started:", hubAlias);
+    console.log("Game ID", gameID);
     if (
       gameID == this.state.gameID &&
       this.hubIsNew(this.state.currentHub, hubAlias)

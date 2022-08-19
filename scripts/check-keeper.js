@@ -8,7 +8,7 @@ const fs = require("fs");
 require("dotenv").config();
 
 async function main() {
-  //const PROVIDER_URL = process.env.GOERLI_RPC_URL;
+  // const PROVIDER_URL = process.env.GOERLI_RPC_URL;
   const PROVIDER_URL = process.env.MUMBAI_RPC_URL;
   // console.log("Provider URL:", PROVIDER_URL);
 
@@ -43,10 +43,13 @@ async function main() {
     //   .keeperCanUpdate(keeperUpdates.performData)
     //   .call();
     // console.log("Can update:", canUpdate);
-    // let tx = await keeper.methods
-    //   .performUpkeep(keeperUpdates.performData)
-    //   .send({ from: accounts[0], gasLimit: "800000" });
-    // console.log("Gas used:", tx.gasUsed);
+    console.log("Performing updates...");
+    let tx = await keeper.methods
+      .performUpkeep(keeperUpdates.performData)
+      .send({ from: accounts[0], gasLimit: "800000" });
+    console.log("Gas used:", tx.gasUsed);
+    // let queue = await keeper.methods.getQueue(0).call();
+    // console.log("Queue item 1:", queue);
   } catch (err) {
     console.log("Error getting keeper updates:", err.message);
   }

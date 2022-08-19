@@ -15,7 +15,7 @@ contract Lobby is Hub {
     bool private _needsNewGameID; // set to true when game has started
 
     uint256 public timeLimitToJoin = 300; // Countdown starts after 2nd player joins
-    uint256 public playerLimit = 3; // game automatically starts if player limit reached
+    uint256 public playerLimit = 20; // game automatically starts if player limit reached
     uint256 public joinCountdownStartTime;
     string public gameHub;
 

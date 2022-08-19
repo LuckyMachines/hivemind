@@ -4,8 +4,6 @@ import { Button, Card } from "semantic-ui-react";
 
 const Question = (props) => {
   const [submitLoading, setSubmitLoading] = useState(false);
-  //const [playerChoice, setPlayerChoice] = useState("");
-  //const [crowdChoice, setCrowdChoice] = useState("");
   const web3 = props.provider;
   const unselectedColor = "grey";
   const selectedColor = "blue";
@@ -15,9 +13,9 @@ const Question = (props) => {
     if (web3) {
       try {
         if (props.buttonText == "Submit Answers") {
-          props.submitChoices(props.playerChoice, props.crowdChoice);
+          await props.submitChoices(props.playerChoice, props.crowdChoice);
         } else if (props.buttonText == "Reveal Answers") {
-          props.revealChoices(props.playerChoice, props.crowdChoice);
+          await props.revealChoices(props.playerChoice, props.crowdChoice);
         } else {
           console.log("This button does nothing, but have fun clicking away!");
         }

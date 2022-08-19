@@ -1,14 +1,10 @@
 import React, { useState } from "react";
 import { Button, Card } from "semantic-ui-react";
-import Addresses from "../../deployed-contracts.json";
 const settings = require("../settings");
 require("dotenv").config();
 
 const Lobby = (props) => {
   const [joinGameLoading, setJoinGameLoading] = useState(false);
-  // const [playersInGame, setPlayersInGame] = useState("(Not in game)");
-  // const [gameID, setGameID] = useState("(Not in game)");
-  // const [buttonText, setButtonText] = useState("Join Game");
   const web3 = props.provider;
   const accounts = props.accounts;
   const gameController = props.gameController;
@@ -26,7 +22,8 @@ const Lobby = (props) => {
           if (!playerInGame) {
             const tx = await gameController.methods.joinGame().send({
               from: accounts[0],
-              maxFeePerGas: settings.gasPrice
+              gasLimit: settings.gasLimit,
+              gasPrice: settings.gasPrice
             });
             console.log("Gas used to join game:", tx.gasUsed);
           }
@@ -34,12 +31,12 @@ const Lobby = (props) => {
             .getCurrentGame(accounts[0])
             .call();
           console.log("New game ID:", currentGameID);
-          props.setGameID(currentGameID);
           const playerCount = await gameController.methods
             .getPlayerCount(currentGameID)
             .call();
           props.setPlayersInGame(playerCount);
           props.setLobbyButton("Waiting for game to start...");
+          props.setGameID(currentGameID);
         } else if (buttonText == "Start Game") {
           // move into next round (probably do this automatically without button)
         } else {

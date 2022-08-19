@@ -71,6 +71,14 @@ contract HivemindKeeper is KeeperCompatibleInterface, AccessControlEnumerable {
         queueIndex[Queue.Winners] = WINNERS_INDEX;
     }
 
+    function getQueue(uint256 queueType)
+        public
+        view
+        returns (uint256[] memory)
+    {
+        return queue[Queue(queueType)];
+    }
+
     // Queue Role functions
     function addActionToQueue(
         Action actionType,

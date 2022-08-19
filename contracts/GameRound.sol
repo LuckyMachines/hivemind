@@ -391,6 +391,9 @@ contract GameRound is Hub, VRFConsumerBaseV2 {
         ) {
             winningChoiceIndex[gameID].push(3);
         }
+        if (winningChoiceIndex[gameID].length == 0) {
+            winningChoiceIndex[gameID].push(10);
+        }
 
         address[] memory players = RAIL_YARD.getRailcarMembers(railcarID);
         if (winningChoiceIndex[gameID].length == 4) {
@@ -399,6 +402,8 @@ contract GameRound is Hub, VRFConsumerBaseV2 {
                 SCORE_KEEPER.increaseScore(winningPoints, gameID, players[i]);
                 roundWinner[gameID][players[i]] = true;
             }
+        } else if (winningChoiceIndex[gameID][0] == 10) {
+            // no winning choice
         } else {
             for (uint256 i = 0; i < players.length; i++) {
                 for (

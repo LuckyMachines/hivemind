@@ -84,7 +84,7 @@ async function main() {
   const round4 = await GameRound.deploy(
     "hivemind.round4",
     "hivemind.winners",
-    deployedContracts.questionPack3,
+    deployedContracts.questionPack4,
     deployedContracts.scoreKeeper,
     gameController.address,
     deployedContracts.railYard,

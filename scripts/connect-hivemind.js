@@ -1,4 +1,4 @@
-// `npx hardhat run scripts/deploy-hivemind.js`
+// `npx hardhat run scripts/connect-hivemind.js`
 const { ethers } = require("hardhat");
 const deployedContracts = require("../deployed-contracts.json");
 const settings = require("../hivemind-settings.json");
