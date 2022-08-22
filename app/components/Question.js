@@ -13,13 +13,6 @@ const Question = (props) => {
     if (web3) {
       try {
         if (props.buttonText == "Submit Answers") {
-          // submit hash instead
-          /*
-          const encoded = web3.eth.abi.encodeParameters(['string'],['test1'])
-          const hash = web3.utils.sha3(encoded, {encoding: 'hex'})
-          keccak256(
-            abi.encode(questionAnswer, crowdAnswer, secretPhrase)
-          */
           const encodedChoices = web3.eth.abi.encodeParameters([
             props.playerChoice,
             props.crowdChoice,
