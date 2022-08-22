@@ -656,19 +656,13 @@ class Dashboard extends Component {
     }
   };
 
-  submitChoices = async (playerChoice, crowdChoice) => {
+  submitChoices = async (hashedChoices) => {
     // send player choice, crowd choice, and secret phrase to contract
-    console.log(`${playerChoice}, ${crowdChoice}, ${this.state.secretPhrase}`);
+    console.log(`${hashedChoices}`);
     const gc = this.state.gameController;
     try {
       const tx = await gc.methods
-        .submitAnswers(
-          playerChoice,
-          crowdChoice,
-          this.state.secretPhrase,
-          this.state.gameID,
-          this.state.currentHub
-        )
+        .submitAnswers(hashedChoices, this.state.gameID, this.state.currentHub)
         .send({ from: this.state.accounts[0] });
       console.log("Submitted Answers. Gas Used:", tx.gasUsed);
 
@@ -1082,6 +1076,7 @@ class Dashboard extends Component {
               setCrowdChoice={this.setCrowdChoice}
               submitChoices={this.submitChoices}
               revealChoices={this.revealChoices}
+              secretPhrase={this.state.secretPhrase}
             />
             <Question
               question={this.state.round2Question}
@@ -1096,6 +1091,7 @@ class Dashboard extends Component {
               setCrowdChoice={this.setCrowdChoice}
               submitChoices={this.submitChoices}
               revealChoices={this.revealChoices}
+              secretPhrase={this.state.secretPhrase}
             />
             <Question
               question={this.state.round3Question}
@@ -1110,6 +1106,7 @@ class Dashboard extends Component {
               setCrowdChoice={this.setCrowdChoice}
               submitChoices={this.submitChoices}
               revealChoices={this.revealChoices}
+              secretPhrase={this.state.secretPhrase}
             />
             <Question
               question={this.state.round4Question}
@@ -1124,6 +1121,7 @@ class Dashboard extends Component {
               setCrowdChoice={this.setCrowdChoice}
               submitChoices={this.submitChoices}
               revealChoices={this.revealChoices}
+              secretPhrase={this.state.secretPhrase}
             />
             <Winners
               accounts={this.state.accounts}

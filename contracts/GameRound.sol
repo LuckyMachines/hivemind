@@ -137,12 +137,7 @@ contract GameRound is Hub, VRFConsumerBaseV2 {
     }
 
     // submit answers (will be stored in secret)
-    function submitAnswers(
-        string memory questionAnswer,
-        string memory crowdAnswer,
-        string memory secretPhrase,
-        uint256 gameID
-    ) public {
+    function submitAnswers(bytes32 _hashedAnswer, uint256 gameID) public {
         address player = tx.origin;
         require(playerIsInHub(gameID, player), "Player is not in this hub");
         require(
@@ -153,10 +148,7 @@ contract GameRound is Hub, VRFConsumerBaseV2 {
             block.timestamp < roundStartTime[gameID] + roundTimeLimit,
             "Cannot submit answers. Round time limit has passed."
         );
-        bytes32 inputHash = keccak256(
-            abi.encode(questionAnswer, crowdAnswer, secretPhrase)
-        );
-        hashedAnswer[gameID][player] = inputHash;
+        hashedAnswer[gameID][player] = _hashedAnswer;
         totalResponses[gameID]++;
         SCORE_KEEPER.increaseScore(submissionPoints, gameID, player);
         if (totalResponses[gameID] >= GAME_CONTROLLER.getPlayerCount(gameID)) {

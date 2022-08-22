@@ -59,16 +59,12 @@ contract GameController is AccessControlEnumerable {
     }
 
     function submitAnswers(
-        string memory questionAnswer,
-        string memory crowdAnswer,
-        string memory secretPhrase,
+        bytes32 _hashedAnswer,
         uint256 gameID,
         string memory hubAlias
     ) public {
         GameRound(HUB_REGISTRY.addressFromName(hubAlias)).submitAnswers(
-            questionAnswer,
-            crowdAnswer,
-            secretPhrase,
+            _hashedAnswer,
             gameID
         );
     }
