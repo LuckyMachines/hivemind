@@ -437,6 +437,7 @@ contract HivemindKeeper is KeeperCompatibleInterface, AccessControlEnumerable {
         returns (bool needsUpdate)
     {
         needsUpdate = false;
+        /*
         if (roundQueue == Queue.Round1) {
             needsUpdate = ROUND_1.needsUpdate(gameID);
         } else if (roundQueue == Queue.Round2) {
@@ -446,6 +447,7 @@ contract HivemindKeeper is KeeperCompatibleInterface, AccessControlEnumerable {
         } else if (roundQueue == Queue.Round4) {
             needsUpdate = ROUND_4.needsUpdate(gameID);
         }
+        */
     }
 
     function _verifyCanUpdate(
