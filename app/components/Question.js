@@ -11,16 +11,20 @@ const Question = (props) => {
   const submit = async () => {
     setSubmitLoading(true);
     if (web3) {
+      console.log("Player choice:", props.playerChoice);
+      console.log("Crowd choice:", props.crowdChoice);
+      console.log("Secret Phase choice:", props.secretPhrase);
       try {
         if (props.buttonText == "Submit Answers") {
-          const encodedChoices = web3.eth.abi.encodeParameters([
-            props.playerChoice,
-            props.crowdChoice,
-            props.secretPhrase
-          ]);
+          const encodedChoices = web3.eth.abi.encodeParameters(
+            ["string", "string", "string"],
+            [props.playerChoice, props.crowdChoice, props.secretPhrase]
+          );
+          console.log("Encoded:", encodedChoices);
           const hashedChoices = web3.utils.sha3(encodedChoices, {
             encoding: "hex"
           });
+          console.log("Hashed:", hashedChoices);
           await props.submitChoices(hashedChoices);
         } else if (props.buttonText == "Reveal Answers") {
           await props.revealChoices(props.playerChoice, props.crowdChoice);

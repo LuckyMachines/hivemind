@@ -665,7 +665,10 @@ class Dashboard extends Component {
         .submitAnswers(hashedChoices, this.state.gameID, this.state.currentHub)
         .send({ from: this.state.accounts[0] });
       console.log("Submitted Answers. Gas Used:", tx.gasUsed);
-
+    } catch (err) {
+      console.log("Error submitting choices:", err.message);
+    }
+    try {
       switch (this.state.currentHub) {
         case "hivemind.round1":
           this.setState({
@@ -698,12 +701,12 @@ class Dashboard extends Component {
       let web3 = this.state.provider;
       const gameRound = new web3.eth.Contract(GameRound.abi, Addresses.round1);
 
-      let hashedChoices = await gameRound.methods
-        .hashedAnswer(this.state.gameID, this.state.accounts[0])
-        .call();
-      console.log("Choices submitted:", hashedChoices);
+      // let hashedChoices = await gameRound.methods
+      //   .hashedAnswer(this.state.gameID, this.state.accounts[0])
+      //   .call();
+      // console.log("Choices submitted:", hashedChoices);
     } catch (err) {
-      console.log("Error submitting choices:", err.message);
+      console.log(err.message);
     }
   };
 
