@@ -4,12 +4,14 @@
 
 Contracts for this project are deployed on the Polygon Mumbai testnet. Test MATIC is required to play this game.
 
+## Move into app directory
+
+`cd app`
+
 ## Install
 
 `yarn`
 
 ## Run Game Locally
-
-`cd app`
 
 `yarn dev`
