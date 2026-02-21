@@ -6,6 +6,8 @@ import {stdJson} from "forge-std/StdJson.sol";
 import {Questions} from "../src/Questions.sol";
 import {ScoreKeeper} from "../src/ScoreKeeper.sol";
 
+/// @title DeployHivemindCore - Deploys 4 Question Packs + ScoreKeeper
+/// @notice Run `node script/csv-to-json.js` first to generate questions/questions.json from CSVs
 contract DeployHivemindCore is Script {
     using stdJson for string;
 
@@ -17,39 +19,18 @@ contract DeployHivemindCore is Script {
         address admin = deployedJson.readAddress(".admin");
         address railcar = deployedJson.readAddress(".railcar");
 
-        // Load questions from JSON (pre-processed from CSV)
-        // For local deployment, use hardcoded test data
-        string[] memory q1 = new string[](3);
-        q1[0] = "Which direction?";
-        q1[1] = "Favorite season?";
-        q1[2] = "Best pizza size?";
-        string[4][] memory r1 = new string[4][](3);
-        r1[0] = ["North", "South", "East", "West"];
-        r1[1] = ["Spring", "Summer", "Fall", "Winter"];
-        r1[2] = ["Small", "Medium", "Large", "XL"];
+        // Load questions from JSON (pre-processed from CSV via script/csv-to-json.js)
+        string memory qJson = vm.readFile("questions/questions.json");
 
-        string[] memory q2 = new string[](2);
-        q2[0] = "Cats or dogs?";
-        q2[1] = "Coffee or tea?";
-        string[4][] memory r2 = new string[4][](2);
-        r2[0] = ["Cats", "Dogs", "", ""];
-        r2[1] = ["Coffee", "Tea", "", ""];
+        (string[] memory q1, string[4][] memory r1) = _loadPack(qJson, "pack1");
+        (string[] memory q2, string[4][] memory r2) = _loadPack(qJson, "pack2");
+        (string[] memory q3, string[4][] memory r3) = _loadPack(qJson, "pack3");
+        (string[] memory q4, string[4][] memory r4) = _loadPack(qJson, "pack4");
 
-        string[] memory q3 = new string[](2);
-        q3[0] = "When life gives you lemons...";
-        q3[1] = "A penny saved is...";
-        string[4][] memory r3 = new string[4][](2);
-        r3[0] = ["make lemonade", "make juice", "throw them", "eat them"];
-        r3[1] = ["a penny earned", "not much", "smart", "boring"];
-
-        string[] memory q4 = new string[](3);
-        q4[0] = "Favorite color?";
-        q4[1] = "Best number?";
-        q4[2] = "Preferred weather?";
-        string[4][] memory r4 = new string[4][](3);
-        r4[0] = ["Red", "Blue", "Green", "Yellow"];
-        r4[1] = ["7", "13", "42", "100"];
-        r4[2] = ["Sunny", "Rainy", "Snowy", "Cloudy"];
+        console.log("Pack1:", q1.length, "questions");
+        console.log("Pack2:", q2.length, "questions");
+        console.log("Pack3:", q3.length, "questions");
+        console.log("Pack4:", q4.length, "questions");
 
         vm.startBroadcast(deployerPrivateKey);
 
@@ -82,5 +63,33 @@ contract DeployHivemindCore is Script {
         string memory finalJson = json.serialize("questionPack4", address(qp4));
         vm.writeFile("deployed-contracts.json", finalJson);
         console.log("Saved to deployed-contracts.json");
+    }
+
+    /// @notice Loads a question pack from the pre-processed JSON
+    /// @param qJson The full JSON string from questions/questions.json
+    /// @param packName The pack key (e.g. "pack1", "pack2")
+    /// @return questions Array of question strings
+    /// @return responses Array of [4] response strings per question
+    function _loadPack(string memory qJson, string memory packName)
+        internal
+        pure
+        returns (string[] memory questions, string[4][] memory responses)
+    {
+        // Read questions array
+        string memory qPath = string.concat(".", packName, ".questions");
+        questions = abi.decode(vm.parseJson(qJson, qPath), (string[]));
+
+        // Read flat responses array (4 per question, interleaved)
+        string memory rPath = string.concat(".", packName, ".responses");
+        string[] memory flatResponses = abi.decode(vm.parseJson(qJson, rPath), (string[]));
+
+        // Rebuild into string[4][]
+        responses = new string[4][](questions.length);
+        for (uint256 i = 0; i < questions.length; i++) {
+            responses[i][0] = flatResponses[i * 4];
+            responses[i][1] = flatResponses[i * 4 + 1];
+            responses[i][2] = flatResponses[i * 4 + 2];
+            responses[i][3] = flatResponses[i * 4 + 3];
+        }
     }
 }

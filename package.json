@@ -1,47 +1,24 @@
 {
   "name": "hivemind",
-  "version": "0.1.0",
-  "description": "",
-  "main": "index.js",
+  "version": "0.2.0",
+  "description": "On-chain multiplayer trivia game",
+  "author": "Max Meier",
+  "license": "GPL-3.0",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy": "npx hardhat run --network hh scripts/deploy-registry.js;npx hardhat run --network hh scripts/deploy-rail-yard.js;npx hardhat run --network hh scripts/deploy-hivemind-core.js;npx hardhat run --network hh scripts/deploy-hivemind-game.js;npx hardhat run --network hh scripts/connect-hivemind.js",
-    "deploy-goerli": "npx hardhat run --network goerli scripts/deploy-registry.js;npx hardhat run --network goerli scripts/deploy-rail-yard.js;npx hardhat run --network goerli scripts/deploy-hivemind-core.js;npx hardhat run --network goerli scripts/deploy-hivemind-game.js;npx hardhat run --network goerli scripts/connect-hivemind.js;npx hardhat run --network goerli scripts/railway-connections.js",
-    "deploy-mumbai": "npx hardhat run --network mumbai scripts/deploy-registry.js;npx hardhat run --network mumbai scripts/deploy-rail-yard.js;npx hardhat run --network mumbai scripts/deploy-hivemind-core.js;npx hardhat run --network mumbai scripts/deploy-hivemind-game.js;npx hardhat run --network mumbai scripts/connect-hivemind.js;npx hardhat run --network mumbai scripts/railway-connections.js"
+    "build": "forge build",
+    "test": "forge test",
+    "test:gas": "forge test --gas-report",
+    "deploy:anvil": "forge script script/DeployRegistry.s.sol --fork-url http://127.0.0.1:8545 --broadcast && forge script script/DeployRailcar.s.sol --fork-url http://127.0.0.1:8545 --broadcast && forge script script/DeployHivemindCore.s.sol --fork-url http://127.0.0.1:8545 --broadcast && forge script script/DeployHivemindGame.s.sol --fork-url http://127.0.0.1:8545 --broadcast && forge script script/ConnectHivemind.s.sol --fork-url http://127.0.0.1:8545 --broadcast && forge script script/RailwayConnections.s.sol --fork-url http://127.0.0.1:8545 --broadcast"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/LuckyMachines/hivemind.git"
   },
-  "author": "Max Meier",
-  "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/LuckyMachines/hivemind/issues"
   },
   "homepage": "https://github.com/LuckyMachines/hivemind#readme",
-  "devDependencies": {
-    "@ethersproject/abi": "^5.4.7",
-    "@ethersproject/providers": "^5.4.7",
-    "@nomicfoundation/hardhat-chai-matchers": "^1.0.0",
-    "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
-    "@nomicfoundation/hardhat-toolbox": "^1.0.1",
-    "@nomiclabs/hardhat-ethers": "^2.0.0",
-    "@nomiclabs/hardhat-etherscan": "^3.1.0",
-    "@openzeppelin/hardhat-upgrades": "^1.19.1",
-    "@typechain/ethers-v5": "^10.1.0",
-    "@typechain/hardhat": "^6.1.2",
-    "chai": "^4.2.0",
-    "ethers": "^5.4.7",
-    "hardhat": "^2.10.1",
-    "hardhat-gas-reporter": "^1.0.8",
-    "solidity-coverage": "^0.7.21",
-    "typechain": "^8.1.0"
-  },
   "dependencies": {
-    "@chainlink/contracts": "^0.4.2",
-    "@luckymachines/railway": "0.0.16",
-    "dotenv": "^16.0.1",
-    "file-loader": "^6.2.0",
-    "web3": "^1.7.5"
+    "dotenv": "^16.0.1"
   }
 }
