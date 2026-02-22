@@ -1,14 +1,94 @@
-"""Generate README images for Hivemind via ComfyUI API (SDXL, 200 steps, CFG 9.5)."""
+"""
+Generate README images for Hivemind via the ComfyUI API.
+
+Requires ComfyUI running at localhost:8188 with the SDXL base checkpoint.
+Outputs to ../images/ relative to this script.
+
+Usage:
+    python scripts/gen-readme-images.py
+"""
 import json
-import urllib.request
-import urllib.error
-import time
-import uuid
 import os
 import sys
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+import uuid
 
 COMFY_URL = "http://localhost:8188"
-OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "images")
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "images")
+
+# ── Sampler settings ─────────────────────────────────────────────────────────
+
+CHECKPOINT = "SDXL/sd_xl_base_1.0.safetensors"
+STEPS = 200
+CFG = 9.5
+SAMPLER = "dpmpp_2m_sde"
+SCHEDULER = "karras"
+
+NEGATIVE_PROMPT = (
+    "text, watermark, signature, blurry, low quality, deformed, ugly, "
+    "amateur, simple, flat, boring, stock photo, jpeg artifacts, noise"
+)
+
+# ── Image definitions ────────────────────────────────────────────────────────
+
+IMAGES = [
+    {
+        "name": "hivemind_hero",
+        "positive": (
+            "A luminous digital hivemind network floating in deep space, "
+            "interconnected glowing nodes and neural pathways forming a collective intelligence, "
+            "bioluminescent hexagonal honeycomb grid pattern radiating energy, "
+            "cosmic nebula background in deep blues and purples, "
+            "golden and cyan energy flows connecting crystalline mind-nodes, "
+            "cyberpunk meets organic neural network aesthetic, "
+            "epic cinematic wide shot, digital art masterpiece, 8k ultra detailed, "
+            "volumetric lighting, ray tracing, dramatic composition"
+        ),
+        "width": 1216,
+        "height": 832,
+        "seed": 42,
+    },
+    {
+        "name": "hivemind_game",
+        "positive": (
+            "A futuristic circular arena with holographic players standing in a ring, "
+            "collectively voting on glowing multiple-choice options floating above them, "
+            "four answer choices displayed as luminous holographic panels A B C D, "
+            "each player connected by threads of light to a central hivemind nexus orb, "
+            "neon blue and purple atmosphere, blockchain hexagonal patterns on the floor, "
+            "futuristic competitive trivia game show in a crystalline stadium, "
+            "digital art, vibrant electric colors, 8k detailed, cinematic overhead angle"
+        ),
+        "negative": (
+            NEGATIVE_PROMPT + ", realistic human faces"
+        ),
+        "width": 1024,
+        "height": 1024,
+        "seed": 777,
+    },
+    {
+        "name": "hivemind_chain",
+        "positive": (
+            "A futuristic blockchain smart contract network visualization, "
+            "glowing interconnected cubes and nodes representing smart contracts, "
+            "Polygon network purple and blue neon aesthetic, "
+            "decentralized nodes connected by beams of streaming data, "
+            "code and transaction data flowing between floating crystalline structures, "
+            "oracle nodes feeding external data into the network as golden streams, "
+            "isometric perspective floating in dark void, cyberpunk technology illustration, "
+            "digital art, 8k ultra detailed, volumetric fog, cinematic lighting"
+        ),
+        "width": 1216,
+        "height": 832,
+        "seed": 1337,
+    },
+]
+
+# ── ComfyUI API helpers ──────────────────────────────────────────────────────
 
 
 def queue_prompt(prompt):
@@ -29,9 +109,10 @@ def get_history(prompt_id):
 
 
 def download_image(filename, subfolder, output_path):
-    params = urllib.parse.urlencode({"filename": filename, "subfolder": subfolder, "type": "output"})
-    url = f"{COMFY_URL}/view?{params}"
-    urllib.request.urlretrieve(url, output_path)
+    params = urllib.parse.urlencode(
+        {"filename": filename, "subfolder": subfolder, "type": "output"}
+    )
+    urllib.request.urlretrieve(f"{COMFY_URL}/view?{params}", output_path)
 
 
 def wait_and_download(name, prompt_id, timeout=1200):
@@ -45,13 +126,15 @@ def wait_and_download(name, prompt_id, timeout=1200):
                 print(f"  ERROR on {name}: {msgs}", file=sys.stderr)
                 return None
             outputs = history[prompt_id].get("outputs", {})
-            for node_id, node_output in outputs.items():
+            for node_output in outputs.values():
                 if "images" in node_output:
                     for img_info in node_output["images"]:
-                        fname = img_info["filename"]
-                        subfolder = img_info.get("subfolder", "")
                         dest = os.path.join(OUTPUT_DIR, f"{name}.png")
-                        download_image(fname, subfolder, dest)
+                        download_image(
+                            img_info["filename"],
+                            img_info.get("subfolder", ""),
+                            dest,
+                        )
                         print(f"  -> {dest}")
                         return dest
         elapsed = int(time.time() - start)
@@ -61,78 +144,15 @@ def wait_and_download(name, prompt_id, timeout=1200):
     return None
 
 
-import urllib.parse
-
-# --- Image definitions ---
-IMAGES = [
-    {
-        "name": "hivemind_hero",
-        "positive": (
-            "A luminous digital hivemind network floating in deep space, "
-            "interconnected glowing nodes and neural pathways forming a collective intelligence, "
-            "bioluminescent hexagonal honeycomb grid pattern radiating energy, "
-            "cosmic nebula background in deep blues and purples, "
-            "golden and cyan energy flows connecting crystalline mind-nodes, "
-            "cyberpunk meets organic neural network aesthetic, "
-            "epic cinematic wide shot, digital art masterpiece, 8k ultra detailed, "
-            "volumetric lighting, ray tracing, dramatic composition"
-        ),
-        "negative": (
-            "text, watermark, signature, blurry, low quality, deformed, ugly, "
-            "amateur, simple, flat, boring, stock photo, jpeg artifacts, noise"
-        ),
-        "width": 1216,
-        "height": 832,
-        "seed": 42,
-    },
-    {
-        "name": "hivemind_game",
-        "positive": (
-            "A futuristic circular arena with holographic players standing in a ring, "
-            "collectively voting on glowing multiple-choice options floating above them, "
-            "four answer choices displayed as luminous holographic panels A B C D, "
-            "each player connected by threads of light to a central hivemind nexus orb, "
-            "neon blue and purple atmosphere, blockchain hexagonal patterns on the floor, "
-            "futuristic competitive trivia game show in a crystalline stadium, "
-            "digital art, vibrant electric colors, 8k detailed, cinematic overhead angle"
-        ),
-        "negative": (
-            "text, watermark, signature, blurry, low quality, deformed, ugly, "
-            "amateur, simple, flat, boring, stock photo, realistic human faces, "
-            "jpeg artifacts, noise"
-        ),
-        "width": 1024,
-        "height": 1024,
-        "seed": 777,
-    },
-    {
-        "name": "hivemind_chain",
-        "positive": (
-            "A futuristic blockchain smart contract network visualization, "
-            "glowing interconnected cubes and nodes representing smart contracts, "
-            "Polygon network purple and blue neon aesthetic, "
-            "decentralized nodes connected by beams of streaming data, "
-            "code and transaction data flowing between floating crystalline structures, "
-            "oracle nodes feeding external data into the network as golden streams, "
-            "isometric perspective floating in dark void, cyberpunk technology illustration, "
-            "digital art, 8k ultra detailed, volumetric fog, cinematic lighting"
-        ),
-        "negative": (
-            "text, watermark, signature, blurry, low quality, deformed, ugly, "
-            "amateur, simple, flat, boring, stock photo, jpeg artifacts, noise"
-        ),
-        "width": 1216,
-        "height": 832,
-        "seed": 1337,
-    },
-]
+# ── Workflow builder ─────────────────────────────────────────────────────────
 
 
 def build_workflow(img):
+    negative = img.get("negative", NEGATIVE_PROMPT)
     return {
         "1": {
             "class_type": "CheckpointLoaderSimple",
-            "inputs": {"ckpt_name": "SDXL/sd_xl_base_1.0.safetensors"},
+            "inputs": {"ckpt_name": CHECKPOINT},
         },
         "2": {
             "class_type": "CLIPTextEncodeSDXL",
@@ -150,7 +170,7 @@ def build_workflow(img):
         },
         "3": {
             "class_type": "CLIPTextEncode",
-            "inputs": {"clip": ["1", 1], "text": img["negative"]},
+            "inputs": {"clip": ["1", 1], "text": negative},
         },
         "4": {
             "class_type": "EmptyLatentImage",
@@ -168,10 +188,10 @@ def build_workflow(img):
                 "negative": ["3", 0],
                 "latent_image": ["4", 0],
                 "seed": img["seed"],
-                "steps": 200,
-                "cfg": 9.5,
-                "sampler_name": "dpmpp_2m_sde",
-                "scheduler": "karras",
+                "steps": STEPS,
+                "cfg": CFG,
+                "sampler_name": SAMPLER,
+                "scheduler": SCHEDULER,
                 "denoise": 1.0,
             },
         },
@@ -186,10 +206,14 @@ def build_workflow(img):
     }
 
 
+# ── Main ─────────────────────────────────────────────────────────────────────
+
+
 def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    print(f"Generating {len(IMAGES)} images (200 steps, CFG 9.5, SDXL)")
-    print(f"Output: {OUTPUT_DIR}\n")
+    print(f"Generating {len(IMAGES)} images ({STEPS} steps, CFG {CFG}, {SAMPLER}/{SCHEDULER})")
+    print(f"Checkpoint: {CHECKPOINT}")
+    print(f"Output:     {OUTPUT_DIR}\n")
 
     jobs = []
     for img in IMAGES:
@@ -197,7 +221,7 @@ def main():
         result = queue_prompt(workflow)
         pid = result["prompt_id"]
         jobs.append((img["name"], pid))
-        print(f"Queued: {img['name']} (id={pid})")
+        print(f"Queued: {img['name']} (seed={img['seed']}, {img['width']}x{img['height']})")
 
     print(f"\nAll queued. Waiting for generation...\n")
 
