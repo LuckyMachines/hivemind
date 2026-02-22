@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="images/logo.png" alt="Hivemind Logo" width="200" />
+  <img src="images/logo.png" alt="Hjivemind Logo" width="200" />
 </p>
 
-# Hivemind
+# Hjivemind
 
-![Hivemind Hero](images/hivemind_hero.png)
+![Hjivemind Hero](images/hivemind_hero.png)
 
-### An on-chain multiplayer game where you win by knowing how the crowd will vote
+### An on-chain multiplayer game where you win by outsmarting the crowd
 
 Contracts for this project are deployed on the Polygon Mumbai testnet. Test MATIC is required to play this game.
 
@@ -14,11 +14,18 @@ Contracts for this project are deployed on the Polygon Mumbai testnet. Test MATI
 
 ![Game Arena](images/hivemind_game.png)
 
-Players join a lobby and compete across 4 rounds of multiple-choice questions. The twist: you don't score by picking the "correct" answer — you score by predicting what the **majority** will choose. Submit your answer, reveal it, and earn points for reading the crowd.
+Players join a lobby and compete across 4 rounds of multiple-choice questions. Each round is randomly assigned as either **majority** or **minority** mode via Chainlink VRF:
+
+- **Majority rounds** — predict what most players will choose (classic mechanic)
+- **Minority rounds** — predict the least popular answer; coordination backfires since colluding groups become the majority and lose
+
+This mixed mode creates genuine strategic uncertainty — there's no fixed strategy that always works.
+
+### Scoring
 
 - **Submission** — 100 points
 - **Fast Reveal Bonus** — up to 1,000 points
-- **Match the Crowd** — 3,000 points
+- **Match the Winning Choice** — 3,000 points
 
 ## Architecture
 
@@ -28,9 +35,9 @@ Built with Solidity on Foundry, integrating Chainlink VRF for randomization and 
 
 | Contract | Role |
 |---|---|
-| **HivemindKeeper** | Automation controller — checks and advances game state |
+| **HjivemindKeeper** | Automation controller — checks and advances game state |
 | **Lobby** | Player entry, matchmaking, and game start |
-| **GameRound** | Question delivery, answer submission/reveal, scoring |
+| **GameRound** | Question delivery, answer submission/reveal, majority/minority scoring |
 | **ScoreKeeper** | Tracks scores and prize pools across rounds |
 | **Winners** | Final results and payout logic |
 | **Questions** | On-chain question storage with VRF-seeded selection |
