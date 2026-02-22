@@ -2,7 +2,7 @@
   <img src="images/logo.png" alt="Hjivemind Logo" width="200" />
 </p>
 
-# Hjivemind
+# Hjivemind&trade;
 
 ![Hjivemind Hero](images/hivemind_hero.png)
 
@@ -14,12 +14,12 @@ Contracts for this project are deployed on the Polygon Mumbai testnet. Test MATI
 
 ![Game Arena](images/hivemind_game.png)
 
-Players join a lobby and compete across 4 rounds of multiple-choice questions. Each round is randomly assigned as either **majority** or **minority** mode via Chainlink VRF:
+Players join a Hjivemind&trade; lobby and compete across 4 rounds of multiple-choice questions. Each round is randomly assigned as either **majority** or **minority** mode via Chainlink VRF:
 
 - **Majority rounds** — predict what most players will choose (classic mechanic)
 - **Minority rounds** — predict the least popular answer; coordination backfires since colluding groups become the majority and lose
 
-This mixed mode creates genuine strategic uncertainty — there's no fixed strategy that always works.
+This mixed mode is what makes Hjivemind&trade; tick — there's no fixed strategy that always works.
 
 ### Scoring
 
