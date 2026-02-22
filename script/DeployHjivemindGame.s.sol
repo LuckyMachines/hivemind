@@ -7,9 +7,9 @@ import {Lobby} from "../src/Lobby.sol";
 import {GameController} from "../src/GameController.sol";
 import {GameRound} from "../src/GameRound.sol";
 import {Winners} from "../src/Winners.sol";
-import {HivemindKeeper} from "../src/HivemindKeeper.sol";
+import {HjivemindKeeper} from "../src/HjivemindKeeper.sol";
 
-contract DeployHivemindGame is Script {
+contract DeployHjivemindGame is Script {
     using stdJson for string;
 
     function run() external {
@@ -33,10 +33,10 @@ contract DeployHivemindGame is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         Lobby lobby = new Lobby(
-            "hivemind.lobby",
+            "hjivemind.lobby",
             scoreKeeper,
             railcar,
-            "hivemind.round1",
+            "hjivemind.round1",
             hubRegistry,
             admin
         );
@@ -51,8 +51,8 @@ contract DeployHivemindGame is Script {
         console.log("GameController deployed to:", address(gameController));
 
         GameRound round1 = new GameRound(
-            "hivemind.round1",
-            "hivemind.round2",
+            "hjivemind.round1",
+            "hjivemind.round2",
             qp1,
             scoreKeeper,
             address(gameController),
@@ -66,8 +66,8 @@ contract DeployHivemindGame is Script {
         console.log("Round1 deployed to:", address(round1));
 
         GameRound round2 = new GameRound(
-            "hivemind.round2",
-            "hivemind.round3",
+            "hjivemind.round2",
+            "hjivemind.round3",
             qp2,
             scoreKeeper,
             address(gameController),
@@ -81,8 +81,8 @@ contract DeployHivemindGame is Script {
         console.log("Round2 deployed to:", address(round2));
 
         GameRound round3 = new GameRound(
-            "hivemind.round3",
-            "hivemind.round4",
+            "hjivemind.round3",
+            "hjivemind.round4",
             qp3,
             scoreKeeper,
             address(gameController),
@@ -96,8 +96,8 @@ contract DeployHivemindGame is Script {
         console.log("Round3 deployed to:", address(round3));
 
         GameRound round4 = new GameRound(
-            "hivemind.round4",
-            "hivemind.winners",
+            "hjivemind.round4",
+            "hjivemind.winners",
             qp4,
             scoreKeeper,
             address(gameController),
@@ -111,7 +111,7 @@ contract DeployHivemindGame is Script {
         console.log("Round4 deployed to:", address(round4));
 
         Winners winners = new Winners(
-            "hivemind.winners",
+            "hjivemind.winners",
             scoreKeeper,
             address(gameController),
             hubRegistry,
@@ -119,7 +119,7 @@ contract DeployHivemindGame is Script {
         );
         console.log("Winners deployed to:", address(winners));
 
-        HivemindKeeper hivemindKeeper = new HivemindKeeper(
+        HjivemindKeeper hjivemindKeeper = new HjivemindKeeper(
             address(lobby),
             address(round1),
             address(round2),
@@ -127,7 +127,7 @@ contract DeployHivemindGame is Script {
             address(round4),
             address(winners)
         );
-        console.log("HivemindKeeper deployed to:", address(hivemindKeeper));
+        console.log("HjivemindKeeper deployed to:", address(hjivemindKeeper));
 
         vm.stopBroadcast();
 
@@ -142,7 +142,7 @@ contract DeployHivemindGame is Script {
         json.serialize("questionPack3", qp3);
         json.serialize("questionPack4", qp4);
         json.serialize("gameController", address(gameController));
-        json.serialize("hivemindKeeper", address(hivemindKeeper));
+        json.serialize("hjivemindKeeper", address(hjivemindKeeper));
         json.serialize("lobby", address(lobby));
         json.serialize("round1", address(round1));
         json.serialize("round2", address(round2));

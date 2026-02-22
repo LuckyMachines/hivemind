@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.33;
 
-import "./HivemindTestBase.t.sol";
+import "./HjivemindTestBase.t.sol";
 
-contract GameRoundTest is HivemindTestBase {
+contract GameRoundTest is HjivemindTestBase {
     function test_railcarEntersRound1_afterGameStart() public {
         _joinPlayers(2);
         vm.warp(block.timestamp + lobby.timeLimitToJoin() + 1);
@@ -134,5 +134,165 @@ contract GameRoundTest is HivemindTestBase {
         vm.warp(block.timestamp + round1.roundTimeLimit() + 1);
         round1.updatePhase(1);
         assertEq(uint256(round1.phase(1)), uint256(GameRound.GamePhase.Reveal));
+    }
+
+    function test_isMinorityRound_setByVRF() public {
+        // Even seed → minority round
+        _joinPlayers(2);
+        _startGameAndFulfillVRFWithSeed(42); // even
+        round1.startNewRound(1);
+        assertTrue(round1.isMinorityRound(1));
+        assertTrue(round1.getIsMinorityRound(1));
+    }
+
+    function test_isMinorityRound_oddSeedIsMajority() public {
+        _joinPlayers(2);
+        _startGameAndFulfillVRFWithSeed(77); // odd
+        round1.startNewRound(1);
+        assertFalse(round1.isMinorityRound(1));
+    }
+
+    function test_findMinorityWinners_leastPopularWins() public {
+        // 4 players: 3 pick choice 0, 1 picks choice 1
+        // In minority mode, choice 1 (least popular) wins
+        _joinPlayers(4);
+        _startGameAndFulfillVRFWithSeed(42); // even → minority
+        round1.startNewRound(1);
+        assertTrue(round1.isMinorityRound(1));
+
+        (, string[4] memory choices) = round1.getQuestion(1);
+
+        // Players 1-3 answer choice[0], crowd guess choice[0]
+        // Player 4 answers choice[1], crowd guess choice[1]
+        bytes32 h1 = keccak256(abi.encode(choices[0], choices[0], "s1"));
+        bytes32 h2 = keccak256(abi.encode(choices[0], choices[0], "s2"));
+        bytes32 h3 = keccak256(abi.encode(choices[0], choices[0], "s3"));
+        bytes32 h4 = keccak256(abi.encode(choices[1], choices[1], "s4"));
+
+        vm.prank(player1, player1);
+        round1.submitAnswers(h1, 1);
+        vm.prank(player2, player2);
+        round1.submitAnswers(h2, 1);
+        vm.prank(player3, player3);
+        round1.submitAnswers(h3, 1);
+        vm.prank(player4, player4);
+        round1.submitAnswers(h4, 1);
+
+        // Reveal
+        vm.prank(player1, player1);
+        round1.revealAnswers(choices[0], choices[0], "s1", 1);
+        vm.prank(player2, player2);
+        round1.revealAnswers(choices[0], choices[0], "s2", 1);
+        vm.prank(player3, player3);
+        round1.revealAnswers(choices[0], choices[0], "s3", 1);
+        vm.prank(player4, player4);
+        round1.revealAnswers(choices[1], choices[1], "s4", 1);
+
+        // Game completed — check winners
+        assertEq(uint256(round1.phase(1)), uint256(GameRound.GamePhase.Completed));
+
+        // Player 4 chose the minority (choice 1, score=1) — should win
+        assertTrue(round1.roundWinner(1, player4));
+        // Players 1-3 chose majority (choice 0, score=3) — should lose
+        assertFalse(round1.roundWinner(1, player1));
+        assertFalse(round1.roundWinner(1, player2));
+        assertFalse(round1.roundWinner(1, player3));
+
+        // Winning choice index should be [1]
+        uint256[] memory winIdx = round1.getWinningChoiceIndex(1);
+        assertEq(winIdx.length, 1);
+        assertEq(winIdx[0], 1);
+    }
+
+    function test_findMinorityWinners_tieAtMinimum() public {
+        // 4 players: 2 pick choice 0, 1 picks choice 1, 1 picks choice 2
+        // Choices 1 and 2 tie at minimum (score=1 each), both win
+        _joinPlayers(4);
+        _startGameAndFulfillVRFWithSeed(42); // even → minority
+        round1.startNewRound(1);
+
+        (, string[4] memory choices) = round1.getQuestion(1);
+
+        bytes32 h1 = keccak256(abi.encode(choices[0], choices[0], "s1"));
+        bytes32 h2 = keccak256(abi.encode(choices[0], choices[0], "s2"));
+        bytes32 h3 = keccak256(abi.encode(choices[1], choices[1], "s3"));
+        bytes32 h4 = keccak256(abi.encode(choices[2], choices[2], "s4"));
+
+        vm.prank(player1, player1);
+        round1.submitAnswers(h1, 1);
+        vm.prank(player2, player2);
+        round1.submitAnswers(h2, 1);
+        vm.prank(player3, player3);
+        round1.submitAnswers(h3, 1);
+        vm.prank(player4, player4);
+        round1.submitAnswers(h4, 1);
+
+        vm.prank(player1, player1);
+        round1.revealAnswers(choices[0], choices[0], "s1", 1);
+        vm.prank(player2, player2);
+        round1.revealAnswers(choices[0], choices[0], "s2", 1);
+        vm.prank(player3, player3);
+        round1.revealAnswers(choices[1], choices[1], "s3", 1);
+        vm.prank(player4, player4);
+        round1.revealAnswers(choices[2], choices[2], "s4", 1);
+
+        assertEq(uint256(round1.phase(1)), uint256(GameRound.GamePhase.Completed));
+
+        // Both minority choices (1 and 2) should be winning indices
+        uint256[] memory winIdx = round1.getWinningChoiceIndex(1);
+        assertEq(winIdx.length, 2);
+        assertEq(winIdx[0], 1);
+        assertEq(winIdx[1], 2);
+
+        // Players 3 and 4 win (chose minority choices)
+        assertTrue(round1.roundWinner(1, player3));
+        assertTrue(round1.roundWinner(1, player4));
+        // Players 1 and 2 lose (chose majority)
+        assertFalse(round1.roundWinner(1, player1));
+        assertFalse(round1.roundWinner(1, player2));
+    }
+
+    function test_findMinorityWinners_allTie() public {
+        // 4 players each pick a different choice → all tie at score=1
+        // All 4 choices are winning → everyone wins
+        _joinPlayers(4);
+        _startGameAndFulfillVRFWithSeed(42); // even → minority
+        round1.startNewRound(1);
+
+        (, string[4] memory choices) = round1.getQuestion(1);
+
+        bytes32 h1 = keccak256(abi.encode(choices[0], choices[0], "s1"));
+        bytes32 h2 = keccak256(abi.encode(choices[1], choices[1], "s2"));
+        bytes32 h3 = keccak256(abi.encode(choices[2], choices[2], "s3"));
+        bytes32 h4 = keccak256(abi.encode(choices[3], choices[3], "s4"));
+
+        vm.prank(player1, player1);
+        round1.submitAnswers(h1, 1);
+        vm.prank(player2, player2);
+        round1.submitAnswers(h2, 1);
+        vm.prank(player3, player3);
+        round1.submitAnswers(h3, 1);
+        vm.prank(player4, player4);
+        round1.submitAnswers(h4, 1);
+
+        vm.prank(player1, player1);
+        round1.revealAnswers(choices[0], choices[0], "s1", 1);
+        vm.prank(player2, player2);
+        round1.revealAnswers(choices[1], choices[1], "s2", 1);
+        vm.prank(player3, player3);
+        round1.revealAnswers(choices[2], choices[2], "s3", 1);
+        vm.prank(player4, player4);
+        round1.revealAnswers(choices[3], choices[3], "s4", 1);
+
+        assertEq(uint256(round1.phase(1)), uint256(GameRound.GamePhase.Completed));
+
+        // All 4 choices at minimum → length 4 → everyone wins
+        uint256[] memory winIdx = round1.getWinningChoiceIndex(1);
+        assertEq(winIdx.length, 4);
+
+        assertTrue(round1.roundWinner(1, player1));
+        assertTrue(round1.roundWinner(1, player2));
+        assertTrue(round1.roundWinner(1, player3));
+        assertTrue(round1.roundWinner(1, player4));
     }
 }

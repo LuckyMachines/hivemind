@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.33;
 
-import "./HivemindTestBase.t.sol";
+import "./HjivemindTestBase.t.sol";
 
-contract HivemindKeeperTest is HivemindTestBase {
+contract HjivemindKeeperTest is HjivemindTestBase {
     function test_checkUpkeep_noUpkeepNeeded() public view {
-        (bool upkeepNeeded,) = hivemindKeeper.checkUpkeep("");
+        (bool upkeepNeeded,) = hjivemindKeeper.checkUpkeep("");
         assertFalse(upkeepNeeded);
     }
 
@@ -13,21 +13,21 @@ contract HivemindKeeperTest is HivemindTestBase {
         _joinPlayers(2);
         vm.warp(block.timestamp + lobby.timeLimitToJoin() + 1);
 
-        (bool upkeepNeeded, bytes memory performData) = hivemindKeeper.checkUpkeep("");
+        (bool upkeepNeeded, bytes memory performData) = hjivemindKeeper.checkUpkeep("");
         assertTrue(upkeepNeeded);
 
         // Decode to verify it's a lobby start action
         (uint256 queueType, uint256 actionType,,) = abi.decode(performData, (uint256, uint256, uint256, uint256));
-        assertEq(queueType, uint256(HivemindKeeper.Queue.Lobby));
-        assertEq(actionType, uint256(HivemindKeeper.Action.StartGame));
+        assertEq(queueType, uint256(HjivemindKeeper.Queue.Lobby));
+        assertEq(actionType, uint256(HjivemindKeeper.Action.StartGame));
     }
 
     function test_performUpkeep_startsGame() public {
         _joinPlayers(2);
         vm.warp(block.timestamp + lobby.timeLimitToJoin() + 1);
 
-        (, bytes memory performData) = hivemindKeeper.checkUpkeep("");
-        hivemindKeeper.performUpkeep(performData);
+        (, bytes memory performData) = hjivemindKeeper.checkUpkeep("");
+        hjivemindKeeper.performUpkeep(performData);
 
         // Game should have started — lobby should need new game ID
         assertFalse(lobby.canStart());
@@ -36,39 +36,39 @@ contract HivemindKeeperTest is HivemindTestBase {
     function test_addActionToQueue() public {
         // Round1 has QUEUE_ROLE, simulate it adding to queue
         vm.prank(address(round1));
-        hivemindKeeper.addActionToQueue(
-            HivemindKeeper.Action.StartRound,
-            HivemindKeeper.Queue.Round1,
+        hjivemindKeeper.addActionToQueue(
+            HjivemindKeeper.Action.StartRound,
+            HjivemindKeeper.Queue.Round1,
             1
         );
 
-        uint256[] memory q = hivemindKeeper.getQueue(1); // Queue.Round1
+        uint256[] memory q = hjivemindKeeper.getQueue(1); // Queue.Round1
         assertEq(q.length, 1);
         assertEq(q[0], 1);
     }
 
     function test_registerDeregisterGameRound() public {
         vm.prank(address(round1));
-        hivemindKeeper.registerGameRound(1, HivemindKeeper.Queue.Round1);
+        hjivemindKeeper.registerGameRound(1, HjivemindKeeper.Queue.Round1);
 
         vm.prank(address(round1));
-        hivemindKeeper.deregisterGameRound(1, HivemindKeeper.Queue.Round1);
+        hjivemindKeeper.deregisterGameRound(1, HjivemindKeeper.Queue.Round1);
     }
 
     function test_getUpdates_tracksCompletedUpkeeps() public {
         _joinPlayers(2);
         vm.warp(block.timestamp + lobby.timeLimitToJoin() + 1);
 
-        (, bytes memory performData) = hivemindKeeper.checkUpkeep("");
-        hivemindKeeper.performUpkeep(performData);
+        (, bytes memory performData) = hjivemindKeeper.checkUpkeep("");
+        hjivemindKeeper.performUpkeep(performData);
 
-        uint256[][] memory updates = hivemindKeeper.getUpdates();
+        uint256[][] memory updates = hjivemindKeeper.getUpdates();
         assertEq(updates.length, 1);
     }
 
     // AutoLoop interface tests
     function test_shouldProgressLoop_noLoopNeeded() public view {
-        (bool loopIsReady,) = hivemindKeeper.shouldProgressLoop();
+        (bool loopIsReady,) = hjivemindKeeper.shouldProgressLoop();
         assertFalse(loopIsReady);
     }
 
@@ -76,20 +76,20 @@ contract HivemindKeeperTest is HivemindTestBase {
         _joinPlayers(2);
         vm.warp(block.timestamp + lobby.timeLimitToJoin() + 1);
 
-        (bool loopIsReady, bytes memory progressWithData) = hivemindKeeper.shouldProgressLoop();
+        (bool loopIsReady, bytes memory progressWithData) = hjivemindKeeper.shouldProgressLoop();
         assertTrue(loopIsReady);
 
         (uint256 queueType, uint256 actionType,,) = abi.decode(progressWithData, (uint256, uint256, uint256, uint256));
-        assertEq(queueType, uint256(HivemindKeeper.Queue.Lobby));
-        assertEq(actionType, uint256(HivemindKeeper.Action.StartGame));
+        assertEq(queueType, uint256(HjivemindKeeper.Queue.Lobby));
+        assertEq(actionType, uint256(HjivemindKeeper.Action.StartGame));
     }
 
     function test_progressLoop_startsGame() public {
         _joinPlayers(2);
         vm.warp(block.timestamp + lobby.timeLimitToJoin() + 1);
 
-        (, bytes memory progressWithData) = hivemindKeeper.shouldProgressLoop();
-        hivemindKeeper.progressLoop(progressWithData);
+        (, bytes memory progressWithData) = hjivemindKeeper.shouldProgressLoop();
+        hjivemindKeeper.progressLoop(progressWithData);
 
         assertFalse(lobby.canStart());
     }
@@ -98,8 +98,8 @@ contract HivemindKeeperTest is HivemindTestBase {
         _joinPlayers(2);
         vm.warp(block.timestamp + lobby.timeLimitToJoin() + 1);
 
-        (bool upkeepNeeded, bytes memory performData) = hivemindKeeper.checkUpkeep("");
-        (bool loopIsReady, bytes memory progressWithData) = hivemindKeeper.shouldProgressLoop();
+        (bool upkeepNeeded, bytes memory performData) = hjivemindKeeper.checkUpkeep("");
+        (bool loopIsReady, bytes memory progressWithData) = hjivemindKeeper.shouldProgressLoop();
 
         assertEq(upkeepNeeded, loopIsReady);
         assertEq(keccak256(performData), keccak256(progressWithData));

@@ -4,16 +4,16 @@ pragma solidity ^0.8.33;
 import {Script, console} from "forge-std/Script.sol";
 import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 import {HubRegistry} from "transit/HubRegistry.sol";
-import {HivemindRailcar} from "../src/transit/HivemindRailcar.sol";
+import {HjivemindRailcar} from "../src/transit/HjivemindRailcar.sol";
 import {Questions} from "../src/Questions.sol";
 import {ScoreKeeper} from "../src/ScoreKeeper.sol";
 import {Lobby} from "../src/Lobby.sol";
 import {GameController} from "../src/GameController.sol";
 import {GameRound} from "../src/GameRound.sol";
 import {Winners} from "../src/Winners.sol";
-import {HivemindKeeper} from "../src/HivemindKeeper.sol";
+import {HjivemindKeeper} from "../src/HjivemindKeeper.sol";
 
-/// @title DeployLocal - Deploys, wires, and connects the full Hivemind suite on a local anvil node
+/// @title DeployLocal - Deploys, wires, and connects the full Hjivemind suite on a local anvil node
 /// @notice Run `node script/csv-to-json.js` first to generate questions/questions.json from CSVs
 contract DeployLocal is Script {
     function run() external {
@@ -29,8 +29,8 @@ contract DeployLocal is Script {
         HubRegistry registry = new HubRegistry(admin);
         console.log("HubRegistry:", address(registry));
 
-        HivemindRailcar railcar = new HivemindRailcar(admin);
-        console.log("HivemindRailcar:", address(railcar));
+        HjivemindRailcar railcar = new HjivemindRailcar(admin);
+        console.log("HjivemindRailcar:", address(railcar));
 
         // Mock VRF Coordinator
         VRFCoordinatorV2_5Mock vrfCoordinator = new VRFCoordinatorV2_5Mock(
@@ -61,8 +61,8 @@ contract DeployLocal is Script {
 
         // ── 4. Game Contracts ───────────────────────────────────
         Lobby lobby = new Lobby(
-            "hivemind.lobby", address(scoreKeeper), address(railcar),
-            "hivemind.round1", address(registry), admin
+            "hjivemind.lobby", address(scoreKeeper), address(railcar),
+            "hjivemind.round1", address(registry), admin
         );
         console.log("Lobby:", address(lobby));
 
@@ -72,28 +72,28 @@ contract DeployLocal is Script {
         console.log("GameController:", address(gameController));
 
         GameRound round1 = new GameRound(
-            "hivemind.round1", "hivemind.round2",
+            "hjivemind.round1", "hjivemind.round2",
             address(qp1), address(scoreKeeper), address(gameController),
             address(railcar), address(registry), admin,
             address(vrfCoordinator), vrfKeyHash, vrfSubId
         );
 
         GameRound round2 = new GameRound(
-            "hivemind.round2", "hivemind.round3",
+            "hjivemind.round2", "hjivemind.round3",
             address(qp2), address(scoreKeeper), address(gameController),
             address(railcar), address(registry), admin,
             address(vrfCoordinator), vrfKeyHash, vrfSubId
         );
 
         GameRound round3 = new GameRound(
-            "hivemind.round3", "hivemind.round4",
+            "hjivemind.round3", "hjivemind.round4",
             address(qp3), address(scoreKeeper), address(gameController),
             address(railcar), address(registry), admin,
             address(vrfCoordinator), vrfKeyHash, vrfSubId
         );
 
         GameRound round4 = new GameRound(
-            "hivemind.round4", "hivemind.winners",
+            "hjivemind.round4", "hjivemind.winners",
             address(qp4), address(scoreKeeper), address(gameController),
             address(railcar), address(registry), admin,
             address(vrfCoordinator), vrfKeyHash, vrfSubId
@@ -105,16 +105,16 @@ contract DeployLocal is Script {
         console.log("Round4:", address(round4));
 
         Winners winners = new Winners(
-            "hivemind.winners", address(scoreKeeper),
+            "hjivemind.winners", address(scoreKeeper),
             address(gameController), address(registry), admin
         );
         console.log("Winners:", address(winners));
 
-        HivemindKeeper hivemindKeeper = new HivemindKeeper(
+        HjivemindKeeper hjivemindKeeper = new HjivemindKeeper(
             address(lobby), address(round1), address(round2),
             address(round3), address(round4), address(winners)
         );
-        console.log("HivemindKeeper:", address(hivemindKeeper));
+        console.log("HjivemindKeeper:", address(hjivemindKeeper));
 
         // Add VRF consumers
         vrfCoordinator.addConsumer(vrfSubId, address(round1));
@@ -123,7 +123,7 @@ contract DeployLocal is Script {
         vrfCoordinator.addConsumer(vrfSubId, address(round4));
 
         // ── 5. Connect All ──────────────────────────────────────
-        _connectAll(lobby, gameController, hivemindKeeper, scoreKeeper, railcar,
+        _connectAll(lobby, gameController, hjivemindKeeper, scoreKeeper, railcar,
             round1, round2, round3, round4, winners, qp1, qp2, qp3, qp4, admin);
 
         // ── 6. Hub Connections ──────────────────────────────────
@@ -158,18 +158,18 @@ contract DeployLocal is Script {
 
     // ── Wiring ──────────────────────────────────────────────
     function _connectAll(
-        Lobby lobby, GameController gameController, HivemindKeeper hivemindKeeper,
-        ScoreKeeper scoreKeeper, HivemindRailcar railcar,
+        Lobby lobby, GameController gameController, HjivemindKeeper hjivemindKeeper,
+        ScoreKeeper scoreKeeper, HjivemindRailcar railcar,
         GameRound round1, GameRound round2, GameRound round3, GameRound round4,
         Winners winners, Questions qp1, Questions qp2, Questions qp3, Questions qp4,
         address admin
     ) internal {
         lobby.setGameControllerAddress(address(gameController));
 
-        round1.setHivemindKeeper(address(hivemindKeeper));
-        round2.setHivemindKeeper(address(hivemindKeeper));
-        round3.setHivemindKeeper(address(hivemindKeeper));
-        round4.setHivemindKeeper(address(hivemindKeeper));
+        round1.setHjivemindKeeper(address(hjivemindKeeper));
+        round2.setHjivemindKeeper(address(hjivemindKeeper));
+        round3.setHjivemindKeeper(address(hjivemindKeeper));
+        round4.setHjivemindKeeper(address(hjivemindKeeper));
 
         round1.setQueueType(1);
         round2.setQueueType(2);
@@ -195,18 +195,18 @@ contract DeployLocal is Script {
         gameController.addEventSender(address(round4));
         gameController.addEventSender(address(winners));
 
-        hivemindKeeper.addQueueRole(address(lobby));
-        hivemindKeeper.addQueueRole(address(round1));
-        hivemindKeeper.addQueueRole(address(round2));
-        hivemindKeeper.addQueueRole(address(round3));
-        hivemindKeeper.addQueueRole(address(round4));
-        hivemindKeeper.addQueueRole(address(winners));
+        hjivemindKeeper.addQueueRole(address(lobby));
+        hjivemindKeeper.addQueueRole(address(round1));
+        hjivemindKeeper.addQueueRole(address(round2));
+        hjivemindKeeper.addQueueRole(address(round3));
+        hjivemindKeeper.addQueueRole(address(round4));
+        hjivemindKeeper.addQueueRole(address(winners));
 
         round1.addKeeper(admin);
-        round1.addKeeper(address(hivemindKeeper));
-        round2.addKeeper(address(hivemindKeeper));
-        round3.addKeeper(address(hivemindKeeper));
-        round4.addKeeper(address(hivemindKeeper));
+        round1.addKeeper(address(hjivemindKeeper));
+        round2.addKeeper(address(hjivemindKeeper));
+        round3.addKeeper(address(hjivemindKeeper));
+        round4.addKeeper(address(hjivemindKeeper));
 
         railcar.grantRole(railcar.HUB_ROLE(), address(lobby));
     }
@@ -216,12 +216,12 @@ contract DeployLocal is Script {
         Lobby lobby, GameRound round1, GameRound round2,
         GameRound round3, GameRound round4, Winners winners
     ) internal {
-        uint256 lobbyID = registry.idFromName("hivemind.lobby");
-        uint256 round1ID = registry.idFromName("hivemind.round1");
-        uint256 round2ID = registry.idFromName("hivemind.round2");
-        uint256 round3ID = registry.idFromName("hivemind.round3");
-        uint256 round4ID = registry.idFromName("hivemind.round4");
-        uint256 winnersID = registry.idFromName("hivemind.winners");
+        uint256 lobbyID = registry.idFromName("hjivemind.lobby");
+        uint256 round1ID = registry.idFromName("hjivemind.round1");
+        uint256 round2ID = registry.idFromName("hjivemind.round2");
+        uint256 round3ID = registry.idFromName("hjivemind.round3");
+        uint256 round4ID = registry.idFromName("hjivemind.round4");
+        uint256 winnersID = registry.idFromName("hjivemind.winners");
 
         lobby.setAllowAllInputs(true);
         lobby.setInputAllowed(lobbyID, true);

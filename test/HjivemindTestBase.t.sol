@@ -4,17 +4,17 @@ pragma solidity ^0.8.33;
 import {Test, console} from "forge-std/Test.sol";
 import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 import {HubRegistry} from "transit/HubRegistry.sol";
-import {HivemindRailcar} from "../src/transit/HivemindRailcar.sol";
+import {HjivemindRailcar} from "../src/transit/HjivemindRailcar.sol";
 import {Questions} from "../src/Questions.sol";
 import {ScoreKeeper} from "../src/ScoreKeeper.sol";
 import {Lobby} from "../src/Lobby.sol";
 import {GameController} from "../src/GameController.sol";
 import {GameRound} from "../src/GameRound.sol";
 import {Winners} from "../src/Winners.sol";
-import {HivemindKeeper} from "../src/HivemindKeeper.sol";
+import {HjivemindKeeper} from "../src/HjivemindKeeper.sol";
 
-/// @title HivemindTestBase - Deploys and wires the full Hivemind contract suite
-abstract contract HivemindTestBase is Test {
+/// @title HjivemindTestBase - Deploys and wires the full Hjivemind contract suite
+abstract contract HjivemindTestBase is Test {
     // Accounts
     address admin;
     address player1;
@@ -24,14 +24,14 @@ abstract contract HivemindTestBase is Test {
 
     // Transit infra
     HubRegistry registry;
-    HivemindRailcar railcar;
+    HjivemindRailcar railcar;
 
     // VRF
     VRFCoordinatorV2_5Mock vrfCoordinator;
     uint256 vrfSubId;
     bytes32 vrfKeyHash = keccak256("test-keyhash");
 
-    // Hivemind contracts
+    // Hjivemind contracts
     Questions qp1;
     Questions qp2;
     Questions qp3;
@@ -44,7 +44,7 @@ abstract contract HivemindTestBase is Test {
     GameRound round3;
     GameRound round4;
     Winners winners;
-    HivemindKeeper hivemindKeeper;
+    HjivemindKeeper hjivemindKeeper;
 
     function setUp() public virtual {
         admin = address(this);
@@ -72,7 +72,7 @@ abstract contract HivemindTestBase is Test {
         registry = new HubRegistry(admin);
 
         // Railcar
-        railcar = new HivemindRailcar(admin);
+        railcar = new HjivemindRailcar(admin);
 
         // VRF Coordinator Mock
         vrfCoordinator = new VRFCoordinatorV2_5Mock(
@@ -132,10 +132,10 @@ abstract contract HivemindTestBase is Test {
 
     function _deployGame() internal {
         lobby = new Lobby(
-            "hivemind.lobby",
+            "hjivemind.lobby",
             address(scoreKeeper),
             address(railcar),
-            "hivemind.round1",
+            "hjivemind.round1",
             address(registry),
             admin
         );
@@ -148,42 +148,42 @@ abstract contract HivemindTestBase is Test {
         );
 
         round1 = new GameRound(
-            "hivemind.round1", "hivemind.round2",
+            "hjivemind.round1", "hjivemind.round2",
             address(qp1), address(scoreKeeper), address(gameController),
             address(railcar), address(registry), admin,
             address(vrfCoordinator), vrfKeyHash, vrfSubId
         );
 
         round2 = new GameRound(
-            "hivemind.round2", "hivemind.round3",
+            "hjivemind.round2", "hjivemind.round3",
             address(qp2), address(scoreKeeper), address(gameController),
             address(railcar), address(registry), admin,
             address(vrfCoordinator), vrfKeyHash, vrfSubId
         );
 
         round3 = new GameRound(
-            "hivemind.round3", "hivemind.round4",
+            "hjivemind.round3", "hjivemind.round4",
             address(qp3), address(scoreKeeper), address(gameController),
             address(railcar), address(registry), admin,
             address(vrfCoordinator), vrfKeyHash, vrfSubId
         );
 
         round4 = new GameRound(
-            "hivemind.round4", "hivemind.winners",
+            "hjivemind.round4", "hjivemind.winners",
             address(qp4), address(scoreKeeper), address(gameController),
             address(railcar), address(registry), admin,
             address(vrfCoordinator), vrfKeyHash, vrfSubId
         );
 
         winners = new Winners(
-            "hivemind.winners",
+            "hjivemind.winners",
             address(scoreKeeper),
             address(gameController),
             address(registry),
             admin
         );
 
-        hivemindKeeper = new HivemindKeeper(
+        hjivemindKeeper = new HjivemindKeeper(
             address(lobby), address(round1), address(round2),
             address(round3), address(round4), address(winners)
         );
@@ -200,10 +200,10 @@ abstract contract HivemindTestBase is Test {
         lobby.setGameControllerAddress(address(gameController));
 
         // Keeper on rounds
-        round1.setHivemindKeeper(address(hivemindKeeper));
-        round2.setHivemindKeeper(address(hivemindKeeper));
-        round3.setHivemindKeeper(address(hivemindKeeper));
-        round4.setHivemindKeeper(address(hivemindKeeper));
+        round1.setHjivemindKeeper(address(hjivemindKeeper));
+        round2.setHjivemindKeeper(address(hjivemindKeeper));
+        round3.setHjivemindKeeper(address(hjivemindKeeper));
+        round4.setHjivemindKeeper(address(hjivemindKeeper));
 
         // Queue types
         round1.setQueueType(1);
@@ -234,31 +234,31 @@ abstract contract HivemindTestBase is Test {
         gameController.addEventSender(address(winners));
 
         // Queue roles
-        hivemindKeeper.addQueueRole(address(lobby));
-        hivemindKeeper.addQueueRole(address(round1));
-        hivemindKeeper.addQueueRole(address(round2));
-        hivemindKeeper.addQueueRole(address(round3));
-        hivemindKeeper.addQueueRole(address(round4));
-        hivemindKeeper.addQueueRole(address(winners));
+        hjivemindKeeper.addQueueRole(address(lobby));
+        hjivemindKeeper.addQueueRole(address(round1));
+        hjivemindKeeper.addQueueRole(address(round2));
+        hjivemindKeeper.addQueueRole(address(round3));
+        hjivemindKeeper.addQueueRole(address(round4));
+        hjivemindKeeper.addQueueRole(address(winners));
 
         // Keeper roles on rounds
         round1.addKeeper(admin);
-        round1.addKeeper(address(hivemindKeeper));
-        round2.addKeeper(address(hivemindKeeper));
-        round3.addKeeper(address(hivemindKeeper));
-        round4.addKeeper(address(hivemindKeeper));
+        round1.addKeeper(address(hjivemindKeeper));
+        round2.addKeeper(address(hjivemindKeeper));
+        round3.addKeeper(address(hjivemindKeeper));
+        round4.addKeeper(address(hjivemindKeeper));
 
         // Railcar HUB_ROLE for Lobby
         railcar.grantRole(railcar.HUB_ROLE(), address(lobby));
     }
 
     function _connectHubs() internal {
-        uint256 lobbyID = registry.idFromName("hivemind.lobby");
-        uint256 round1ID = registry.idFromName("hivemind.round1");
-        uint256 round2ID = registry.idFromName("hivemind.round2");
-        uint256 round3ID = registry.idFromName("hivemind.round3");
-        uint256 round4ID = registry.idFromName("hivemind.round4");
-        uint256 winnersID = registry.idFromName("hivemind.winners");
+        uint256 lobbyID = registry.idFromName("hjivemind.lobby");
+        uint256 round1ID = registry.idFromName("hjivemind.round1");
+        uint256 round2ID = registry.idFromName("hjivemind.round2");
+        uint256 round3ID = registry.idFromName("hjivemind.round3");
+        uint256 round4ID = registry.idFromName("hjivemind.round4");
+        uint256 winnersID = registry.idFromName("hjivemind.winners");
 
         // Input permissions
         lobby.setAllowAllInputs(true);
@@ -325,5 +325,14 @@ abstract contract HivemindTestBase is Test {
 
         // Fulfill VRF for round 1
         vrfCoordinator.fulfillRandomWords(1, address(round1));
+    }
+
+    function _startGameAndFulfillVRFWithSeed(uint256 seed) internal {
+        vm.warp(block.timestamp + lobby.timeLimitToJoin() + 1);
+        lobby.startGame();
+
+        uint256[] memory words = new uint256[](1);
+        words[0] = seed;
+        vrfCoordinator.fulfillRandomWordsWithOverride(1, address(round1), words);
     }
 }

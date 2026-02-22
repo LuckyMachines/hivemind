@@ -8,7 +8,7 @@ import "./GameRound.sol";
 import "./Winners.sol";
 import "./Lobby.sol";
 
-contract HivemindKeeper is AutomationCompatibleInterface, AutoLoopCompatibleInterface, AccessControlEnumerable {
+contract HjivemindKeeper is AutomationCompatibleInterface, AutoLoopCompatibleInterface, AccessControlEnumerable {
     enum Queue {
         Lobby,
         Round1,

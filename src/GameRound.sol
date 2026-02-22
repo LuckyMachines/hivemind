@@ -2,13 +2,13 @@
 pragma solidity ^0.8.33;
 
 import {Hub} from "transit/Hub.sol";
-import {HivemindRailcar} from "./transit/HivemindRailcar.sol";
+import {HjivemindRailcar} from "./transit/HjivemindRailcar.sol";
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
 import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 import "./Questions.sol";
 import "./ScoreKeeper.sol";
 import "./GameController.sol";
-import "./HivemindKeeper.sol";
+import "./HjivemindKeeper.sol";
 
 contract GameRound is Hub, VRFConsumerBaseV2Plus {
     // VRF settings
@@ -43,8 +43,8 @@ contract GameRound is Hub, VRFConsumerBaseV2Plus {
     Questions internal QUESTIONS;
     ScoreKeeper internal SCORE_KEEPER;
     GameController internal GAME_CONTROLLER;
-    HivemindRailcar internal RAILCAR;
-    HivemindKeeper internal HIVEMIND_KEEPER;
+    HjivemindRailcar internal RAILCAR;
+    HjivemindKeeper internal HJIVEMIND_KEEPER;
 
     // mapping from railcar ID
     mapping(uint256 => uint256) internal _gameID;
@@ -61,6 +61,7 @@ contract GameRound is Hub, VRFConsumerBaseV2Plus {
     mapping(uint256 => uint256) public totalReveals;
     mapping(uint256 => uint256) public railcar;
     mapping(uint256 => uint256) public questionSeed;
+    mapping(uint256 => bool) public isMinorityRound;
 
     // from game ID => player
     mapping(uint256 => mapping(address => bytes32)) public hashedAnswer;
@@ -90,14 +91,14 @@ contract GameRound is Hub, VRFConsumerBaseV2Plus {
         QUESTIONS = Questions(questionsAddress);
         SCORE_KEEPER = ScoreKeeper(scoreKeeperAddress);
         GAME_CONTROLLER = GameController(gameControllerAddress);
-        RAILCAR = HivemindRailcar(railcarAddress);
+        RAILCAR = HjivemindRailcar(railcarAddress);
     }
 
-    function setHivemindKeeper(address hivemindKeeperAddress)
+    function setHjivemindKeeper(address hjivemindKeeperAddress)
         public
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
-        HIVEMIND_KEEPER = HivemindKeeper(hivemindKeeperAddress);
+        HJIVEMIND_KEEPER = HjivemindKeeper(hjivemindKeeperAddress);
     }
 
     function setQueueType(uint256 queueType)
@@ -131,6 +132,14 @@ contract GameRound is Hub, VRFConsumerBaseV2Plus {
         returns (uint256[] memory)
     {
         return winningChoiceIndex[gameID];
+    }
+
+    function getIsMinorityRound(uint256 gameID)
+        public
+        view
+        returns (bool)
+    {
+        return isMinorityRound[gameID];
     }
 
     // submit answers (will be stored in secret)
@@ -237,9 +246,9 @@ contract GameRound is Hub, VRFConsumerBaseV2Plus {
                 // assign points to winners
                 findWinners(railcarID);
 
-                HIVEMIND_KEEPER.deregisterGameRound(
+                HJIVEMIND_KEEPER.deregisterGameRound(
                     gameID,
-                    HivemindKeeper.Queue(_queueType)
+                    HjivemindKeeper.Queue(_queueType)
                 );
 
                 GAME_CONTROLLER.roundEnd(
@@ -261,9 +270,9 @@ contract GameRound is Hub, VRFConsumerBaseV2Plus {
     {
         uint256 gameID = _gameID[railcarRequestID[requestId]];
         questionSeed[gameID] = randomWords[0];
-        HIVEMIND_KEEPER.addActionToQueue(
-            HivemindKeeper.Action.StartRound,
-            HivemindKeeper.Queue(_queueType),
+        HJIVEMIND_KEEPER.addActionToQueue(
+            HjivemindKeeper.Action.StartRound,
+            HjivemindKeeper.Queue(_queueType),
             gameID
         );
     }
@@ -295,12 +304,14 @@ contract GameRound is Hub, VRFConsumerBaseV2Plus {
     // after randomness delivered...
     function startNewRound(uint256 gameID) public onlyRole(KEEPER_ROLE) {
         if (questionSeed[gameID] != 0) {
+            isMinorityRound[gameID] = (questionSeed[gameID] % 2 == 0);
+
             (question[gameID], responses[gameID]) = QUESTIONS
                 .getQuestionWithSeed(questionSeed[gameID]);
 
-            HIVEMIND_KEEPER.registerGameRound(
+            HJIVEMIND_KEEPER.registerGameRound(
                 gameID,
-                HivemindKeeper.Queue(_queueType)
+                HjivemindKeeper.Queue(_queueType)
             );
 
             GAME_CONTROLLER.roundStart(
@@ -353,6 +364,15 @@ contract GameRound is Hub, VRFConsumerBaseV2Plus {
 
     function findWinners(uint256 railcarID) internal {
         uint256 gameID = _gameID[railcarID];
+        if (isMinorityRound[gameID]) {
+            _findMinorityWinners(gameID);
+        } else {
+            _findMajorityWinners(gameID);
+        }
+        _awardWinnerPoints(railcarID, gameID);
+    }
+
+    function _findMajorityWinners(uint256 gameID) internal {
         if (
             responseScores[gameID][0] >= responseScores[gameID][1] &&
             responseScores[gameID][0] >= responseScores[gameID][2] &&
@@ -384,7 +404,32 @@ contract GameRound is Hub, VRFConsumerBaseV2Plus {
         if (winningChoiceIndex[gameID].length == 0) {
             winningChoiceIndex[gameID].push(10);
         }
+    }
 
+    function _findMinorityWinners(uint256 gameID) internal {
+        // Find the minimum non-zero response score
+        uint256 minScore = type(uint256).max;
+        for (uint256 i = 0; i < 4; i++) {
+            if (responseScores[gameID][i] > 0 && responseScores[gameID][i] < minScore) {
+                minScore = responseScores[gameID][i];
+            }
+        }
+
+        if (minScore == type(uint256).max) {
+            // No responses at all
+            winningChoiceIndex[gameID].push(10);
+            return;
+        }
+
+        // Push all indices that match the minimum
+        for (uint256 i = 0; i < 4; i++) {
+            if (responseScores[gameID][i] == minScore) {
+                winningChoiceIndex[gameID].push(i);
+            }
+        }
+    }
+
+    function _awardWinnerPoints(uint256 railcarID, uint256 gameID) internal {
         address[] memory players = RAILCAR.getMembers(railcarID);
         if (winningChoiceIndex[gameID].length == 4) {
             // everyone wins

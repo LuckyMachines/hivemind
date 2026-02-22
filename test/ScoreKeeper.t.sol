@@ -64,7 +64,7 @@ contract ScoreKeeperTest is Test {
 
     function test_setLatestRound() public {
         vm.prank(scoreSetter);
-        scoreKeeper.setLatestRound("hivemind.round2", 1);
-        assertEq(scoreKeeper.latestRound(1), "hivemind.round2");
+        scoreKeeper.setLatestRound("hjivemind.round2", 1);
+        assertEq(scoreKeeper.latestRound(1), "hjivemind.round2");
     }
 }

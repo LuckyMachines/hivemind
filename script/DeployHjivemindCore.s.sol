@@ -6,9 +6,9 @@ import {stdJson} from "forge-std/StdJson.sol";
 import {Questions} from "../src/Questions.sol";
 import {ScoreKeeper} from "../src/ScoreKeeper.sol";
 
-/// @title DeployHivemindCore - Deploys 4 Question Packs + ScoreKeeper
+/// @title DeployHjivemindCore - Deploys 4 Question Packs + ScoreKeeper
 /// @notice Run `node script/csv-to-json.js` first to generate questions/questions.json from CSVs
-contract DeployHivemindCore is Script {
+contract DeployHjivemindCore is Script {
     using stdJson for string;
 
     function run() external {

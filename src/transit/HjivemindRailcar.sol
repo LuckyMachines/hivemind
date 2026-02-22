@@ -3,9 +3,9 @@ pragma solidity ^0.8.33;
 
 import {Railcar} from "transit/Railcar.sol";
 
-/// @title HivemindRailcar - Extends Railcar with hub-driven membership
+/// @title HjivemindRailcar - Extends Railcar with hub-driven membership
 /// @notice Adds addMember() so hubs can enroll players on their behalf
-contract HivemindRailcar is Railcar {
+contract HjivemindRailcar is Railcar {
     constructor(address adminAddress) Railcar(adminAddress) {}
 
     /// @notice Add a member to a railcar (called by an authorized hub)

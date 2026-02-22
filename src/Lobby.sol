@@ -2,13 +2,13 @@
 pragma solidity ^0.8.33;
 
 import {Hub} from "transit/Hub.sol";
-import {HivemindRailcar} from "./transit/HivemindRailcar.sol";
+import {HjivemindRailcar} from "./transit/HjivemindRailcar.sol";
 import "./ScoreKeeper.sol";
 import "./GameRound.sol";
 
 contract Lobby is Hub {
     ScoreKeeper private SCORE_KEEPER;
-    HivemindRailcar private RAILCAR;
+    HjivemindRailcar private RAILCAR;
     address private _gameControllerAddress;
     uint256 private _currentGameID;
     bool private _needsNewGameID; // set to true when game has started
@@ -39,7 +39,7 @@ contract Lobby is Hub {
         REGISTRY.setName(hubName, hubID);
         inputAllowed[hubID] = true; // allow input from self to start railcars here
         SCORE_KEEPER = ScoreKeeper(scoreKeeperAddress);
-        RAILCAR = HivemindRailcar(railcarAddress);
+        RAILCAR = HjivemindRailcar(railcarAddress);
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _needsNewGameID = true;
         gameHub = gameStartHub;
@@ -55,7 +55,7 @@ contract Lobby is Hub {
         require(msg.value >= entryFee, "Minimum entry fee not sent");
         if (_needsNewGameID) {
             _currentGameID++;
-            // Create railcar via HivemindRailcar
+            // Create railcar via HjivemindRailcar
             RAILCAR.createRailcar(playerLimit);
             railcarID[_currentGameID] = RAILCAR.totalRailcars();
             _needsNewGameID = false;
@@ -63,7 +63,7 @@ contract Lobby is Hub {
         // add entry to pool and send to winners
         uint256 poolValue = msg.value > adminFee ? msg.value - adminFee : 0;
         if (poolValue > 0) {
-            payable(REGISTRY.addressFromName("hivemind.winners")).transfer(
+            payable(REGISTRY.addressFromName("hjivemind.winners")).transfer(
                 poolValue
             );
             SCORE_KEEPER.increasePrizePool(poolValue, _currentGameID);

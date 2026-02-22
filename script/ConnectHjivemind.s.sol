@@ -7,18 +7,18 @@ import {Lobby} from "../src/Lobby.sol";
 import {GameController} from "../src/GameController.sol";
 import {GameRound} from "../src/GameRound.sol";
 import {Winners} from "../src/Winners.sol";
-import {HivemindKeeper} from "../src/HivemindKeeper.sol";
+import {HjivemindKeeper} from "../src/HjivemindKeeper.sol";
 import {Questions} from "../src/Questions.sol";
 import {ScoreKeeper} from "../src/ScoreKeeper.sol";
-import {HivemindRailcar} from "../src/transit/HivemindRailcar.sol";
+import {HjivemindRailcar} from "../src/transit/HjivemindRailcar.sol";
 
-contract ConnectHivemind is Script {
+contract ConnectHjivemind is Script {
     using stdJson for string;
 
     struct Addresses {
         address lobby;
         address gameController;
-        address hivemindKeeper;
+        address hjivemindKeeper;
         address qp1;
         address qp2;
         address qp3;
@@ -37,7 +37,7 @@ contract ConnectHivemind is Script {
         string memory d = vm.readFile("deployed-contracts.json");
         a.lobby = d.readAddress(".lobby");
         a.gameController = d.readAddress(".gameController");
-        a.hivemindKeeper = d.readAddress(".hivemindKeeper");
+        a.hjivemindKeeper = d.readAddress(".hjivemindKeeper");
         a.qp1 = d.readAddress(".questionPack1");
         a.qp2 = d.readAddress(".questionPack2");
         a.qp3 = d.readAddress(".questionPack3");
@@ -62,10 +62,10 @@ contract ConnectHivemind is Script {
         Lobby(a.lobby).setGameControllerAddress(a.gameController);
 
         // Set keeper address on Rounds
-        GameRound(a.round1).setHivemindKeeper(a.hivemindKeeper);
-        GameRound(a.round2).setHivemindKeeper(a.hivemindKeeper);
-        GameRound(a.round3).setHivemindKeeper(a.hivemindKeeper);
-        GameRound(a.round4).setHivemindKeeper(a.hivemindKeeper);
+        GameRound(a.round1).setHjivemindKeeper(a.hjivemindKeeper);
+        GameRound(a.round2).setHjivemindKeeper(a.hjivemindKeeper);
+        GameRound(a.round3).setHjivemindKeeper(a.hjivemindKeeper);
+        GameRound(a.round4).setHjivemindKeeper(a.hjivemindKeeper);
 
         // Set queue types on Rounds
         GameRound(a.round1).setQueueType(1);
@@ -95,13 +95,13 @@ contract ConnectHivemind is Script {
 
         // Set keeper roles on rounds
         GameRound(a.round1).addKeeper(a.admin);
-        GameRound(a.round1).addKeeper(a.hivemindKeeper);
-        GameRound(a.round2).addKeeper(a.hivemindKeeper);
-        GameRound(a.round3).addKeeper(a.hivemindKeeper);
-        GameRound(a.round4).addKeeper(a.hivemindKeeper);
+        GameRound(a.round1).addKeeper(a.hjivemindKeeper);
+        GameRound(a.round2).addKeeper(a.hjivemindKeeper);
+        GameRound(a.round3).addKeeper(a.hjivemindKeeper);
+        GameRound(a.round4).addKeeper(a.hjivemindKeeper);
 
         // Grant HUB_ROLE on Railcar to Lobby (so Lobby can addMember/createRailcar)
-        HivemindRailcar rc = HivemindRailcar(a.railcar);
+        HjivemindRailcar rc = HjivemindRailcar(a.railcar);
         rc.grantRole(rc.HUB_ROLE(), a.lobby);
 
         vm.stopBroadcast();
@@ -120,7 +120,7 @@ contract ConnectHivemind is Script {
     }
 
     function _grantQueueRoles(Addresses memory a) internal {
-        HivemindKeeper hk = HivemindKeeper(a.hivemindKeeper);
+        HjivemindKeeper hk = HjivemindKeeper(a.hjivemindKeeper);
         hk.addQueueRole(a.lobby);
         hk.addQueueRole(a.round1);
         hk.addQueueRole(a.round2);

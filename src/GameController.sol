@@ -3,7 +3,7 @@ pragma solidity ^0.8.33;
 
 import {AccessControlEnumerable} from "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol";
 import {HubRegistry} from "transit/HubRegistry.sol";
-import {HivemindRailcar} from "./transit/HivemindRailcar.sol";
+import {HjivemindRailcar} from "./transit/HjivemindRailcar.sol";
 import "./Lobby.sol";
 import "./GameRound.sol";
 import "./ScoreKeeper.sol";
@@ -13,7 +13,7 @@ contract GameController is AccessControlEnumerable {
     Lobby internal LOBBY;
     ScoreKeeper internal SCORE_KEEPER;
     HubRegistry internal HUB_REGISTRY;
-    HivemindRailcar internal RAILCAR;
+    HjivemindRailcar internal RAILCAR;
 
     bytes32 public EVENT_SENDER_ROLE = keccak256("EVENT_SENDER_ROLE");
 
@@ -49,7 +49,7 @@ contract GameController is AccessControlEnumerable {
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
         LOBBY = Lobby(lobbyAddress);
         SCORE_KEEPER = ScoreKeeper(scoreKeeperAddress);
-        RAILCAR = HivemindRailcar(railcarAddress);
+        RAILCAR = HjivemindRailcar(railcarAddress);
         HUB_REGISTRY = HubRegistry(hubRegistryAddress);
     }
 
@@ -248,6 +248,15 @@ contract GameController is AccessControlEnumerable {
             .getWinningChoiceIndex(gameID);
     }
 
+    function getIsMinorityRound(string memory hubAlias, uint256 gameID)
+        public
+        view
+        returns (bool)
+    {
+        return GameRound(HUB_REGISTRY.addressFromName(hubAlias))
+            .isMinorityRound(gameID);
+    }
+
     function getPrizePool(uint256 gameID) public view returns (uint256 pool) {
         pool = SCORE_KEEPER.prizePool(gameID);
     }
@@ -298,6 +307,6 @@ contract GameController is AccessControlEnumerable {
 
     // Internal functions
     function _winnersHub() internal view returns (Winners winnersHub) {
-        winnersHub = Winners(payable(HUB_REGISTRY.addressFromName("hivemind.winners")));
+        winnersHub = Winners(payable(HUB_REGISTRY.addressFromName("hjivemind.winners")));
     }
 }

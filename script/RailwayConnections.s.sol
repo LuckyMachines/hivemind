@@ -28,12 +28,12 @@ contract RailwayConnections is Script {
 
         // Get hub IDs
         console.log("Getting hub IDs...");
-        uint256 lobbyID = registry.idFromName("hivemind.lobby");
-        uint256 round1ID = registry.idFromName("hivemind.round1");
-        uint256 round2ID = registry.idFromName("hivemind.round2");
-        uint256 round3ID = registry.idFromName("hivemind.round3");
-        uint256 round4ID = registry.idFromName("hivemind.round4");
-        uint256 winnersID = registry.idFromName("hivemind.winners");
+        uint256 lobbyID = registry.idFromName("hjivemind.lobby");
+        uint256 round1ID = registry.idFromName("hjivemind.round1");
+        uint256 round2ID = registry.idFromName("hjivemind.round2");
+        uint256 round3ID = registry.idFromName("hjivemind.round3");
+        uint256 round4ID = registry.idFromName("hjivemind.round4");
+        uint256 winnersID = registry.idFromName("hjivemind.winners");
 
         // Open connections to hubs
         console.log("Opening input permissions...");

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.33;
 
-import "./HivemindTestBase.t.sol";
+import "./HjivemindTestBase.t.sol";
 
-contract LobbyTest is HivemindTestBase {
+contract LobbyTest is HjivemindTestBase {
     function test_joinGame_singlePlayer() public {
         vm.prank(player1, player1);
         lobby.joinGame();

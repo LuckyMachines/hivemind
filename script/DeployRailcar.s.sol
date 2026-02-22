@@ -3,7 +3,7 @@ pragma solidity ^0.8.33;
 
 import {Script, console} from "forge-std/Script.sol";
 import {stdJson} from "forge-std/StdJson.sol";
-import {HivemindRailcar} from "../src/transit/HivemindRailcar.sol";
+import {HjivemindRailcar} from "../src/transit/HjivemindRailcar.sol";
 
 contract DeployRailcar is Script {
     using stdJson for string;
@@ -17,8 +17,8 @@ contract DeployRailcar is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        HivemindRailcar railcar = new HivemindRailcar(admin);
-        console.log("HivemindRailcar deployed to:", address(railcar));
+        HjivemindRailcar railcar = new HjivemindRailcar(admin);
+        console.log("HjivemindRailcar deployed to:", address(railcar));
 
         vm.stopBroadcast();
 
