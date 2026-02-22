@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="images/logo.png" alt="Hivemind Logo" width="200" />
+</p>
+
 # Hivemind
 
 ![Hivemind Hero](images/hivemind_hero.png)
