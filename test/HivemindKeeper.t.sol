@@ -65,4 +65,43 @@ contract HivemindKeeperTest is HivemindTestBase {
         uint256[][] memory updates = hivemindKeeper.getUpdates();
         assertEq(updates.length, 1);
     }
+
+    // AutoLoop interface tests
+    function test_shouldProgressLoop_noLoopNeeded() public view {
+        (bool loopIsReady,) = hivemindKeeper.shouldProgressLoop();
+        assertFalse(loopIsReady);
+    }
+
+    function test_shouldProgressLoop_lobbyCanStart() public {
+        _joinPlayers(2);
+        vm.warp(block.timestamp + lobby.timeLimitToJoin() + 1);
+
+        (bool loopIsReady, bytes memory progressWithData) = hivemindKeeper.shouldProgressLoop();
+        assertTrue(loopIsReady);
+
+        (uint256 queueType, uint256 actionType,,) = abi.decode(progressWithData, (uint256, uint256, uint256, uint256));
+        assertEq(queueType, uint256(HivemindKeeper.Queue.Lobby));
+        assertEq(actionType, uint256(HivemindKeeper.Action.StartGame));
+    }
+
+    function test_progressLoop_startsGame() public {
+        _joinPlayers(2);
+        vm.warp(block.timestamp + lobby.timeLimitToJoin() + 1);
+
+        (, bytes memory progressWithData) = hivemindKeeper.shouldProgressLoop();
+        hivemindKeeper.progressLoop(progressWithData);
+
+        assertFalse(lobby.canStart());
+    }
+
+    function test_bothInterfaces_sameResult() public {
+        _joinPlayers(2);
+        vm.warp(block.timestamp + lobby.timeLimitToJoin() + 1);
+
+        (bool upkeepNeeded, bytes memory performData) = hivemindKeeper.checkUpkeep("");
+        (bool loopIsReady, bytes memory progressWithData) = hivemindKeeper.shouldProgressLoop();
+
+        assertEq(upkeepNeeded, loopIsReady);
+        assertEq(keccak256(performData), keccak256(progressWithData));
+    }
 }

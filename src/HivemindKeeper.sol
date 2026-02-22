@@ -2,12 +2,13 @@
 pragma solidity ^0.8.33;
 
 import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/automation/interfaces/AutomationCompatibleInterface.sol";
+import {AutoLoopCompatibleInterface} from "autoloop/AutoLoopCompatibleInterface.sol";
 import {AccessControlEnumerable} from "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol";
 import "./GameRound.sol";
 import "./Winners.sol";
 import "./Lobby.sol";
 
-contract HivemindKeeper is AutomationCompatibleInterface, AccessControlEnumerable {
+contract HivemindKeeper is AutomationCompatibleInterface, AutoLoopCompatibleInterface, AccessControlEnumerable {
     enum Queue {
         Lobby,
         Round1,
@@ -133,6 +134,76 @@ contract HivemindKeeper is AutomationCompatibleInterface, AccessControlEnumerabl
         override
         returns (bool upkeepNeeded, bytes memory performData)
     {
+        return _checkInternal();
+    }
+
+    function performUpkeep(bytes calldata performData) external override {
+        _performInternal(performData);
+    }
+
+    // AutoLoop functions
+    function shouldProgressLoop()
+        external
+        view
+        override
+        returns (bool loopIsReady, bytes memory progressWithData)
+    {
+        return _checkInternal();
+    }
+
+    function progressLoop(bytes calldata progressWithData) external override {
+        _performInternal(progressWithData);
+    }
+
+    function getUpdates() public view returns (uint256[][] memory updates) {
+        updates = _completedUpdates;
+    }
+
+    function keeperCanUpdate(bytes calldata performData)
+        public
+        view
+        returns (bool)
+    {
+        uint256 _queue;
+        uint256 _action;
+        uint256 _queueIndex;
+        uint256 _gameID;
+        (_queue, _action, _queueIndex, _gameID) = abi.decode(
+            performData,
+            (uint256, uint256, uint256, uint256)
+        );
+        Queue q = Queue(_queue);
+        Action a = Action(_action);
+
+        return _verifyCanUpdate(q, a, _queueIndex, _gameID);
+    }
+
+    function loopCanUpdate(bytes calldata progressWithData)
+        public
+        view
+        returns (bool)
+    {
+        return keeperCanUpdate(progressWithData);
+    }
+
+    // ERC165 Support
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(AccessControlEnumerable)
+        returns (bool)
+    {
+        return
+            interfaceId == type(AutoLoopCompatibleInterface).interfaceId ||
+            super.supportsInterface(interfaceId);
+    }
+
+    // Shared internal logic
+    function _checkInternal()
+        internal
+        view
+        returns (bool upkeepNeeded, bytes memory performData)
+    {
         upkeepNeeded = false;
         performData = bytes("");
         Queue _queue;
@@ -237,7 +308,7 @@ contract HivemindKeeper is AutomationCompatibleInterface, AccessControlEnumerabl
         }
     }
 
-    function performUpkeep(bytes calldata performData) external override {
+    function _performInternal(bytes calldata performData) internal {
         uint256 _queue;
         uint256 _action;
         uint256 _queueIndex;
@@ -293,29 +364,6 @@ contract HivemindKeeper is AutomationCompatibleInterface, AccessControlEnumerabl
             }
             action[q][_gameID] = Action.None;
         }
-    }
-
-    function getUpdates() public view returns (uint256[][] memory updates) {
-        updates = _completedUpdates;
-    }
-
-    function keeperCanUpdate(bytes calldata performData)
-        public
-        view
-        returns (bool)
-    {
-        uint256 _queue;
-        uint256 _action;
-        uint256 _queueIndex;
-        uint256 _gameID;
-        (_queue, _action, _queueIndex, _gameID) = abi.decode(
-            performData,
-            (uint256, uint256, uint256, uint256)
-        );
-        Queue q = Queue(_queue);
-        Action a = Action(_action);
-
-        return _verifyCanUpdate(q, a, _queueIndex, _gameID);
     }
 
     // Internal checks
