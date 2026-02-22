@@ -13,3 +13,6 @@ artifacts
 out/
 cache/
 broadcast/
+
+# Claude Code
+.claude/
