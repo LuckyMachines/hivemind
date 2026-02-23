@@ -26,7 +26,7 @@ export default function LandingPage() {
           />
           <h1 className="hjivemind-title">HJIVEMIND</h1>
           <p className="hjivemind-tagline" style={{ fontSize: "1.4em" }}>
-            A coordination game protocol
+            Read the room. Win the game.
           </p>
           <p className="landing-hero__hook">
             Think you know what everyone else will pick?
@@ -157,7 +157,7 @@ export default function LandingPage() {
         <h2 className="hjivemind-title" style={{ fontSize: "1.8em" }}>
           HJIVEMIND
         </h2>
-        <p className="hjivemind-tagline">A coordination game protocol</p>
+        <p className="hjivemind-tagline">Read the room. Win the game.</p>
         <Link href="/play">
           <a className="landing-cta landing-cta--small">Play Now</a>
         </Link>
