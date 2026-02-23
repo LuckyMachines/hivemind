@@ -17,8 +17,7 @@ function pause(timeInSeconds) {
 }
 
 async function main() {
-  // const PROVIDER_URL = process.env.GOERLI_RPC_URL;
-  const PROVIDER_URL = process.env.MUMBAI_RPC_URL;
+  const PROVIDER_URL = process.env.SEPOLIA_RPC_URL;
   console.log("Provider URL:", PROVIDER_URL);
 
   let keys = [];

@@ -4,8 +4,7 @@ const fs = require("fs");
 const settings = require("../settings");
 require("dotenv").config();
 
-const PROVIDER_URL = process.env.MUMBAI_RPC_URL;
-// const PROVIDER_URL = process.env.GOERLI_RPC_URL;
+const PROVIDER_URL = process.env.SEPOLIA_RPC_URL;
 
 const provider = async (privateKeys, providerUrl) => {
   let keys = [];

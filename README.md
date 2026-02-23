@@ -8,7 +8,7 @@
 
 ### An on-chain multiplayer game where you win by outsmarting the crowd
 
-Contracts for this project are deployed on the Polygon Mumbai testnet. Test MATIC is required to play this game.
+Contracts for this project target Ethereum Sepolia (testnet) and Ethereum mainnet.
 
 ## How It Works
 

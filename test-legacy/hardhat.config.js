@@ -15,17 +15,13 @@ module.exports = {
         process.env.HARDHAT_PRIVATE_KEY_3
       ]
     },
-    mumbai: {
-      url: process.env.MUMBAI_RPC_URL,
-      accounts: [process.env.MUMBAI_PRIVATE_KEY_1]
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_URL,
+      accounts: [process.env.SEPOLIA_PRIVATE_KEY_1]
     },
-    polygon: {
-      url: process.env.POLYGON_RPC_URL,
-      accounts: [process.env.POLYGON_PRIVATE_KEY_1]
-    },
-    goerli: {
-      url: process.env.GOERLI_RPC_URL,
-      accounts: [process.env.GOERLI_PRIVATE_KEY_1]
+    mainnet: {
+      url: process.env.MAINNET_RPC_URL,
+      accounts: [process.env.MAINNET_PRIVATE_KEY_1]
     }
   },
   solidity: {
@@ -39,8 +35,8 @@ module.exports = {
   },
   etherscan: {
     apiKey: {
-      goerli: "QKEP4PUXN6P9ZCPYXE52R2MCKEX89GWGY8",
-      polygonMumbai: "NR92TZ2YMUY1CU4NJU1D4VRHK9RTA4GVP3"
+      sepolia: process.env.ETHERSCAN_API_KEY,
+      mainnet: process.env.ETHERSCAN_API_KEY
     }
   }
 };

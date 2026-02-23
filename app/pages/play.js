@@ -123,8 +123,7 @@ class Dashboard extends Component {
 
     /*
     Event subscription option 1: good locally, not on testnets
-    // const url = process.env.MUMBAI_RPC_URL;
-    const url = process.env.GOERLI_RPC_URL;
+    // const url = process.env.SEPOLIA_RPC_URL;
     let p2 = new ethers.providers.JsonRpcProvider(url);
     gc2 = new ethers.Contract(Addresses.gameController, GameController.abi, p2);
     console.log("Subscribing to events...");
