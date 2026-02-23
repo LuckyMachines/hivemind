@@ -1,12 +1,8 @@
 import React, { useState } from "react";
-import "semantic-ui-css/semantic.min.css";
-import { Button, Card } from "semantic-ui-react";
 
 const Question = (props) => {
   const [submitLoading, setSubmitLoading] = useState(false);
   const web3 = props.provider;
-  const unselectedColor = "grey";
-  const selectedColor = "blue";
 
   const submit = async () => {
     setSubmitLoading(true);
@@ -48,184 +44,74 @@ const Question = (props) => {
     props.setCrowdChoice(choice);
   };
 
-  const crowdResponseContent = (p) => {
-    return p.responses[2] == "" ? (
-      <>
-        <div>
-          <Button
-            color={
-              p.crowdChoice == p.responses[0] ? selectedColor : unselectedColor
-            }
-            onClick={() => setCrowdChoice(p.responses[0])}
-            disabled={p.inputLocked}
+  const renderChoices = (selectedChoice, onSelect) => {
+    const activeResponses = props.responses.filter((r) => r !== "");
+    return (
+      <div className="question-card__choices">
+        {activeResponses.map((response, idx) => (
+          <button
+            key={idx}
+            className={`choice-btn ${selectedChoice === response ? "choice-btn--selected" : ""}`}
+            onClick={() => onSelect(response)}
+            disabled={props.inputLocked}
           >
-            {p.responses[0]}
-          </Button>
-          <Button
-            color={
-              p.crowdChoice == p.responses[1] ? selectedColor : unselectedColor
-            }
-            onClick={() => setCrowdChoice(p.responses[1])}
-            disabled={p.inputLocked}
-          >
-            {p.responses[1]}
-          </Button>
-        </div>
-      </>
-    ) : (
-      <>
-        <div>
-          <Button
-            color={
-              p.crowdChoice == p.responses[0] ? selectedColor : unselectedColor
-            }
-            onClick={() => setCrowdChoice(p.responses[0])}
-            disabled={p.inputLocked}
-          >
-            {p.responses[0]}
-          </Button>
-          <Button
-            color={
-              p.crowdChoice == p.responses[1] ? selectedColor : unselectedColor
-            }
-            onClick={() => setCrowdChoice(p.responses[1])}
-            disabled={p.inputLocked}
-          >
-            {p.responses[1]}
-          </Button>
-        </div>
-        <div style={{ marginTop: "5px" }}>
-          <Button
-            color={
-              p.crowdChoice == p.responses[2] ? selectedColor : unselectedColor
-            }
-            onClick={() => setCrowdChoice(p.responses[2])}
-            disabled={p.inputLocked}
-          >
-            {p.responses[2]}
-          </Button>
-          <Button
-            color={
-              p.crowdChoice == p.responses[3] ? selectedColor : unselectedColor
-            }
-            onClick={() => setCrowdChoice(p.responses[3])}
-            disabled={p.inputLocked}
-          >
-            {p.responses[3]}
-          </Button>
-        </div>
-      </>
-    );
-  };
-
-  const userResponseContent = (p) => {
-    return p.responses[2] == "" ? (
-      <>
-        <div>
-          <Button
-            color={
-              p.playerChoice == p.responses[0] ? selectedColor : unselectedColor
-            }
-            onClick={() => setPlayerChoice(p.responses[0])}
-            disabled={p.inputLocked}
-          >
-            {p.responses[0]}
-          </Button>
-          <Button
-            color={
-              p.playerChoice == p.responses[1] ? selectedColor : unselectedColor
-            }
-            onClick={() => setPlayerChoice(p.responses[1])}
-            disabled={p.inputLocked}
-          >
-            {p.responses[1]}
-          </Button>
-        </div>
-      </>
-    ) : (
-      <>
-        <div>
-          <Button
-            color={
-              p.playerChoice == p.responses[0] ? selectedColor : unselectedColor
-            }
-            onClick={() => setPlayerChoice(p.responses[0])}
-            disabled={p.inputLocked}
-          >
-            {p.responses[0]}
-          </Button>
-          <Button
-            color={
-              p.playerChoice == p.responses[1] ? selectedColor : unselectedColor
-            }
-            onClick={() => setPlayerChoice(p.responses[1])}
-            disabled={p.inputLocked}
-          >
-            {p.responses[1]}
-          </Button>
-        </div>
-        <div style={{ marginTop: "5px" }}>
-          <Button
-            color={
-              p.playerChoice == p.responses[2] ? selectedColor : unselectedColor
-            }
-            onClick={() => setPlayerChoice(p.responses[2])}
-            disabled={p.inputLocked}
-          >
-            {p.responses[2]}
-          </Button>
-          <Button
-            color={
-              p.playerChoice == p.responses[3] ? selectedColor : unselectedColor
-            }
-            onClick={() => setPlayerChoice(p.responses[3])}
-            disabled={p.inputLocked}
-          >
-            {p.responses[3]}
-          </Button>
-        </div>
-      </>
-    );
-  };
-
-  let content =
-    props.show == false ? (
-      ""
-    ) : (
-      <div>
-        <div className={`mode-badge ${props.isMinority ? "mode-badge--minority" : "mode-badge--majority"}`}>
-          {props.isMinority
-            ? "MINORITY ROUND — Pick the least popular answer"
-            : "MAJORITY ROUND — Pick the most popular answer"}
-        </div>
-        <Card.Group>
-          <Card>
-            <Card.Content>
-              <Card.Header>{props.question}</Card.Header>
-            </Card.Content>
-            <Card.Content extra>{userResponseContent(props)}</Card.Content>
-          </Card>
-          <Card>
-            <Card.Content>
-              <Card.Header>What will the crowd choose?</Card.Header>
-              <Card.Meta>{props.question}</Card.Meta>
-            </Card.Content>
-            <Card.Content extra>{crowdResponseContent(props)}</Card.Content>
-          </Card>
-        </Card.Group>
-        <br />
-        <Button
-          loading={submitLoading}
-          color="black"
-          size="massive"
-          onClick={() => submit()}
-        >
-          {props.buttonText}
-        </Button>
-        {props.children}
+            {response}
+          </button>
+        ))}
       </div>
     );
-  return content;
+  };
+
+  const isWaiting =
+    props.buttonText !== "Submit Answers" &&
+    props.buttonText !== "Reveal Answers";
+  const isReveal = props.buttonText === "Reveal Answers";
+
+  if (!props.show) return null;
+
+  return (
+    <div className="play-fade-in">
+      <div
+        className={`mode-badge ${
+          props.isMinority ? "mode-badge--minority" : "mode-badge--majority"
+        }`}
+      >
+        {props.isMinority
+          ? "MINORITY ROUND — Pick the least popular answer"
+          : "MAJORITY ROUND — Pick the most popular answer"}
+      </div>
+
+      <div className="question-cards">
+        <div className="question-card">
+          <div className="question-card__label">Your Answer</div>
+          <div className="question-card__title">{props.question}</div>
+          {renderChoices(props.playerChoice, setPlayerChoice)}
+        </div>
+
+        <div className="question-card">
+          <div className="question-card__label">Crowd Prediction</div>
+          <div className="question-card__title">What will the crowd choose?</div>
+          <div className="question-card__subtitle">{props.question}</div>
+          {renderChoices(props.crowdChoice, setCrowdChoice)}
+        </div>
+      </div>
+
+      <button
+        className={`play-submit-btn ${
+          isWaiting
+            ? "play-submit-btn--waiting"
+            : isReveal
+            ? "play-submit-btn--reveal"
+            : ""
+        }`}
+        onClick={submit}
+        disabled={submitLoading || isWaiting}
+      >
+        {submitLoading ? "Processing..." : props.buttonText}
+      </button>
+      {props.children}
+    </div>
+  );
 };
 
 export default Question;

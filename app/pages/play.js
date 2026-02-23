@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Grid } from "semantic-ui-react";
+// Grid no longer used — layout handled by custom CSS
 import Layout from "../components/Layout";
 import ConnectWallet from "../components/ConnectWallet";
 import Question from "../components/Question";
@@ -1034,15 +1034,28 @@ class Dashboard extends Component {
     return isNew;
   };
 
+  getRoundIndex() {
+    switch (this.state.currentHub) {
+      case "hivemind.round1": return 1;
+      case "hivemind.round2": return 2;
+      case "hivemind.round3": return 3;
+      case "hivemind.round4": return 4;
+      case "hivemind.winners": return 5;
+      default: return 0;
+    }
+  }
+
   render() {
+    const roundIndex = this.getRoundIndex();
     return (
       <Layout page="hivemind">
-        <Grid centered style={{ paddingTop: "10px" }}>
-          <Grid.Row color="black" style={{ flexDirection: "column", alignItems: "center", paddingBottom: "0px" }}>
+        <div className="play-page">
+          {/* Header */}
+          <div className="play-header">
             <img
               src="/logo.png"
               alt="HJIVEMIND"
-              style={{ width: "80px", height: "80px", marginBottom: "10px" }}
+              className="play-header__logo"
             />
             <h1 className="hjivemind-title">
               {settings.projectTitle}
@@ -1050,117 +1063,139 @@ class Dashboard extends Component {
             <p className="hjivemind-tagline">
               A coordination game protocol
             </p>
-          </Grid.Row>
-          <Grid.Row color="black">
+          </div>
+
+          {/* Wallet Bar */}
+          <div className="play-wallet-bar">
             <ConnectWallet
               setProvider={this.setProvider}
               setAccounts={this.setAccounts}
               setConnectedWallet={this.setConnectedWallet}
             />
-          </Grid.Row>
-          <Grid.Row color="black" style={{ paddingTop: "0px" }}>
-            {this.state.connectedWallet
-              ? `Connected: ${this.state.connectedWallet}`
-              : "Not connected"}
-          </Grid.Row>
-          <Grid.Row style={{ backgroundColor: "#99ccff", color: "#001433" }}>
-            <Title title={this.state.title} />
-          </Grid.Row>
-          <Grid.Row style={{ backgroundColor: "#99ccff", color: "#001433" }}>
+          </div>
+
+          {/* Main Content */}
+          <div className="play-content">
+            {/* Round Title */}
+            <div className="play-round-bar">
+              <h2 className="play-round-title">
+                <Title title={this.state.title} />
+              </h2>
+              {roundIndex > 0 && (
+                <div className="play-round-dots">
+                  {[1, 2, 3, 4].map((r) => (
+                    <div
+                      key={r}
+                      className={`play-round-dot ${
+                        r === roundIndex
+                          ? "play-round-dot--active"
+                          : r < roundIndex
+                          ? "play-round-dot--completed"
+                          : ""
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Secret Phrase */}
             <SecretPhrase
               show={this.state.showSecretPhrase}
               phrase={this.state.secretPhrase}
               setPhrase={this.setSecretPhrase}
             />
-          </Grid.Row>
-          <Grid.Row style={{ backgroundColor: "#99ccff", color: "#001433" }}>
-            <Lobby
-              accounts={this.state.accounts}
-              gameController={this.state.gameController}
-              show={this.state.showLobby}
-              provider={this.state.provider}
-              gameID={this.state.gameID}
-              playersInGame={this.state.playersInGame}
-              lobbyButton={this.state.lobbyButton}
-              setGameID={this.setGameID}
-              setPlayersInGame={this.setPlayersInGame}
-              setLobbyButton={this.setLobbyButton}
-            />
-            <Question
-              question={this.state.round1Question}
-              responses={this.state.round1Responses}
-              show={this.state.showRound1}
-              buttonText={this.state.round1Button}
-              provider={this.state.provider}
-              playerChoice={this.state.round1PlayerChoice}
-              crowdChoice={this.state.round1CrowdChoice}
-              inputLocked={this.state.round1InputLocked}
-              isMinority={this.state.round1IsMinority}
-              setPlayerChoice={this.setPlayerChoice}
-              setCrowdChoice={this.setCrowdChoice}
-              submitChoices={this.submitChoices}
-              revealChoices={this.revealChoices}
-              secretPhrase={this.state.secretPhrase}
-            />
-            <Question
-              question={this.state.round2Question}
-              responses={this.state.round2Responses}
-              show={this.state.showRound2}
-              buttonText={this.state.round2Button}
-              provider={this.state.provider}
-              playerChoice={this.state.round2PlayerChoice}
-              crowdChoice={this.state.round2CrowdChoice}
-              inputLocked={this.state.round2InputLocked}
-              isMinority={this.state.round2IsMinority}
-              setPlayerChoice={this.setPlayerChoice}
-              setCrowdChoice={this.setCrowdChoice}
-              submitChoices={this.submitChoices}
-              revealChoices={this.revealChoices}
-              secretPhrase={this.state.secretPhrase}
-            />
-            <Question
-              question={this.state.round3Question}
-              responses={this.state.round3Responses}
-              show={this.state.showRound3}
-              buttonText={this.state.round3Button}
-              provider={this.state.provider}
-              playerChoice={this.state.round3PlayerChoice}
-              crowdChoice={this.state.round3CrowdChoice}
-              inputLocked={this.state.round3InputLocked}
-              isMinority={this.state.round3IsMinority}
-              setPlayerChoice={this.setPlayerChoice}
-              setCrowdChoice={this.setCrowdChoice}
-              submitChoices={this.submitChoices}
-              revealChoices={this.revealChoices}
-              secretPhrase={this.state.secretPhrase}
-            />
-            <Question
-              question={this.state.round4Question}
-              responses={this.state.round4Responses}
-              show={this.state.showRound4}
-              buttonText={this.state.round4Button}
-              provider={this.state.provider}
-              playerChoice={this.state.round4PlayerChoice}
-              crowdChoice={this.state.round4CrowdChoice}
-              inputLocked={this.state.round4InputLocked}
-              isMinority={this.state.round4IsMinority}
-              setPlayerChoice={this.setPlayerChoice}
-              setCrowdChoice={this.setCrowdChoice}
-              submitChoices={this.submitChoices}
-              revealChoices={this.revealChoices}
-              secretPhrase={this.state.secretPhrase}
-            />
-            <Winners
-              accounts={this.state.accounts}
-              gameController={this.state.gameController}
-              provider={this.state.provider}
-              show={this.state.showWinners}
-              rank={this.state.playerRank}
-              claimPrize={this.claimPrize}
-              joinNewGame={this.resetAndJoinNewGame}
-            />
-          </Grid.Row>
-          <Grid.Row>
+
+            {/* Game Content */}
+            <div className="play-fade-in" key={this.state.currentHub}>
+              <Lobby
+                accounts={this.state.accounts}
+                gameController={this.state.gameController}
+                show={this.state.showLobby}
+                provider={this.state.provider}
+                gameID={this.state.gameID}
+                playersInGame={this.state.playersInGame}
+                lobbyButton={this.state.lobbyButton}
+                setGameID={this.setGameID}
+                setPlayersInGame={this.setPlayersInGame}
+                setLobbyButton={this.setLobbyButton}
+              />
+              <Question
+                question={this.state.round1Question}
+                responses={this.state.round1Responses}
+                show={this.state.showRound1}
+                buttonText={this.state.round1Button}
+                provider={this.state.provider}
+                playerChoice={this.state.round1PlayerChoice}
+                crowdChoice={this.state.round1CrowdChoice}
+                inputLocked={this.state.round1InputLocked}
+                isMinority={this.state.round1IsMinority}
+                setPlayerChoice={this.setPlayerChoice}
+                setCrowdChoice={this.setCrowdChoice}
+                submitChoices={this.submitChoices}
+                revealChoices={this.revealChoices}
+                secretPhrase={this.state.secretPhrase}
+              />
+              <Question
+                question={this.state.round2Question}
+                responses={this.state.round2Responses}
+                show={this.state.showRound2}
+                buttonText={this.state.round2Button}
+                provider={this.state.provider}
+                playerChoice={this.state.round2PlayerChoice}
+                crowdChoice={this.state.round2CrowdChoice}
+                inputLocked={this.state.round2InputLocked}
+                isMinority={this.state.round2IsMinority}
+                setPlayerChoice={this.setPlayerChoice}
+                setCrowdChoice={this.setCrowdChoice}
+                submitChoices={this.submitChoices}
+                revealChoices={this.revealChoices}
+                secretPhrase={this.state.secretPhrase}
+              />
+              <Question
+                question={this.state.round3Question}
+                responses={this.state.round3Responses}
+                show={this.state.showRound3}
+                buttonText={this.state.round3Button}
+                provider={this.state.provider}
+                playerChoice={this.state.round3PlayerChoice}
+                crowdChoice={this.state.round3CrowdChoice}
+                inputLocked={this.state.round3InputLocked}
+                isMinority={this.state.round3IsMinority}
+                setPlayerChoice={this.setPlayerChoice}
+                setCrowdChoice={this.setCrowdChoice}
+                submitChoices={this.submitChoices}
+                revealChoices={this.revealChoices}
+                secretPhrase={this.state.secretPhrase}
+              />
+              <Question
+                question={this.state.round4Question}
+                responses={this.state.round4Responses}
+                show={this.state.showRound4}
+                buttonText={this.state.round4Button}
+                provider={this.state.provider}
+                playerChoice={this.state.round4PlayerChoice}
+                crowdChoice={this.state.round4CrowdChoice}
+                inputLocked={this.state.round4InputLocked}
+                isMinority={this.state.round4IsMinority}
+                setPlayerChoice={this.setPlayerChoice}
+                setCrowdChoice={this.setCrowdChoice}
+                submitChoices={this.submitChoices}
+                revealChoices={this.revealChoices}
+                secretPhrase={this.state.secretPhrase}
+              />
+              <Winners
+                accounts={this.state.accounts}
+                gameController={this.state.gameController}
+                provider={this.state.provider}
+                show={this.state.showWinners}
+                rank={this.state.playerRank}
+                claimPrize={this.claimPrize}
+                joinNewGame={this.resetAndJoinNewGame}
+              />
+            </div>
+
+            {/* Score Section */}
             <Score
               show={this.state.showScoreRound2}
               score={this.state.playerScore}
@@ -1201,11 +1236,8 @@ class Dashboard extends Component {
               responses={this.state.round4Responses}
               isMinority={this.state.round4IsMinority}
             />
-          </Grid.Row>
-          {/* <Grid.Row>
-            <span onClick={this.abandonGame}>abandon game</span>
-          </Grid.Row> */}
-        </Grid>
+          </div>
+        </div>
       </Layout>
     );
   }

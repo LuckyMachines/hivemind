@@ -1,5 +1,4 @@
 import React from "react";
-import { Progress } from "semantic-ui-react";
 
 const Score = (props) => {
   const r1 = Number(props.responseScores[0]);
@@ -8,81 +7,65 @@ const Score = (props) => {
   const r4 = Number(props.responseScores[3]);
   const totalResponses = r1 + r2 + r3 + r4;
   const responsePercentages = [
-    (r1 / totalResponses) * 100,
-    (r2 / totalResponses) * 100,
-    (r3 / totalResponses) * 100,
-    (r4 / totalResponses) * 100
+    totalResponses > 0 ? (r1 / totalResponses) * 100 : 0,
+    totalResponses > 0 ? (r2 / totalResponses) * 100 : 0,
+    totalResponses > 0 ? (r3 / totalResponses) * 100 : 0,
+    totalResponses > 0 ? (r4 / totalResponses) * 100 : 0
   ];
-  // console.log(
-  //   `Values: ${props.responseScores[0]},${props.responseScores[1]},${props.responseScores[2]},${props.responseScores[3]}`
-  // );
-  // console.log("Percentages:", responsePercentages);
 
-  let responseView = (p) => {
-    return p.responses[2] == "" ? (
-      <>
-        <Progress
-          progress
-          percent={responsePercentages[0]}
-          label={props.responses[0]}
-        />
-        <Progress
-          progress
-          percent={responsePercentages[1]}
-          label={props.responses[1]}
-          style={{ marginBottom: "50px" }}
-        />
-      </>
-    ) : (
-      <>
-        <Progress
-          progress
-          percent={responsePercentages[0]}
-          label={props.responses[0]}
-        />
-        <Progress
-          progress
-          percent={responsePercentages[1]}
-          label={props.responses[1]}
-        />
-        <Progress
-          progress
-          percent={responsePercentages[2]}
-          label={props.responses[2]}
-        />
-        <Progress
-          progress
-          percent={responsePercentages[3]}
-          label={props.responses[3]}
-          style={{ marginBottom: "50px" }}
-        />
-      </>
-    );
-  };
+  if (!props.show) return null;
 
-  let content =
-    props.show == false ? (
-      ""
-    ) : (
-      <div style={{ width: "60%", marginBottom: "-10px" }}>
-        <div className={`mode-badge mode-badge--small ${props.isMinority ? "mode-badge--minority" : "mode-badge--majority"}`}>
-          {props.isMinority ? "MINORITY ROUND" : "MAJORITY ROUND"}
+  const activeResponses = props.responses.filter((r) => r !== "");
+
+  return (
+    <div className="glass-card score-section play-fade-in">
+      <div className="score-section__header">
+        <div>
+          <div className="score-section__points-label">Score</div>
+          <div className="score-section__points">{props.score}</div>
         </div>
-        <span>
-          <strong>Score: </strong>
-          {props.score}
-        </span>
-        <h3>
-          <strong>{props.question}</strong>
-          <br />
-          <strong>&ldquo;{props.responses[Number(props.guess)]}&rdquo;</strong>
-        </h3>
-
-        {responseView(props)}
-        {props.children}
+        <div
+          className={`mode-badge mode-badge--small ${
+            props.isMinority ? "mode-badge--minority" : "mode-badge--majority"
+          }`}
+        >
+          {props.isMinority ? "MINORITY" : "MAJORITY"}
+        </div>
       </div>
-    );
-  return content;
+
+      <div className="score-section__question">{props.question}</div>
+      <div className="score-section__answer">
+        &ldquo;{props.responses[Number(props.guess)]}&rdquo;
+      </div>
+
+      {activeResponses.map((response, idx) => {
+        const pct = Math.round(responsePercentages[idx]);
+        const isWinner =
+          props.winningIndex && props.winningIndex.includes(String(idx));
+        return (
+          <div className="score-bar" key={idx}>
+            <div className="score-bar__label">
+              <span>{response}</span>
+              <span>{pct}%</span>
+            </div>
+            <div className="score-bar__track">
+              <div
+                className={`score-bar__fill ${
+                  isWinner
+                    ? props.isMinority
+                      ? "score-bar__fill--minority"
+                      : "score-bar__fill--winner"
+                    : ""
+                }`}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+      {props.children}
+    </div>
+  );
 };
 
 export default Score;

@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Button } from "semantic-ui-react";
 import Web3 from "web3";
 
 const ConnectWallet = (props) => {
@@ -65,24 +64,32 @@ const ConnectWallet = (props) => {
   };
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
       {connectedAddress ? (
-        <span style={{ fontFamily: "monospace", fontSize: "0.9em" }}>
+        <span className="play-wallet-address">
           {truncateAddress(connectedAddress)}
         </span>
       ) : null}
       {wrongChain ? (
-        <Button color="red" onClick={switchChain} loading={switchingChain}>
-          Wrong Chain — Switch
-        </Button>
+        <button
+          className="wallet-btn wallet-btn--wrong"
+          onClick={switchChain}
+          disabled={switchingChain}
+        >
+          {switchingChain ? "Switching..." : "Wrong Chain — Switch"}
+        </button>
       ) : connectedAddress ? (
-        <Button color="green" disabled>
+        <button className="wallet-btn wallet-btn--connected" disabled>
           Connected
-        </Button>
+        </button>
       ) : (
-        <Button onClick={connectWallet} loading={connectWalletLoading}>
-          Connect
-        </Button>
+        <button
+          className="wallet-btn wallet-btn--connect"
+          onClick={connectWallet}
+          disabled={connectWalletLoading}
+        >
+          {connectWalletLoading ? "Connecting..." : "Connect Wallet"}
+        </button>
       )}
       {props.children}
     </div>

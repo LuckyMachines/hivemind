@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Button, Card } from "semantic-ui-react";
 const settings = require("../settings");
 
 const Lobby = (props) => {
@@ -49,21 +48,25 @@ const Lobby = (props) => {
     setJoinGameLoading(false);
   };
 
-  let content =
-    props.show == false ? (
-      ""
-    ) : (
-      <div style={{ marginTop: "-40px" }}>
-        <p>
-          <strong>Game ID: {props.gameID}</strong>
-        </p>
-        <Button onClick={joinGame} loading={joinGameLoading}>
-          {props.lobbyButton}
-        </Button>
-        {props.children}
-      </div>
-    );
-  return content;
+  const isWaiting = props.lobbyButton !== "Join Game";
+
+  if (!props.show) return null;
+
+  return (
+    <div className="glass-card lobby-card play-fade-in">
+      <div className="lobby-card__label">Game ID</div>
+      <div className="lobby-card__game-id">{props.gameID}</div>
+      <br />
+      <button
+        className={`lobby-join-btn ${isWaiting ? "lobby-join-btn--waiting" : ""}`}
+        onClick={joinGame}
+        disabled={joinGameLoading || isWaiting}
+      >
+        {joinGameLoading ? "Joining..." : props.lobbyButton}
+      </button>
+      {props.children}
+    </div>
+  );
 };
 
 export default Lobby;
