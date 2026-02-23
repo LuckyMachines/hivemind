@@ -142,12 +142,12 @@ export default function LandingPage() {
             <p>Smart contracts on Ethereum and Sepolia</p>
           </div>
           <div className="landing-tech__item">
-            <strong>Chainlink VRF</strong>
-            <p>Verifiable randomization for minority/majority round selection</p>
+            <strong>AutoLoop VRF</strong>
+            <p>On-chain ECVRF randomness with decentralized game-state automation by Lucky Machines</p>
           </div>
           <div className="landing-tech__item">
-            <strong>AutoLoop</strong>
-            <p>Decentralized game-state automation by Lucky Machines</p>
+            <strong>Chainlink VRF</strong>
+            <p>Configurable Chainlink VRF v2.5 as an alternative randomness source</p>
           </div>
         </div>
       </section>
