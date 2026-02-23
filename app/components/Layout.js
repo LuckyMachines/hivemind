@@ -6,7 +6,7 @@ const Layout = (props) => {
   return (
     <Container>
       <Head>
-        <title>Hivemind</title>
+        <title>HJIVEMIND</title>
       </Head>
       {props.children}
     </Container>

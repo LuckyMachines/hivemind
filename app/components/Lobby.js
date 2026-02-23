@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Button, Card } from "semantic-ui-react";
 const settings = require("../settings");
-require("dotenv").config();
 
 const Lobby = (props) => {
   const [joinGameLoading, setJoinGameLoading] = useState(false);

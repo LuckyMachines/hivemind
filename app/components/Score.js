@@ -65,6 +65,9 @@ const Score = (props) => {
       ""
     ) : (
       <div style={{ width: "60%", marginBottom: "-10px" }}>
+        <div className={`mode-badge mode-badge--small ${props.isMinority ? "mode-badge--minority" : "mode-badge--majority"}`}>
+          {props.isMinority ? "MINORITY ROUND" : "MAJORITY ROUND"}
+        </div>
         <span>
           <strong>Score: </strong>
           {props.score}
@@ -72,7 +75,7 @@ const Score = (props) => {
         <h3>
           <strong>{props.question}</strong>
           <br />
-          <strong>"{props.responses[Number(props.guess)]}"</strong>
+          <strong>&ldquo;{props.responses[Number(props.guess)]}&rdquo;</strong>
         </h3>
 
         {responseView(props)}

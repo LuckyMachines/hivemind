@@ -15,6 +15,54 @@ a {
   box-sizing: border-box;
 }
 
+/* HJIVEMIND Branding */
+.hjivemind-title {
+  color: white;
+  font-size: 4em;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.hjivemind-tagline {
+  color: #99ccff;
+  font-size: 1.1em;
+  font-weight: 300;
+  letter-spacing: 0.05em;
+  margin: 0 0 10px 0;
+}
+
+/* Mode badges */
+.mode-badge {
+  text-align: center;
+  font-weight: 700;
+  font-size: 1em;
+  padding: 8px 16px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  letter-spacing: 0.05em;
+}
+
+.mode-badge--small {
+  font-size: 0.85em;
+  padding: 4px 12px;
+  margin-bottom: 8px;
+  display: inline-block;
+}
+
+.mode-badge--minority {
+  background-color: #fff3e0;
+  color: #e65100;
+  border: 2px solid #ff9800;
+}
+
+.mode-badge--majority {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  border: 2px solid #2196f3;
+}
+
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
@@ -22,5 +70,265 @@ a {
   body {
     color: white;
     background: black;
+  }
+}
+
+/* ========== Landing Page ========== */
+
+.landing-hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  overflow: hidden;
+}
+
+.landing-hero__bg {
+  position: absolute;
+  inset: 0;
+  background: url("/hero.png") center/cover no-repeat;
+  opacity: 0.35;
+}
+
+.landing-hero__content {
+  position: relative;
+  text-align: center;
+  padding: 2rem;
+}
+
+.landing-hero__logo {
+  width: 120px;
+  height: 120px;
+  margin-bottom: 1rem;
+}
+
+/* CTA Button */
+.landing-cta {
+  display: inline-block;
+  margin-top: 1.5rem;
+  padding: 1rem 3rem;
+  background: #2196f3;
+  color: #fff;
+  font-size: 1.2em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.landing-cta:hover {
+  background: #1976d2;
+  transform: translateY(-2px);
+}
+
+.landing-cta--small {
+  padding: 0.75rem 2rem;
+  font-size: 1em;
+}
+
+/* Sections */
+.landing-section {
+  padding: 5rem 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.landing-section--dark {
+  background: #0a0a0a;
+  color: #fff;
+  max-width: none;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+.landing-section--dark > * {
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.landing-section--light {
+  background: #111;
+  color: #fff;
+  max-width: none;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+.landing-section--light > * {
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.landing-section__title {
+  text-align: center;
+  font-size: 2.2em;
+  font-weight: 700;
+  margin-bottom: 2.5rem;
+  letter-spacing: 0.04em;
+}
+
+/* Steps (How It Works) */
+.landing-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.landing-steps__card {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.landing-steps__card h3 {
+  margin: 0.75rem 0 0.5rem;
+  font-size: 1.3em;
+}
+
+.landing-steps__card p {
+  color: #b0b0b0;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.landing-steps__number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #2196f3;
+  color: #fff;
+  font-size: 1.4em;
+  font-weight: 700;
+}
+
+/* Game Modes */
+.landing-modes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+
+.landing-modes__card {
+  border-radius: 12px;
+  padding: 2.5rem 2rem;
+  text-align: center;
+}
+
+.landing-modes__card h3 {
+  font-size: 1.4em;
+  margin: 0 0 0.75rem;
+}
+
+.landing-modes__card p {
+  line-height: 1.6;
+  margin: 0;
+}
+
+.landing-modes__card--majority {
+  background: #0d2137;
+  border: 2px solid #2196f3;
+  color: #e3f2fd;
+}
+
+.landing-modes__card--minority {
+  background: #2a1800;
+  border: 2px solid #ff9800;
+  color: #fff3e0;
+}
+
+/* Scoring */
+.landing-scoring {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  text-align: center;
+}
+
+.landing-scoring__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.landing-scoring__points {
+  font-size: 2.8em;
+  font-weight: 800;
+  color: #2196f3;
+  line-height: 1;
+}
+
+.landing-scoring__label {
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.landing-scoring__desc {
+  color: #b0b0b0;
+  font-size: 0.95em;
+  line-height: 1.4;
+}
+
+/* Tech / Architecture */
+.landing-tech {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  text-align: center;
+}
+
+.landing-tech__item {
+  padding: 1.5rem;
+}
+
+.landing-tech__item strong {
+  display: block;
+  font-size: 1.2em;
+  margin-bottom: 0.5rem;
+}
+
+.landing-tech__item p {
+  color: #b0b0b0;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Footer */
+.landing-footer {
+  background: #000;
+  text-align: center;
+  padding: 4rem 2rem;
+  border-top: 1px solid #222;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .landing-steps,
+  .landing-scoring,
+  .landing-tech {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-modes {
+    grid-template-columns: 1fr;
+  }
+
+  .hjivemind-title {
+    font-size: 2.5em;
+  }
+
+  .landing-hero__logo {
+    width: 80px;
+    height: 80px;
   }
 }

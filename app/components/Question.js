@@ -193,6 +193,11 @@ const Question = (props) => {
       ""
     ) : (
       <div>
+        <div className={`mode-badge ${props.isMinority ? "mode-badge--minority" : "mode-badge--majority"}`}>
+          {props.isMinority
+            ? "MINORITY ROUND — Pick the least popular answer"
+            : "MAJORITY ROUND — Pick the most popular answer"}
+        </div>
         <Card.Group>
           <Card>
             <Card.Content>
