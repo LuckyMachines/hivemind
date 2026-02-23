@@ -11,7 +11,11 @@ import "./GameController.sol";
 import "./HjivemindKeeper.sol";
 
 contract GameRound is Hub, VRFConsumerBaseV2Plus {
-    // VRF settings
+    // VRF source configuration
+    enum VRFSource { Chainlink, AutoLoop }
+    VRFSource public vrfSource;
+
+    // Chainlink VRF settings
     uint32 constant callbackGasLimit = 200000;
     uint256 s_subscriptionId;
     bytes32 keyHash;
@@ -286,19 +290,29 @@ contract GameRound is Hub, VRFConsumerBaseV2Plus {
         phase[gameID] = GamePhase.Question;
         SCORE_KEEPER.setLatestRound(hubName, gameID);
         roundStartTime[gameID] = block.timestamp;
-        uint256 requestID = s_vrfCoordinator.requestRandomWords(
-            VRFV2PlusClient.RandomWordsRequest({
-                keyHash: keyHash,
-                subId: s_subscriptionId,
-                requestConfirmations: requestConfirmations,
-                callbackGasLimit: callbackGasLimit,
-                numWords: numWords,
-                extraArgs: VRFV2PlusClient._argsToBytes(
-                    VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
-                )
-            })
-        );
-        railcarRequestID[requestID] = railcarID;
+
+        if (vrfSource == VRFSource.Chainlink) {
+            uint256 requestID = s_vrfCoordinator.requestRandomWords(
+                VRFV2PlusClient.RandomWordsRequest({
+                    keyHash: keyHash,
+                    subId: s_subscriptionId,
+                    requestConfirmations: requestConfirmations,
+                    callbackGasLimit: callbackGasLimit,
+                    numWords: numWords,
+                    extraArgs: VRFV2PlusClient._argsToBytes(
+                        VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
+                    )
+                })
+            );
+            railcarRequestID[requestID] = railcarID;
+        } else {
+            // AutoLoop VRF: queue SeedRound action for keeper to fulfill
+            HJIVEMIND_KEEPER.addActionToQueue(
+                HjivemindKeeper.Action.SeedRound,
+                HjivemindKeeper.Queue(_queueType),
+                gameID
+            );
+        }
     }
 
     // after randomness delivered...
@@ -477,6 +491,27 @@ contract GameRound is Hub, VRFConsumerBaseV2Plus {
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
         grantRole(KEEPER_ROLE, keeperAddress);
+    }
+
+    function setVRFSource(VRFSource _source)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        vrfSource = _source;
+    }
+
+    // AutoLoop VRF: keeper delivers the seed after verifying the ECVRF proof
+    function setQuestionSeed(uint256 gameID, uint256 seed)
+        public
+        onlyRole(KEEPER_ROLE)
+    {
+        require(questionSeed[gameID] == 0, "Seed already set");
+        questionSeed[gameID] = seed;
+        HJIVEMIND_KEEPER.addActionToQueue(
+            HjivemindKeeper.Action.StartRound,
+            HjivemindKeeper.Queue(_queueType),
+            gameID
+        );
     }
 
 }

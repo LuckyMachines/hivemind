@@ -12,6 +12,7 @@ import {GameController} from "../src/GameController.sol";
 import {GameRound} from "../src/GameRound.sol";
 import {Winners} from "../src/Winners.sol";
 import {HjivemindKeeper} from "../src/HjivemindKeeper.sol";
+import {VRFVerifier} from "../src/VRFVerifier.sol";
 
 /// @title HjivemindTestBase - Deploys and wires the full Hjivemind contract suite
 abstract contract HjivemindTestBase is Test {
@@ -334,5 +335,79 @@ abstract contract HjivemindTestBase is Test {
         uint256[] memory words = new uint256[](1);
         words[0] = seed;
         vrfCoordinator.fulfillRandomWordsWithOverride(1, address(round1), words);
+    }
+
+    // ── AutoLoop VRF helpers ─────────────────────────────────
+
+    address autoLoopController = makeAddr("autoLoopController");
+    uint256 constant CONTROLLER_PK_X = 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef;
+    uint256 constant CONTROLLER_PK_Y = 0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321;
+
+    function _enableAutoLoopVRF() internal {
+        round1.setVRFSource(GameRound.VRFSource.AutoLoop);
+        round2.setVRFSource(GameRound.VRFSource.AutoLoop);
+        round3.setVRFSource(GameRound.VRFSource.AutoLoop);
+        round4.setVRFSource(GameRound.VRFSource.AutoLoop);
+        hjivemindKeeper.setVRFEnabled(true);
+        hjivemindKeeper.registerControllerKey(
+            autoLoopController,
+            CONTROLLER_PK_X,
+            CONTROLLER_PK_Y
+        );
+    }
+
+    function _buildVRFProofData(uint256 gammaX, uint256 gammaY, uint256 alpha)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        VRFVerifier.ECVRFProof memory proof = VRFVerifier.ECVRFProof({
+            pk: [CONTROLLER_PK_X, CONTROLLER_PK_Y],
+            gamma: [gammaX, gammaY],
+            c: 1,
+            s: 1,
+            alpha: alpha
+        });
+        return abi.encode(proof);
+    }
+
+    function _buildVRFEnvelope(
+        uint256 queueType,
+        uint256 queueIndex,
+        uint256 gameID,
+        uint256 gammaX,
+        uint256 gammaY,
+        uint256 alpha
+    ) internal pure returns (bytes memory) {
+        bytes memory vrfProofData = _buildVRFProofData(gammaX, gammaY, alpha);
+        return abi.encode(
+            queueType,
+            uint256(HjivemindKeeper.Action.SeedRound),
+            queueIndex,
+            gameID,
+            vrfProofData
+        );
+    }
+
+    function _startGameAutoLoopVRF() internal {
+        vm.warp(block.timestamp + lobby.timeLimitToJoin() + 1);
+        lobby.startGame();
+    }
+
+    function _fulfillAutoLoopVRF(
+        uint256 queueType,
+        uint256 queueIndex,
+        uint256 gameID
+    ) internal {
+        bytes memory envelope = _buildVRFEnvelope(
+            queueType,
+            queueIndex,
+            gameID,
+            0xaaaa, // gammaX
+            0xbbbb, // gammaY
+            block.timestamp // alpha
+        );
+        vm.prank(autoLoopController);
+        hjivemindKeeper.progressLoop(envelope);
     }
 }

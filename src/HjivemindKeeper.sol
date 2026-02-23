@@ -2,8 +2,9 @@
 pragma solidity ^0.8.33;
 
 import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/automation/interfaces/AutomationCompatibleInterface.sol";
-import {AutoLoopCompatibleInterface} from "autoloop/AutoLoopCompatibleInterface.sol";
+import {AutoLoopCompatibleInterface} from "./interfaces/AutoLoopCompatibleInterface.sol";
 import {AccessControlEnumerable} from "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol";
+import {VRFVerifier} from "./VRFVerifier.sol";
 import "./GameRound.sol";
 import "./Winners.sol";
 import "./Lobby.sol";
@@ -23,7 +24,8 @@ contract HjivemindKeeper is AutomationCompatibleInterface, AutoLoopCompatibleInt
         StartRound,
         UpdatePhase,
         Clean,
-        FindWinners
+        FindWinners,
+        SeedRound
     }
 
     uint256 constant LOBBY_INDEX = 10000000000;
@@ -48,6 +50,11 @@ contract HjivemindKeeper is AutomationCompatibleInterface, AutoLoopCompatibleInt
     // Mapping from Queue enum => game id
     mapping(Queue => mapping(uint256 => Action)) public action; // Action to be performed on queue for game
     uint256[2][] public registeredGameRounds;
+
+    // AutoLoop VRF state
+    mapping(address => uint256[2]) public controllerPublicKeys;
+    mapping(address => bool) public controllerKeyRegistered;
+    bool public vrfEnabled;
 
     constructor(
         address lobbyAddress,
@@ -152,6 +159,19 @@ contract HjivemindKeeper is AutomationCompatibleInterface, AutoLoopCompatibleInt
     }
 
     function progressLoop(bytes calldata progressWithData) external override {
+        if (vrfEnabled) {
+            // Try to decode as VRF envelope first
+            // VRF envelope: (uint256 queue, uint256 action, uint256 queueIndex, uint256 gameID, bytes vrfProofData)
+            // Standard envelope: (uint256 queue, uint256 action, uint256 queueIndex, uint256 gameID)
+            (uint256 _queue, uint256 _action, , ) = abi.decode(
+                progressWithData,
+                (uint256, uint256, uint256, uint256)
+            );
+            if (Action(_action) == Action.SeedRound) {
+                _performVRFSeedRound(progressWithData);
+                return;
+            }
+        }
         _performInternal(progressWithData);
     }
 
@@ -481,11 +501,92 @@ contract HjivemindKeeper is AutomationCompatibleInterface, AutoLoopCompatibleInt
         action[queueType][gameID] = actionType;
     }
 
+    // AutoLoop VRF internal
+    function _performVRFSeedRound(bytes calldata progressWithData) internal {
+        (
+            uint256 _queue,
+            uint256 _action,
+            uint256 _queueIndex,
+            uint256 _gameID,
+            bytes memory vrfProofData
+        ) = abi.decode(
+            progressWithData,
+            (uint256, uint256, uint256, uint256, bytes)
+        );
+
+        Queue q = Queue(_queue);
+
+        // Decode and verify VRF proof
+        VRFVerifier.ECVRFProof memory proof = abi.decode(
+            vrfProofData,
+            (VRFVerifier.ECVRFProof)
+        );
+
+        // Verify controller key is registered
+        address controller = msg.sender;
+        require(controllerKeyRegistered[controller], "Controller key not registered");
+        require(
+            controllerPublicKeys[controller][0] == proof.pk[0] &&
+            controllerPublicKeys[controller][1] == proof.pk[1],
+            "Public key mismatch"
+        );
+
+        // Verify VRF proof
+        require(VRFVerifier.fastVerify(proof), "Invalid VRF proof");
+
+        // Extract randomness from verified proof
+        bytes32 randomness = VRFVerifier.gammaToHash(proof.gamma);
+
+        // Clean up old SeedRound queue entry BEFORE delivering seed,
+        // because _deliverSeedToRound queues a new StartRound action for the same gameID
+        if (_queueIndex < LOBBY_INDEX) {
+            queue[q][_queueIndex] = 0;
+        }
+
+        // Deliver seed to the appropriate round (this queues StartRound)
+        _deliverSeedToRound(q, _gameID, uint256(randomness));
+
+        uint256[] memory newUpdate = new uint256[](4);
+        newUpdate[0] = _queue;
+        newUpdate[1] = _action;
+        newUpdate[2] = _queueIndex;
+        newUpdate[3] = _gameID;
+        _completedUpdates.push(newUpdate);
+    }
+
+    function _deliverSeedToRound(Queue q, uint256 gameID, uint256 seed) internal {
+        if (q == Queue.Round1) {
+            ROUND_1.setQuestionSeed(gameID, seed);
+        } else if (q == Queue.Round2) {
+            ROUND_2.setQuestionSeed(gameID, seed);
+        } else if (q == Queue.Round3) {
+            ROUND_3.setQuestionSeed(gameID, seed);
+        } else if (q == Queue.Round4) {
+            ROUND_4.setQuestionSeed(gameID, seed);
+        }
+    }
+
     // Admin Functions
     function addQueueRole(address queueRoleAddress)
         public
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
         grantRole(QUEUE_ROLE, queueRoleAddress);
+    }
+
+    function setVRFEnabled(bool enabled)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        vrfEnabled = enabled;
+    }
+
+    function registerControllerKey(
+        address controller,
+        uint256 pkX,
+        uint256 pkY
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        controllerPublicKeys[controller] = [pkX, pkY];
+        controllerKeyRegistered[controller] = true;
     }
 }

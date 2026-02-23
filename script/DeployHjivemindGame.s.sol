@@ -25,10 +25,20 @@ contract DeployHjivemindGame is Script {
         address qp3 = deployedJson.readAddress(".questionPack3");
         address qp4 = deployedJson.readAddress(".questionPack4");
 
-        // VRF settings from env
-        address vrfCoordinator = vm.envAddress("VRF_COORDINATOR");
-        bytes32 vrfKeyHash = vm.envBytes32("VRF_KEY_HASH");
-        uint256 vrfSubscriptionId = vm.envUint("VRF_SUBSCRIPTION_ID");
+        // VRF source: 0 = Chainlink (default), 1 = AutoLoop
+        uint256 vrfSourceEnv = vm.envOr("VRF_SOURCE", uint256(0));
+        bool useAutoLoop = vrfSourceEnv == 1;
+
+        // VRF settings from env (dummy values for AutoLoop mode)
+        address vrfCoordinator = useAutoLoop
+            ? address(1)
+            : vm.envAddress("VRF_COORDINATOR");
+        bytes32 vrfKeyHash = useAutoLoop
+            ? bytes32(0)
+            : vm.envBytes32("VRF_KEY_HASH");
+        uint256 vrfSubscriptionId = useAutoLoop
+            ? 0
+            : vm.envUint("VRF_SUBSCRIPTION_ID");
 
         vm.startBroadcast(deployerPrivateKey);
 
@@ -128,6 +138,18 @@ contract DeployHjivemindGame is Script {
             address(winners)
         );
         console.log("HjivemindKeeper deployed to:", address(hjivemindKeeper));
+
+        // Configure VRF source if AutoLoop mode
+        if (useAutoLoop) {
+            round1.setVRFSource(GameRound.VRFSource.AutoLoop);
+            round2.setVRFSource(GameRound.VRFSource.AutoLoop);
+            round3.setVRFSource(GameRound.VRFSource.AutoLoop);
+            round4.setVRFSource(GameRound.VRFSource.AutoLoop);
+            hjivemindKeeper.setVRFEnabled(true);
+            console.log("VRF source set to AutoLoop");
+        } else {
+            console.log("VRF source set to Chainlink");
+        }
 
         vm.stopBroadcast();
 
