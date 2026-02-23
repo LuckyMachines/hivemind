@@ -15,10 +15,15 @@ import {HjivemindKeeper} from "../src/HjivemindKeeper.sol";
 
 /// @title DeployLocal - Deploys, wires, and connects the full Hjivemind suite on a local anvil node
 /// @notice Run `node script/csv-to-json.js` first to generate questions/questions.json from CSVs
+/// @dev Set VRF_SOURCE=1 to use AutoLoop VRF instead of Chainlink VRF mock
 contract DeployLocal is Script {
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         address admin = vm.addr(deployerPrivateKey);
+
+        // VRF source: 0 = Chainlink mock (default), 1 = AutoLoop
+        uint256 vrfSourceEnv = vm.envOr("VRF_SOURCE", uint256(0));
+        bool useAutoLoop = vrfSourceEnv == 1;
 
         // Load questions from JSON
         string memory qJson = vm.readFile("questions/questions.json");
@@ -32,15 +37,27 @@ contract DeployLocal is Script {
         HjivemindRailcar railcar = new HjivemindRailcar(admin);
         console.log("HjivemindRailcar:", address(railcar));
 
-        // Mock VRF Coordinator
-        VRFCoordinatorV2_5Mock vrfCoordinator = new VRFCoordinatorV2_5Mock(
-            100000000000000000, 1000000000, 1e18
-        );
-        uint256 vrfSubId = vrfCoordinator.createSubscription();
-        vrfCoordinator.fundSubscription(vrfSubId, 10 ether);
-        bytes32 vrfKeyHash = keccak256("local-keyhash");
-        console.log("VRFCoordinator:", address(vrfCoordinator));
-        console.log("VRF SubId:", vrfSubId);
+        // VRF Coordinator: real mock for Chainlink, dummy for AutoLoop
+        address vrfCoordinatorAddr;
+        bytes32 vrfKeyHash;
+        uint256 vrfSubId;
+
+        if (useAutoLoop) {
+            vrfCoordinatorAddr = address(1);
+            vrfKeyHash = bytes32(0);
+            vrfSubId = 0;
+            console.log("VRF source: AutoLoop (no Chainlink coordinator)");
+        } else {
+            VRFCoordinatorV2_5Mock vrfCoordinator = new VRFCoordinatorV2_5Mock(
+                100000000000000000, 1000000000, 1e18
+            );
+            vrfSubId = vrfCoordinator.createSubscription();
+            vrfCoordinator.fundSubscription(vrfSubId, 10 ether);
+            vrfCoordinatorAddr = address(vrfCoordinator);
+            vrfKeyHash = keccak256("local-keyhash");
+            console.log("VRFCoordinator:", vrfCoordinatorAddr);
+            console.log("VRF SubId:", vrfSubId);
+        }
 
         // ── 2. Question Packs (from CSV-derived JSON) ───────────
         (string[] memory q1, string[4][] memory r1) = _loadPack(qJson, "pack1");
@@ -75,28 +92,28 @@ contract DeployLocal is Script {
             "hjivemind.round1", "hjivemind.round2",
             address(qp1), address(scoreKeeper), address(gameController),
             address(railcar), address(registry), admin,
-            address(vrfCoordinator), vrfKeyHash, vrfSubId
+            vrfCoordinatorAddr, vrfKeyHash, vrfSubId
         );
 
         GameRound round2 = new GameRound(
             "hjivemind.round2", "hjivemind.round3",
             address(qp2), address(scoreKeeper), address(gameController),
             address(railcar), address(registry), admin,
-            address(vrfCoordinator), vrfKeyHash, vrfSubId
+            vrfCoordinatorAddr, vrfKeyHash, vrfSubId
         );
 
         GameRound round3 = new GameRound(
             "hjivemind.round3", "hjivemind.round4",
             address(qp3), address(scoreKeeper), address(gameController),
             address(railcar), address(registry), admin,
-            address(vrfCoordinator), vrfKeyHash, vrfSubId
+            vrfCoordinatorAddr, vrfKeyHash, vrfSubId
         );
 
         GameRound round4 = new GameRound(
             "hjivemind.round4", "hjivemind.winners",
             address(qp4), address(scoreKeeper), address(gameController),
             address(railcar), address(registry), admin,
-            address(vrfCoordinator), vrfKeyHash, vrfSubId
+            vrfCoordinatorAddr, vrfKeyHash, vrfSubId
         );
 
         console.log("Round1:", address(round1));
@@ -116,11 +133,31 @@ contract DeployLocal is Script {
         );
         console.log("HjivemindKeeper:", address(hjivemindKeeper));
 
-        // Add VRF consumers
-        vrfCoordinator.addConsumer(vrfSubId, address(round1));
-        vrfCoordinator.addConsumer(vrfSubId, address(round2));
-        vrfCoordinator.addConsumer(vrfSubId, address(round3));
-        vrfCoordinator.addConsumer(vrfSubId, address(round4));
+        // ── 4b. VRF Configuration ─────────────────────────────
+        if (useAutoLoop) {
+            // AutoLoop VRF: configure rounds and keeper
+            round1.setVRFSource(GameRound.VRFSource.AutoLoop);
+            round2.setVRFSource(GameRound.VRFSource.AutoLoop);
+            round3.setVRFSource(GameRound.VRFSource.AutoLoop);
+            round4.setVRFSource(GameRound.VRFSource.AutoLoop);
+            hjivemindKeeper.setVRFEnabled(true);
+
+            // Register deployer as a VRF controller for local testing
+            // In production, this would be the AutoLoop worker address
+            hjivemindKeeper.registerControllerKey(
+                admin,
+                uint256(keccak256("local-pk-x")),
+                uint256(keccak256("local-pk-y"))
+            );
+            console.log("AutoLoop VRF enabled, deployer registered as controller");
+        } else {
+            // Chainlink VRF: add consumers to subscription
+            VRFCoordinatorV2_5Mock(vrfCoordinatorAddr).addConsumer(vrfSubId, address(round1));
+            VRFCoordinatorV2_5Mock(vrfCoordinatorAddr).addConsumer(vrfSubId, address(round2));
+            VRFCoordinatorV2_5Mock(vrfCoordinatorAddr).addConsumer(vrfSubId, address(round3));
+            VRFCoordinatorV2_5Mock(vrfCoordinatorAddr).addConsumer(vrfSubId, address(round4));
+            console.log("Chainlink VRF mock configured");
+        }
 
         // ── 5. Connect All ──────────────────────────────────────
         _connectAll(lobby, gameController, hjivemindKeeper, scoreKeeper, railcar,
@@ -133,6 +170,11 @@ contract DeployLocal is Script {
 
         console.log("");
         console.log("=== Deployment Complete ===");
+        if (useAutoLoop) {
+            console.log("VRF Mode: AutoLoop (controller = deployer)");
+        } else {
+            console.log("VRF Mode: Chainlink (mock coordinator)");
+        }
     }
 
     // ── Question Loading ────────────────────────────────────
