@@ -339,9 +339,12 @@ abstract contract HjivemindTestBase is Test {
 
     // ── AutoLoop VRF helpers ─────────────────────────────────
 
+    // secp256k1 generator point — used as test public key (valid on-curve point)
     address autoLoopController = makeAddr("autoLoopController");
-    uint256 constant CONTROLLER_PK_X = 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef;
-    uint256 constant CONTROLLER_PK_Y = 0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321;
+    uint256 constant CONTROLLER_PK_X =
+        0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798;
+    uint256 constant CONTROLLER_PK_Y =
+        0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8;
 
     function _enableAutoLoopVRF() internal {
         round1.setVRFSource(GameRound.VRFSource.AutoLoop);
@@ -356,36 +359,25 @@ abstract contract HjivemindTestBase is Test {
         );
     }
 
-    function _buildVRFProofData(uint256 gammaX, uint256 gammaY, uint256 alpha)
-        internal
-        pure
-        returns (bytes memory)
-    {
-        VRFVerifier.ECVRFProof memory proof = VRFVerifier.ECVRFProof({
-            pk: [CONTROLLER_PK_X, CONTROLLER_PK_Y],
-            gamma: [gammaX, gammaY],
-            c: 1,
-            s: 1,
-            alpha: alpha
-        });
-        return abi.encode(proof);
-    }
-
+    /// @dev Build a VRF envelope matching AutoLoopVRFCompatible format.
+    ///      Since generating real ECVRF proofs requires off-chain EC scalar multiplication,
+    ///      tests that need to deliver a seed should use _directSetQuestionSeed() instead.
+    ///      This helper is for testing envelope parsing and rejection cases.
     function _buildVRFEnvelope(
         uint256 queueType,
         uint256 queueIndex,
         uint256 gameID,
-        uint256 gammaX,
-        uint256 gammaY,
-        uint256 alpha
+        uint256[4] memory proof,
+        uint256[2] memory uPoint,
+        uint256[4] memory vComponents
     ) internal pure returns (bytes memory) {
-        bytes memory vrfProofData = _buildVRFProofData(gammaX, gammaY, alpha);
+        bytes memory gameData = abi.encode(queueType, uint256(HjivemindKeeper.Action.SeedRound), queueIndex, gameID);
         return abi.encode(
-            queueType,
-            uint256(HjivemindKeeper.Action.SeedRound),
-            queueIndex,
-            gameID,
-            vrfProofData
+            uint8(1),       // vrfVersion
+            proof,
+            uPoint,
+            vComponents,
+            gameData
         );
     }
 
@@ -394,20 +386,9 @@ abstract contract HjivemindTestBase is Test {
         lobby.startGame();
     }
 
-    function _fulfillAutoLoopVRF(
-        uint256 queueType,
-        uint256 queueIndex,
-        uint256 gameID
-    ) internal {
-        bytes memory envelope = _buildVRFEnvelope(
-            queueType,
-            queueIndex,
-            gameID,
-            0xaaaa, // gammaX
-            0xbbbb, // gammaY
-            block.timestamp // alpha
-        );
-        vm.prank(autoLoopController);
-        hjivemindKeeper.progressLoop(envelope);
+    /// @dev Directly deliver a VRF seed via the keeper role (bypasses VRF proof verification).
+    ///      Use this for integration tests that need the full game flow to proceed.
+    function _directSetQuestionSeed(GameRound round, uint256 gameID, uint256 seed) internal {
+        round.setQuestionSeed(gameID, seed);
     }
 }

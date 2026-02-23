@@ -34,14 +34,12 @@ contract AutoLoopVRFTest is HjivemindTestBase {
         _startGameAutoLoopVRF();
 
         // In AutoLoop mode, _railcarDidEnter queues a SeedRound action
-        // Check the queue for Round1 (queueType=1)
         uint256[] memory q = hjivemindKeeper.getQueue(1);
         assertTrue(q.length > 0, "Queue should have entries");
 
         uint256 gameID = q[0];
         assertTrue(gameID != 0, "Game ID should be non-zero");
 
-        // Action should be SeedRound
         assertEq(
             uint256(hjivemindKeeper.action(HjivemindKeeper.Queue.Round1, gameID)),
             uint256(HjivemindKeeper.Action.SeedRound)
@@ -53,9 +51,8 @@ contract AutoLoopVRFTest is HjivemindTestBase {
         _startGameAutoLoopVRF();
 
         uint256 gameID = 1;
-        // Keeper delivers seed via setQuestionSeed
         uint256 seed = 12345;
-        round1.setQuestionSeed(gameID, seed);
+        _directSetQuestionSeed(round1, gameID, seed);
         assertEq(round1.questionSeed(gameID), seed);
     }
 
@@ -64,7 +61,7 @@ contract AutoLoopVRFTest is HjivemindTestBase {
         _startGameAutoLoopVRF();
 
         uint256 gameID = 1;
-        round1.setQuestionSeed(gameID, 12345);
+        _directSetQuestionSeed(round1, gameID, 12345);
 
         vm.expectRevert("Seed already set");
         round1.setQuestionSeed(gameID, 67890);
@@ -79,48 +76,36 @@ contract AutoLoopVRFTest is HjivemindTestBase {
         round1.setQuestionSeed(1, 12345);
     }
 
-    function test_fullAutoLoopVRFFlow() public {
+    function test_fullAutoLoopVRFFlow_viaDirect() public {
+        // Full game flow using direct seed delivery (bypasses VRF proof).
+        // VRF proof verification is tested separately at the library level.
         _joinPlayers(2);
         _startGameAutoLoopVRF();
 
         uint256 gameID = 1;
 
-        // Phase should be Question (set by _railcarDidEnter)
+        // Phase should be Question
         assertEq(
             uint256(round1.phase(gameID)),
             uint256(GameRound.GamePhase.Question)
         );
-
-        // Seed not yet set
         assertEq(round1.questionSeed(gameID), 0);
 
-        // Get queue index for the SeedRound entry
-        uint256[] memory q = hjivemindKeeper.getQueue(1);
-        uint256 queueIndex = 0; // first entry
+        // Deliver seed directly (simulates keeper after VRF proof verification)
+        _directSetQuestionSeed(round1, gameID, 42);
+        assertTrue(round1.questionSeed(gameID) != 0, "Seed should be set");
 
-        // Simulate AutoLoop controller delivering VRF proof
-        _fulfillAutoLoopVRF(1, queueIndex, gameID);
-
-        // Seed should now be set (hash of gamma point)
-        assertTrue(round1.questionSeed(gameID) != 0, "Seed should be set after VRF");
-
-        // After VRF seed delivery, a StartRound action should be queued
-        // The keeper should be able to start the round now
-        // Check that shouldProgressLoop signals the StartRound action
+        // StartRound should now be queued
         (bool ready, bytes memory data) = hjivemindKeeper.shouldProgressLoop();
-        assertTrue(ready, "Keeper should have work after VRF seed delivery");
+        assertTrue(ready, "Keeper should have work after seed delivery");
 
-        // Execute the StartRound via keeper
+        // Execute StartRound
         hjivemindKeeper.progressLoop(data);
 
         // Verify question is set
         (string memory question, string[4] memory choices) = round1.getQuestion(gameID);
         assertTrue(bytes(question).length > 0, "Question should be set");
         assertTrue(bytes(choices[0]).length > 0, "Choices should be set");
-
-        // Verify minority/majority mode is set
-        // The seed determines this: seed % 2 == 0 → minority
-        // Our seed is keccak256(gammaX, gammaY) so it's deterministic
     }
 
     function test_vrfEnabled_toggle() public {
@@ -144,10 +129,11 @@ contract AutoLoopVRFTest is HjivemindTestBase {
         _startGameAutoLoopVRF();
 
         uint256 gameID = 1;
-        uint256[] memory q = hjivemindKeeper.getQueue(1);
-        bytes memory envelope = _buildVRFEnvelope(
-            1, 0, gameID, 0xaaaa, 0xbbbb, block.timestamp
-        );
+        // Build a VRF envelope (will fail proof verification, but should fail on controller check first)
+        uint256[4] memory fakeProof = [uint256(1), uint256(2), uint256(3), uint256(4)];
+        uint256[2] memory fakeU = [uint256(1), uint256(2)];
+        uint256[4] memory fakeV = [uint256(1), uint256(2), uint256(3), uint256(4)];
+        bytes memory envelope = _buildVRFEnvelope(1, 0, gameID, fakeProof, fakeU, fakeV);
 
         // Unregistered controller should revert
         vm.prank(player1);
@@ -155,9 +141,52 @@ contract AutoLoopVRFTest is HjivemindTestBase {
         hjivemindKeeper.progressLoop(envelope);
     }
 
+    function test_progressLoop_wrongVRFVersion_reverts() public {
+        _joinPlayers(2);
+        _startGameAutoLoopVRF();
+
+        uint256 gameID = 1;
+        // Build envelope with wrong version
+        bytes memory gameData = abi.encode(
+            uint256(1), uint256(HjivemindKeeper.Action.SeedRound), uint256(0), gameID
+        );
+        bytes memory envelope = abi.encode(
+            uint8(99), // wrong version
+            [uint256(1), uint256(2), uint256(3), uint256(4)],
+            [uint256(1), uint256(2)],
+            [uint256(1), uint256(2), uint256(3), uint256(4)],
+            gameData
+        );
+
+        vm.prank(autoLoopController);
+        vm.expectRevert("Unsupported VRF version");
+        hjivemindKeeper.progressLoop(envelope);
+    }
+
     function test_setVRFSource_onlyAdmin() public {
         vm.prank(player1);
         vm.expectRevert();
         round1.setVRFSource(GameRound.VRFSource.Chainlink);
+    }
+
+    function test_vrfEnvelopeFormat_standardDataPassesThrough() public {
+        // Standard 128-byte envelope should still go through _performInternal
+        _joinPlayers(2);
+        _startGameAutoLoopVRF();
+
+        // Deliver seed directly to get a StartRound queued
+        _directSetQuestionSeed(round1, 1, 42);
+
+        // shouldProgressLoop returns standard 128-byte data
+        (bool ready, bytes memory data) = hjivemindKeeper.shouldProgressLoop();
+        assertTrue(ready);
+        assertEq(data.length, 128, "Standard envelope should be 128 bytes");
+
+        // This should go through _performInternal, not VRF path
+        hjivemindKeeper.progressLoop(data);
+
+        // Verify it worked
+        (string memory question, ) = round1.getQuestion(1);
+        assertTrue(bytes(question).length > 0);
     }
 }

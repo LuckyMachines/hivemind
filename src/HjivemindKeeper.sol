@@ -160,14 +160,10 @@ contract HjivemindKeeper is AutomationCompatibleInterface, AutoLoopCompatibleInt
 
     function progressLoop(bytes calldata progressWithData) external override {
         if (vrfEnabled) {
-            // Try to decode as VRF envelope first
-            // VRF envelope: (uint256 queue, uint256 action, uint256 queueIndex, uint256 gameID, bytes vrfProofData)
-            // Standard envelope: (uint256 queue, uint256 action, uint256 queueIndex, uint256 gameID)
-            (uint256 _queue, uint256 _action, , ) = abi.decode(
-                progressWithData,
-                (uint256, uint256, uint256, uint256)
-            );
-            if (Action(_action) == Action.SeedRound) {
+            // Discriminate VRF envelope from standard envelope by data length.
+            // Standard: abi.encode(uint256, uint256, uint256, uint256) = 128 bytes
+            // VRF:      abi.encode(uint8, uint256[4], uint256[2], uint256[4], bytes) > 128 bytes
+            if (progressWithData.length > 128) {
                 _performVRFSeedRound(progressWithData);
                 return;
             }
@@ -502,40 +498,49 @@ contract HjivemindKeeper is AutomationCompatibleInterface, AutoLoopCompatibleInt
     }
 
     // AutoLoop VRF internal
+    // VRF envelope format (matches AutoLoopVRFCompatible):
+    //   abi.encode(uint8 vrfVersion, uint256[4] proof, uint256[2] uPoint,
+    //              uint256[4] vComponents, bytes gameData)
+    // where gameData = abi.encode(uint256 queue, uint256 action, uint256 queueIndex, uint256 gameID)
     function _performVRFSeedRound(bytes calldata progressWithData) internal {
         (
-            uint256 _queue,
-            uint256 _action,
-            uint256 _queueIndex,
-            uint256 _gameID,
-            bytes memory vrfProofData
+            uint8 vrfVersion,
+            uint256[4] memory proof,
+            uint256[2] memory uPoint,
+            uint256[4] memory vComponents,
+            bytes memory gameData
         ) = abi.decode(
             progressWithData,
-            (uint256, uint256, uint256, uint256, bytes)
+            (uint8, uint256[4], uint256[2], uint256[4], bytes)
         );
+
+        require(vrfVersion == 1, "Unsupported VRF version");
+
+        // Decode the inner game data
+        (uint256 _queue, uint256 _action, uint256 _queueIndex, uint256 _gameID) =
+            abi.decode(gameData, (uint256, uint256, uint256, uint256));
 
         Queue q = Queue(_queue);
-
-        // Decode and verify VRF proof
-        VRFVerifier.ECVRFProof memory proof = abi.decode(
-            vrfProofData,
-            (VRFVerifier.ECVRFProof)
-        );
 
         // Verify controller key is registered
         address controller = msg.sender;
         require(controllerKeyRegistered[controller], "Controller key not registered");
-        require(
-            controllerPublicKeys[controller][0] == proof.pk[0] &&
-            controllerPublicKeys[controller][1] == proof.pk[1],
-            "Public key mismatch"
+
+        uint256[2] memory publicKey = controllerPublicKeys[controller];
+
+        // Compute deterministic seed: keccak256(address(this), gameID)
+        bytes memory seed = abi.encodePacked(
+            keccak256(abi.encodePacked(address(this), _gameID))
         );
 
-        // Verify VRF proof
-        require(VRFVerifier.fastVerify(proof), "Invalid VRF proof");
+        // Verify the ECVRF proof
+        require(
+            VRFVerifier.fastVerify(publicKey, proof, seed, uPoint, vComponents),
+            "VRF proof verification failed"
+        );
 
         // Extract randomness from verified proof
-        bytes32 randomness = VRFVerifier.gammaToHash(proof.gamma);
+        bytes32 randomness = VRFVerifier.gammaToHash(proof[0], proof[1]);
 
         // Clean up old SeedRound queue entry BEFORE delivering seed,
         // because _deliverSeedToRound queues a new StartRound action for the same gameID
