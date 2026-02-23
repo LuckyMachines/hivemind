@@ -161,6 +161,9 @@ export default function LandingPage() {
         <Link href="/play">
           <a className="landing-cta landing-cta--small">Play Now</a>
         </Link>
+        <p style={{ marginTop: "2em", fontSize: "0.85em", opacity: 0.7 }}>
+          Made With ❤️ by Lucky Machines LLC. All rights reserved, Lucky Machines LLC 2026
+        </p>
       </footer>
     </>
   );

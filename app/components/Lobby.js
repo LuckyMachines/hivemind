@@ -21,8 +21,7 @@ const Lobby = (props) => {
           if (!playerInGame) {
             const tx = await gameController.methods.joinGame().send({
               from: accounts[0],
-              gasLimit: settings.gasLimit,
-              gasPrice: settings.gasPrice
+              gasLimit: settings.gasLimit
             });
             console.log("Gas used to join game:", tx.gasUsed);
           }
