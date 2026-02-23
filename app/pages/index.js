@@ -28,9 +28,34 @@ export default function LandingPage() {
           <p className="hjivemind-tagline" style={{ fontSize: "1.4em" }}>
             A coordination game protocol
           </p>
+          <p className="landing-hero__hook">
+            Think you know what everyone else will pick?
+            <br />
+            Prove it — or bet against the crowd.
+          </p>
+          <div className="landing-hero__stats">
+            <div className="landing-hero__stat">
+              <span className="landing-hero__stat-value">4</span>
+              <span className="landing-hero__stat-label">Rounds</span>
+            </div>
+            <div className="landing-hero__stat">
+              <span className="landing-hero__stat-value">2</span>
+              <span className="landing-hero__stat-label">Game Modes</span>
+            </div>
+            <div className="landing-hero__stat">
+              <span className="landing-hero__stat-value">1</span>
+              <span className="landing-hero__stat-label">Hivemind</span>
+            </div>
+          </div>
           <Link href="/play">
             <a className="landing-cta">Play Now</a>
           </Link>
+          <div className="landing-hero__scroll">
+            <span>See how it works</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 5v14M5 12l7 7 7-7" />
+            </svg>
+          </div>
         </div>
       </section>
 
@@ -114,15 +139,15 @@ export default function LandingPage() {
         <div className="landing-tech">
           <div className="landing-tech__item">
             <strong>Solidity + Foundry</strong>
-            <p>Smart contracts deployed on Polygon Mumbai</p>
+            <p>Smart contracts on Ethereum and Sepolia</p>
           </div>
           <div className="landing-tech__item">
             <strong>Chainlink VRF</strong>
             <p>Verifiable randomization for minority/majority round selection</p>
           </div>
           <div className="landing-tech__item">
-            <strong>On-Chain Automation</strong>
-            <p>Game-state transitions handled automatically by Chainlink Keepers</p>
+            <strong>AutoLoop</strong>
+            <p>Decentralized game-state automation by Lucky Machines</p>
           </div>
         </div>
       </section>

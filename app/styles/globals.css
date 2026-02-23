@@ -104,6 +104,59 @@ a {
   margin-bottom: 1rem;
 }
 
+.landing-hero__hook {
+  color: #ccc;
+  font-size: 1.15em;
+  line-height: 1.6;
+  margin: 1rem auto 0;
+  max-width: 480px;
+}
+
+.landing-hero__stats {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin-top: 1.5rem;
+}
+
+.landing-hero__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.landing-hero__stat-value {
+  font-size: 2.4em;
+  font-weight: 800;
+  color: #2196f3;
+  line-height: 1;
+}
+
+.landing-hero__stat-label {
+  font-size: 0.85em;
+  color: #99ccff;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-top: 0.25rem;
+}
+
+.landing-hero__scroll {
+  margin-top: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  color: #667;
+  font-size: 0.85em;
+  letter-spacing: 0.04em;
+  animation: hero-bounce 2s ease-in-out infinite;
+}
+
+@keyframes hero-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
 /* CTA Button */
 .landing-cta {
   display: inline-block;
