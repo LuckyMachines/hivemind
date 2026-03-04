@@ -373,6 +373,9 @@ contract HjivemindKeeper is AutomationCompatibleInterface, AutoLoopCompatibleInt
                 } else if (a == Action.UpdatePhase) {
                     ROUND_4.updatePhase(_gameID);
                 }
+            } else if (a == Action.Clean) {
+                _cleanQueue(q);
+                return;
             }
             // then reset queue
             if (_queueIndex < LOBBY_INDEX) {
@@ -388,7 +391,38 @@ contract HjivemindKeeper is AutomationCompatibleInterface, AutoLoopCompatibleInt
         view
         returns (bool needClean, Queue queueType)
     {
-        // TODO: check if we want to clean any zero filled queues...
+        for (uint256 t = 0; t <= uint256(Queue.Winners); t++) {
+            Queue q = Queue(t);
+            uint256 len = queue[q].length;
+            if (len < 2) continue;
+            uint256 leadingZeros = 0;
+            for (uint256 i = 0; i < len; i++) {
+                if (queue[q][i] == 0) {
+                    leadingZeros++;
+                } else {
+                    break;
+                }
+            }
+            if (leadingZeros >= len / 2) {
+                return (true, q);
+            }
+        }
+    }
+
+    function _cleanQueue(Queue queueType) internal {
+        uint256 len = queue[queueType].length;
+        uint256 writeIdx = 0;
+        for (uint256 readIdx = 0; readIdx < len; readIdx++) {
+            if (queue[queueType][readIdx] != 0) {
+                if (writeIdx != readIdx) {
+                    queue[queueType][writeIdx] = queue[queueType][readIdx];
+                }
+                writeIdx++;
+            }
+        }
+        for (uint256 i = len; i > writeIdx; i--) {
+            queue[queueType].pop();
+        }
     }
 
     function _queueNeedsUpdate(Queue queueType)

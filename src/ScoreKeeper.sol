@@ -9,6 +9,10 @@ import {AccessControlEnumerable} from "@openzeppelin/contracts/access/extensions
 contract ScoreKeeper is AccessControlEnumerable {
     bytes32 public SCORE_SETTER_ROLE = keccak256("SCORE_SETTER_ROLE");
 
+    event ScoreIncreased(uint256 indexed gameID, address indexed player, uint256 points);
+    event PrizePoolIncreased(uint256 indexed gameID, uint256 amount);
+    event GameIDSet(uint256 indexed gameID, address indexed player);
+
     // Mapping from game ID
     mapping(uint256 => string) public latestRound;
     mapping(uint256 => uint256) public prizePool;
@@ -37,6 +41,7 @@ contract ScoreKeeper is AccessControlEnumerable {
         address playerAddress
     ) external onlyRole(SCORE_SETTER_ROLE) {
         playerScore[gameID][playerAddress] += points;
+        emit ScoreIncreased(gameID, playerAddress, points);
     }
 
     function increasePrizePool(uint256 valueIncrease, uint256 gameID)
@@ -44,6 +49,7 @@ contract ScoreKeeper is AccessControlEnumerable {
         onlyRole(SCORE_SETTER_ROLE)
     {
         prizePool[gameID] += valueIncrease;
+        emit PrizePoolIncreased(gameID, valueIncrease);
     }
 
     function setLatestRound(string memory hubName, uint256 gameID)
@@ -59,6 +65,7 @@ contract ScoreKeeper is AccessControlEnumerable {
     {
         currentGameID[playerAddress] = gameID;
         playerInActiveGame[playerAddress] = true;
+        emit GameIDSet(gameID, playerAddress);
     }
 
     function setGameID(
@@ -69,6 +76,7 @@ contract ScoreKeeper is AccessControlEnumerable {
         currentGameID[playerAddress] = gameID;
         playerInActiveGame[playerAddress] = true;
         gameIDFromRailcar[railcarID] = gameID;
+        emit GameIDSet(gameID, playerAddress);
     }
 
     function removePlayerFromActiveGame(address playerAddress)

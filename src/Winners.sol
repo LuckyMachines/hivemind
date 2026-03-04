@@ -9,6 +9,8 @@ import "./GameController.sol";
 contract Winners is Hub {
     bytes32 public GAME_ROUND_ROLE = keccak256("GAME_ROUND_ROLE");
 
+    event WinningsClaimed(uint256 indexed gameID, address indexed claimant, uint256 amount);
+
     ScoreKeeper internal SCORE_KEEPER;
     GameController internal GAME_CONTROLLER;
     // mapping from game ID
@@ -114,12 +116,14 @@ contract Winners is Hub {
         if (payoutAmount > remainingPool) {
             payoutAmount = remainingPool;
         }
-        claimant.transfer(payoutAmount);
-        prizePoolPaidAmount[gameID] += payoutAmount;
+        // Checks-Effects-Interactions: update state before external call
         playerPaid[gameID][claimant] = true;
+        prizePoolPaidAmount[gameID] += payoutAmount;
         if (prizePoolPaidAmount[gameID] >= prizePool) {
             gameHasWinnings[gameID] = false;
         }
+        claimant.transfer(payoutAmount);
+        emit WinningsClaimed(gameID, claimant, payoutAmount);
     }
 
     function getPayoutAmount(uint256 gameID, uint256 finalScore)

@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import Addresses from "../contracts/deployed-contracts.json";
+import LobbyABI from "../../out/Lobby.sol/Lobby.json";
 const settings = require("../settings");
 
 const Lobby = (props) => {
@@ -16,10 +18,15 @@ const Lobby = (props) => {
             .getIsInActiveGame(accounts[0])
             .call();
 
-          // TODO: set gas parameters
           if (!playerInGame) {
+            const lobbyContract = new web3.eth.Contract(
+              LobbyABI.abi,
+              Addresses.lobby
+            );
+            const entryFee = await lobbyContract.methods.entryFee().call();
             const tx = await gameController.methods.joinGame().send({
               from: accounts[0],
+              value: entryFee,
               gasLimit: settings.gasLimit
             });
             console.log("Gas used to join game:", tx.gasUsed);

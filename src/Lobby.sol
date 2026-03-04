@@ -7,6 +7,9 @@ import "./ScoreKeeper.sol";
 import "./GameRound.sol";
 
 contract Lobby is Hub {
+    event PlayerJoined(uint256 indexed gameID, address indexed player, uint256 playerCount);
+    event GameStarted(uint256 indexed gameID, uint256 playerCount);
+
     ScoreKeeper private SCORE_KEEPER;
     HjivemindRailcar private RAILCAR;
     address private _gameControllerAddress;
@@ -80,6 +83,7 @@ contract Lobby is Hub {
         }
 
         RAILCAR.addMember(railcarID[_currentGameID], player);
+        emit PlayerJoined(_currentGameID, player, playerCount[_currentGameID]);
 
         // auto-start game if at limit
         if (playerCount[_currentGameID] == playerLimit) {
@@ -97,6 +101,7 @@ contract Lobby is Hub {
 
     function startGame() public {
         require(_canStartGame(), "unable to start game");
+        emit GameStarted(_currentGameID, playerCount[_currentGameID]);
 
         _sendRailcarToHub(railcarID[_currentGameID], gameHub);
         _needsNewGameID = true;

@@ -11,6 +11,9 @@ import "./GameController.sol";
 import "./HjivemindKeeper.sol";
 
 contract GameRound is Hub, VRFConsumerBaseV2Plus {
+    event AnswersSubmitted(uint256 indexed gameID, address indexed player);
+    event AnswersRevealed(uint256 indexed gameID, address indexed player);
+
     // VRF source configuration
     enum VRFSource { Chainlink, AutoLoop }
     VRFSource public vrfSource;
@@ -161,6 +164,7 @@ contract GameRound is Hub, VRFConsumerBaseV2Plus {
         hashedAnswer[gameID][player] = _hashedAnswer;
         totalResponses[gameID]++;
         SCORE_KEEPER.increaseScore(submissionPoints, gameID, player);
+        emit AnswersSubmitted(gameID, player);
         if (totalResponses[gameID] >= GAME_CONTROLLER.getPlayerCount(gameID)) {
             updatePhase(gameID);
         }
@@ -204,6 +208,7 @@ contract GameRound is Hub, VRFConsumerBaseV2Plus {
         }
 
         totalReveals[gameID]++;
+        emit AnswersRevealed(gameID, player);
         if (totalReveals[gameID] >= GAME_CONTROLLER.getPlayerCount(gameID)) {
             updatePhase(gameID);
         }
