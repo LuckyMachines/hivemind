@@ -63,7 +63,7 @@ contract GameController is AccessControlEnumerable {
         uint256 gameID,
         string memory hubAlias
     ) public {
-        GameRound(HUB_REGISTRY.addressFromName(hubAlias)).submitAnswers(
+        GameRound(_resolveHub(hubAlias)).submitAnswers(
             _hashedAnswer,
             gameID
         );
@@ -76,7 +76,7 @@ contract GameController is AccessControlEnumerable {
         uint256 gameID,
         string memory hubAlias
     ) public {
-        GameRound(HUB_REGISTRY.addressFromName(hubAlias)).revealAnswers(
+        GameRound(_resolveHub(hubAlias)).revealAnswers(
             questionAnswer,
             crowdAnswer,
             secretPhrase,
@@ -216,7 +216,7 @@ contract GameController is AccessControlEnumerable {
         returns (string memory q, string[4] memory choices)
     {
         return
-            GameRound(HUB_REGISTRY.addressFromName(hubAlias)).getQuestion(
+            GameRound(_resolveHub(hubAlias)).getQuestion(
                 gameID
             );
     }
@@ -226,7 +226,7 @@ contract GameController is AccessControlEnumerable {
         uint256 gameID,
         address playerAddress
     ) public view returns (uint256 guessIndex) {
-        guessIndex = GameRound(HUB_REGISTRY.addressFromName(hubAlias))
+        guessIndex = GameRound(_resolveHub(hubAlias))
             .revealedIndex(gameID, playerAddress);
     }
 
@@ -235,7 +235,7 @@ contract GameController is AccessControlEnumerable {
         view
         returns (uint256[4] memory responseScores)
     {
-        responseScores = GameRound(HUB_REGISTRY.addressFromName(hubAlias))
+        responseScores = GameRound(_resolveHub(hubAlias))
             .getResponseScores(gameID);
     }
 
@@ -244,7 +244,7 @@ contract GameController is AccessControlEnumerable {
         view
         returns (uint256[] memory winningIndex)
     {
-        winningIndex = GameRound(HUB_REGISTRY.addressFromName(hubAlias))
+        winningIndex = GameRound(_resolveHub(hubAlias))
             .getWinningChoiceIndex(gameID);
     }
 
@@ -253,7 +253,7 @@ contract GameController is AccessControlEnumerable {
         view
         returns (bool)
     {
-        return GameRound(HUB_REGISTRY.addressFromName(hubAlias))
+        return GameRound(_resolveHub(hubAlias))
             .isMinorityRound(gameID);
     }
 
@@ -306,7 +306,12 @@ contract GameController is AccessControlEnumerable {
     }
 
     // Internal functions
+    function _resolveHub(string memory hubAlias) internal view returns (address hubAddress) {
+        hubAddress = HUB_REGISTRY.addressFromName(hubAlias);
+        require(hubAddress != address(0), "Hub not found");
+    }
+
     function _winnersHub() internal view returns (Winners winnersHub) {
-        winnersHub = Winners(payable(HUB_REGISTRY.addressFromName("hjivemind.winners")));
+        winnersHub = Winners(payable(_resolveHub("hjivemind.winners")));
     }
 }

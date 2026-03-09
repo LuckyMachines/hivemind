@@ -188,6 +188,9 @@ contract HjivemindKeeper is AutomationCompatibleInterface, AutoLoopCompatibleInt
             performData,
             (uint256, uint256, uint256, uint256)
         );
+        if (_queue > uint256(Queue.Winners) || _action > uint256(Action.SeedRound)) {
+            return false;
+        }
         Queue q = Queue(_queue);
         Action a = Action(_action);
 
@@ -333,6 +336,8 @@ contract HjivemindKeeper is AutomationCompatibleInterface, AutoLoopCompatibleInt
             performData,
             (uint256, uint256, uint256, uint256)
         );
+        require(_queue <= uint256(Queue.Winners), "Invalid queue type");
+        require(_action <= uint256(Action.SeedRound), "Invalid action type");
         Queue q = Queue(_queue);
         Action a = Action(_action);
 
@@ -554,6 +559,7 @@ contract HjivemindKeeper is AutomationCompatibleInterface, AutoLoopCompatibleInt
         (uint256 _queue, uint256 _action, uint256 _queueIndex, uint256 _gameID) =
             abi.decode(gameData, (uint256, uint256, uint256, uint256));
 
+        require(_queue <= uint256(Queue.Winners), "Invalid queue type");
         Queue q = Queue(_queue);
 
         // Verify controller key is registered

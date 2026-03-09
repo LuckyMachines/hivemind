@@ -2,5 +2,5 @@
 @chainlink/contracts/=lib/chainlink-brownie-contracts/contracts/
 forge-std/=lib/forge-std/src/
 transit/=lib/racerverse-transit-system/contracts/
-autoloop/=lib/autoloop/src/
+autoloop/=node_modules/@luckymachines/autoloop/src/
 

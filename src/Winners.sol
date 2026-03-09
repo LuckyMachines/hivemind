@@ -99,7 +99,7 @@ contract Winners is Hub {
     function claimWinnings(uint256 gameID, uint256 finalScore) public {
         uint256 prizePool = SCORE_KEEPER.prizePool(gameID);
         require(prizePool > 0, "No prize pool for this game");
-        address payable claimant = payable(tx.origin);
+        address payable claimant = payable(msg.sender);
         require(
             !playerPaid[gameID][claimant],
             "player already paid for this game"
@@ -122,7 +122,8 @@ contract Winners is Hub {
         if (prizePoolPaidAmount[gameID] >= prizePool) {
             gameHasWinnings[gameID] = false;
         }
-        claimant.transfer(payoutAmount);
+        (bool success, ) = claimant.call{value: payoutAmount}("");
+        require(success, "Transfer failed");
         emit WinningsClaimed(gameID, claimant, payoutAmount);
     }
 
@@ -247,7 +248,7 @@ contract Winners is Hub {
         }
     }
 
-    function saveTopScores(uint256 railcarID, uint256 gameID) public {
+    function saveTopScores(uint256 railcarID, uint256 gameID) internal {
         // for each player, save mapping of score to their address
         address[] memory players = GAME_CONTROLLER.getRailcarMembers(railcarID);
         uint256[] memory allScores = new uint256[](players.length);

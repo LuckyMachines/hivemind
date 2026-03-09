@@ -50,7 +50,7 @@ contract Lobby is Hub {
     }
 
     function joinGame() public payable {
-        address player = tx.origin;
+        address player = msg.sender;
         require(
             !SCORE_KEEPER.playerInActiveGame(player),
             "player already in game"
@@ -66,9 +66,8 @@ contract Lobby is Hub {
         // add entry to pool and send to winners
         uint256 poolValue = msg.value > adminFee ? msg.value - adminFee : 0;
         if (poolValue > 0) {
-            payable(REGISTRY.addressFromName("hjivemind.winners")).transfer(
-                poolValue
-            );
+            (bool success, ) = payable(REGISTRY.addressFromName("hjivemind.winners")).call{value: poolValue}("");
+            require(success, "Prize pool transfer failed");
             SCORE_KEEPER.increasePrizePool(poolValue, _currentGameID);
         }
         SCORE_KEEPER.setGameID(
@@ -145,7 +144,8 @@ contract Lobby is Hub {
         public
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
-        payable(withdrawAddress).transfer(address(this).balance);
+        (bool success, ) = payable(withdrawAddress).call{value: address(this).balance}("");
+        require(success, "Withdraw failed");
     }
 
     // Internal functions

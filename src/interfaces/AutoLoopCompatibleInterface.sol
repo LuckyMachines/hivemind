@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.33;
 
-/// @notice Local copy of AutoLoopCompatibleInterface from autoloop submodule.
-///         The submodule uses pragma solidity 0.8.34 (unreleased), so we maintain
-///         a compatible copy here. Keep in sync with lib/autoloop/src/AutoLoopCompatibleInterface.sol.
+// Local copy of AutoLoopCompatibleInterface from luckymachines/autoloop (npm).
+// The package uses pragma solidity 0.8.34, so we maintain a ^0.8.33
+// compatible copy here. Keep in sync with node_modules/luckymachines-autoloop/src/AutoLoopCompatibleInterface.sol.
 interface AutoLoopCompatibleInterface {
     function shouldProgressLoop()
         external

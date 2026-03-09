@@ -151,7 +151,7 @@ contract GameRound is Hub, VRFConsumerBaseV2Plus {
 
     // submit answers (will be stored in secret)
     function submitAnswers(bytes32 _hashedAnswer, uint256 gameID) public {
-        address player = tx.origin;
+        address player = msg.sender;
         require(playerIsInHub(gameID, player), "Player is not in this hub");
         require(
             phase[gameID] == GamePhase.Question,
@@ -177,7 +177,7 @@ contract GameRound is Hub, VRFConsumerBaseV2Plus {
         string memory secretPhrase,
         uint256 gameID
     ) public {
-        address player = tx.origin;
+        address player = msg.sender;
         require(playerIsInHub(gameID, player), "Player is not in this hub");
         require(phase[gameID] == GamePhase.Reveal, "Game not in reveal phase");
         require(
@@ -277,6 +277,7 @@ contract GameRound is Hub, VRFConsumerBaseV2Plus {
         internal
         override
     {
+        require(randomWords.length > 0 && randomWords[0] != 0, "Invalid VRF randomness");
         uint256 gameID = _gameID[railcarRequestID[requestId]];
         questionSeed[gameID] = randomWords[0];
         HJIVEMIND_KEEPER.addActionToQueue(
@@ -495,6 +496,7 @@ contract GameRound is Hub, VRFConsumerBaseV2Plus {
         public
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
+        require(keeperAddress != address(0), "Invalid keeper address");
         grantRole(KEEPER_ROLE, keeperAddress);
     }
 

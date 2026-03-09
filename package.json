@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/LuckyMachines/hivemind#readme",
   "dependencies": {
+    "@luckymachines/autoloop": "^0.2.1",
     "dotenv": "^16.0.1"
   }
 }

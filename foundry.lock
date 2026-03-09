@@ -1,8 +1,5 @@
 {
-  "lib/autoloop": {
-    "rev": "f96a2ed296ec092ee9e589bb77bc2740f7d1eda7"
-  },
-  "lib\\chainlink": {
+"lib\\chainlink": {
     "tag": {
       "name": "v2.34.0",
       "rev": "638456240b497dbd9f6b1d016df93fe5a48c74d0"
