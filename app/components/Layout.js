@@ -1,15 +1,14 @@
 import React from "react";
-import { Container } from "semantic-ui-react";
 import Head from "next/head";
 
 const Layout = (props) => {
   return (
-    <Container>
+    <div className="app-container">
       <Head>
         <title>HJIVEMIND</title>
       </Head>
       {props.children}
-    </Container>
+    </div>
   );
 };
 
