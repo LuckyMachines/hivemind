@@ -8,6 +8,7 @@ import "./GameController.sol";
 
 contract Winners is Hub {
     bytes32 public GAME_ROUND_ROLE = keccak256("GAME_ROUND_ROLE");
+    bytes32 public RELAYER_ROLE = keccak256("RELAYER_ROLE");
 
     event WinningsClaimed(uint256 indexed gameID, address indexed claimant, uint256 amount);
 
@@ -125,6 +126,42 @@ contract Winners is Hub {
         (bool success, ) = claimant.call{value: payoutAmount}("");
         require(success, "Transfer failed");
         emit WinningsClaimed(gameID, claimant, payoutAmount);
+    }
+
+    function claimWinningsFor(uint256 gameID, uint256 finalScore, address player) public onlyRole(RELAYER_ROLE) {
+        uint256 prizePool = SCORE_KEEPER.prizePool(gameID);
+        require(prizePool > 0, "No prize pool for this game");
+        address payable claimant = payable(player);
+        require(
+            !playerPaid[gameID][claimant],
+            "player already paid for this game"
+        );
+        require(
+            playerHasScore(finalScore, gameID, claimant),
+            "incorrect player score submitted"
+        );
+
+        uint256 payoutAmount = getPayoutAmount(gameID, finalScore);
+
+        uint256 remainingPool = prizePool - prizePoolPaidAmount[gameID];
+        if (payoutAmount > remainingPool) {
+            payoutAmount = remainingPool;
+        }
+        playerPaid[gameID][claimant] = true;
+        prizePoolPaidAmount[gameID] += payoutAmount;
+        if (prizePoolPaidAmount[gameID] >= prizePool) {
+            gameHasWinnings[gameID] = false;
+        }
+        (bool success, ) = claimant.call{value: payoutAmount}("");
+        require(success, "Transfer failed");
+        emit WinningsClaimed(gameID, claimant, payoutAmount);
+    }
+
+    function addRelayer(address relayerAddress)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        grantRole(RELAYER_ROLE, relayerAddress);
     }
 
     function getPayoutAmount(uint256 gameID, uint256 finalScore)

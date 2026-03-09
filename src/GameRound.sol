@@ -26,6 +26,7 @@ contract GameRound is Hub, VRFConsumerBaseV2Plus {
     uint32 constant numWords = 1;
 
     bytes32 public KEEPER_ROLE = keccak256("KEEPER_ROLE");
+    bytes32 public RELAYER_ROLE = keccak256("RELAYER_ROLE");
 
     // Mapping from request id
     mapping(uint256 => uint256) railcarRequestID;
@@ -212,6 +213,74 @@ contract GameRound is Hub, VRFConsumerBaseV2Plus {
         if (totalReveals[gameID] >= GAME_CONTROLLER.getPlayerCount(gameID)) {
             updatePhase(gameID);
         }
+    }
+
+    // Relayer functions
+    function submitAnswersFor(bytes32 _hashedAnswer, uint256 gameID, address player) public onlyRole(RELAYER_ROLE) {
+        require(playerIsInHub(gameID, player), "Player is not in this hub");
+        require(
+            phase[gameID] == GamePhase.Question,
+            "Game not in question phase"
+        );
+        require(
+            block.timestamp < roundStartTime[gameID] + roundTimeLimit,
+            "Cannot submit answers. Round time limit has passed."
+        );
+        hashedAnswer[gameID][player] = _hashedAnswer;
+        totalResponses[gameID]++;
+        SCORE_KEEPER.increaseScore(submissionPoints, gameID, player);
+        emit AnswersSubmitted(gameID, player);
+        if (totalResponses[gameID] >= GAME_CONTROLLER.getPlayerCount(gameID)) {
+            updatePhase(gameID);
+        }
+    }
+
+    function revealAnswersFor(
+        string memory questionAnswer,
+        string memory crowdAnswer,
+        string memory secretPhrase,
+        uint256 gameID,
+        address player
+    ) public onlyRole(RELAYER_ROLE) {
+        require(playerIsInHub(gameID, player), "Player is not in this hub");
+        require(phase[gameID] == GamePhase.Reveal, "Game not in reveal phase");
+        require(
+            !answersRevealed[gameID][player],
+            "Player already revealed answers"
+        );
+
+        bytes32 hashedReveal = keccak256(
+            abi.encode(questionAnswer, crowdAnswer, secretPhrase)
+        );
+        bool hashesMatch = hashedAnswer[gameID][player] == hashedReveal;
+        require(hashesMatch, "revealed answers don't match original answers");
+
+        uint256 pIndex = indexOfResponse(gameID, questionAnswer);
+        uint256 cIndex = indexOfResponse(gameID, crowdAnswer);
+        if (pIndex < 4) {
+            responseScores[gameID][pIndex] += 1;
+            answersRevealed[gameID][player] = true;
+            revealedIndex[gameID][player] = cIndex;
+            uint256 timeSinceRevealStart = block.timestamp -
+                revealStartTime[gameID];
+            uint256 fastRevealBonus = maxFastRevealBonus > timeSinceRevealStart
+                ? maxFastRevealBonus - timeSinceRevealStart
+                : 0;
+            SCORE_KEEPER.increaseScore(fastRevealBonus, gameID, player);
+        }
+
+        totalReveals[gameID]++;
+        emit AnswersRevealed(gameID, player);
+        if (totalReveals[gameID] >= GAME_CONTROLLER.getPlayerCount(gameID)) {
+            updatePhase(gameID);
+        }
+    }
+
+    function addRelayer(address relayerAddress)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        grantRole(RELAYER_ROLE, relayerAddress);
     }
 
     // Public functions

@@ -82,4 +82,87 @@ contract LobbyTest is HjivemindTestBase {
         lobby.joinGame{value: 0.1 ether}();
         assertEq(lobby.playerCount(1), 1);
     }
+
+    // Protocol fee tests
+    function test_protocolFee_default2Percent() public {
+        assertEq(lobby.protocolFeeBps(), 200);
+    }
+
+    function test_protocolFee_deducted() public {
+        lobby.setEntryFee(1 ether);
+        address winnersAddr = address(winners);
+        uint256 winnersBefore = winnersAddr.balance;
+
+        vm.prank(player1, player1);
+        lobby.joinGame{value: 1 ether}();
+
+        // 2% fee = 0.02 ether stays in lobby, 0.98 ether goes to winners
+        assertEq(lobby.totalProtocolFees(), 0.02 ether);
+        assertEq(winnersAddr.balance - winnersBefore, 0.98 ether);
+    }
+
+    function test_protocolFee_accumulates() public {
+        lobby.setEntryFee(1 ether);
+
+        vm.prank(player1, player1);
+        lobby.joinGame{value: 1 ether}();
+        vm.prank(player2, player2);
+        lobby.joinGame{value: 1 ether}();
+
+        // 2 players * 0.02 ether = 0.04 ether total fees
+        assertEq(lobby.totalProtocolFees(), 0.04 ether);
+    }
+
+    function test_protocolFee_withdraw() public {
+        lobby.setEntryFee(1 ether);
+
+        vm.prank(player1, player1);
+        lobby.joinGame{value: 1 ether}();
+        vm.prank(player2, player2);
+        lobby.joinGame{value: 1 ether}();
+
+        address treasury = makeAddr("treasury");
+        uint256 expectedFees = 0.04 ether;
+        assertEq(lobby.totalProtocolFees(), expectedFees);
+
+        lobby.withdraw(treasury);
+
+        assertEq(treasury.balance, expectedFees);
+        assertEq(lobby.totalProtocolFees(), 0);
+    }
+
+    function test_protocolFee_withdrawEmpty_reverts() public {
+        address treasury = makeAddr("treasury");
+        vm.expectRevert("No fees to withdraw");
+        lobby.withdraw(treasury);
+    }
+
+    function test_setProtocolFeeBps() public {
+        lobby.setProtocolFeeBps(500); // 5%
+        assertEq(lobby.protocolFeeBps(), 500);
+    }
+
+    function test_setProtocolFeeBps_cap() public {
+        vm.expectRevert("Fee exceeds 10% cap");
+        lobby.setProtocolFeeBps(1001); // > 10%
+    }
+
+    function test_setProtocolFeeBps_zero() public {
+        lobby.setProtocolFeeBps(0); // No fee
+        lobby.setEntryFee(1 ether);
+
+        vm.prank(player1, player1);
+        lobby.joinGame{value: 1 ether}();
+
+        assertEq(lobby.totalProtocolFees(), 0);
+        // Full amount goes to prize pool
+        assertEq(scoreKeeper.prizePool(1), 1 ether);
+    }
+
+    function test_protocolFee_noFeeWhenNoEntryFee() public {
+        // entryFee = 0, so msg.value = 0, fee = 0
+        vm.prank(player1, player1);
+        lobby.joinGame();
+        assertEq(lobby.totalProtocolFees(), 0);
+    }
 }

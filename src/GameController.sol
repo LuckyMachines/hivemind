@@ -16,6 +16,7 @@ contract GameController is AccessControlEnumerable {
     HjivemindRailcar internal RAILCAR;
 
     bytes32 public EVENT_SENDER_ROLE = keccak256("EVENT_SENDER_ROLE");
+    bytes32 public RELAYER_ROLE = keccak256("RELAYER_ROLE");
 
     event RoundStart(
         string hubAlias,
@@ -106,6 +107,52 @@ contract GameController is AccessControlEnumerable {
 
     function claimPrize(uint256 gameID, uint256 finalScore) public {
         _winnersHub().claimWinnings(gameID, finalScore);
+    }
+
+    // Relayer functions (x402 protocol)
+    function joinGameFor(address player) public payable onlyRole(RELAYER_ROLE) {
+        LOBBY.joinGameFor{value: msg.value}(player);
+    }
+
+    function submitAnswersFor(
+        bytes32 _hashedAnswer,
+        uint256 gameID,
+        string memory hubAlias,
+        address player
+    ) public onlyRole(RELAYER_ROLE) {
+        GameRound(_resolveHub(hubAlias)).submitAnswersFor(
+            _hashedAnswer,
+            gameID,
+            player
+        );
+    }
+
+    function revealAnswersFor(
+        string memory questionAnswer,
+        string memory crowdAnswer,
+        string memory secretPhrase,
+        uint256 gameID,
+        string memory hubAlias,
+        address player
+    ) public onlyRole(RELAYER_ROLE) {
+        GameRound(_resolveHub(hubAlias)).revealAnswersFor(
+            questionAnswer,
+            crowdAnswer,
+            secretPhrase,
+            gameID,
+            player
+        );
+    }
+
+    function claimPrizeFor(uint256 gameID, uint256 finalScore, address player) public onlyRole(RELAYER_ROLE) {
+        _winnersHub().claimWinningsFor(gameID, finalScore, player);
+    }
+
+    function addRelayer(address relayerAddress)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        grantRole(RELAYER_ROLE, relayerAddress);
     }
 
     function abandonActiveGame() public {

@@ -9,6 +9,9 @@ import "./GameRound.sol";
 contract Lobby is Hub {
     event PlayerJoined(uint256 indexed gameID, address indexed player, uint256 playerCount);
     event GameStarted(uint256 indexed gameID, uint256 playerCount);
+    event ProtocolFeeCollected(uint256 indexed gameID, uint256 amount);
+
+    bytes32 public RELAYER_ROLE = keccak256("RELAYER_ROLE");
 
     ScoreKeeper private SCORE_KEEPER;
     HjivemindRailcar private RAILCAR;
@@ -22,9 +25,11 @@ contract Lobby is Hub {
     string public gameHub;
 
     uint256 public entryFee;
-    uint256 public adminFee;
+    uint256 public protocolFeeBps = 200; // 2% protocol fee (basis points, 10000 = 100%)
+    uint256 public totalProtocolFees; // accumulated fees available for withdrawal
 
     uint256 constant HUNDRED_YEARS = 3153600000;
+    uint256 constant MAX_PROTOCOL_FEE_BPS = 1000; // cap at 10%
 
     // Mapping from game id
     mapping(uint256 => uint256) public playerCount;
@@ -50,44 +55,11 @@ contract Lobby is Hub {
     }
 
     function joinGame() public payable {
-        address player = msg.sender;
-        require(
-            !SCORE_KEEPER.playerInActiveGame(player),
-            "player already in game"
-        );
-        require(msg.value >= entryFee, "Minimum entry fee not sent");
-        if (_needsNewGameID) {
-            _currentGameID++;
-            // Create railcar via HjivemindRailcar
-            RAILCAR.createRailcar(playerLimit);
-            railcarID[_currentGameID] = RAILCAR.totalRailcars();
-            _needsNewGameID = false;
-        }
-        // add entry to pool and send to winners
-        uint256 poolValue = msg.value > adminFee ? msg.value - adminFee : 0;
-        if (poolValue > 0) {
-            (bool success, ) = payable(REGISTRY.addressFromName("hjivemind.winners")).call{value: poolValue}("");
-            require(success, "Prize pool transfer failed");
-            SCORE_KEEPER.increasePrizePool(poolValue, _currentGameID);
-        }
-        SCORE_KEEPER.setGameID(
-            _currentGameID,
-            player,
-            railcarID[_currentGameID]
-        );
-        playerCount[_currentGameID]++;
+        _joinPlayer(msg.sender);
+    }
 
-        if (playerCount[_currentGameID] == 2) {
-            joinCountdownStartTime = block.timestamp;
-        }
-
-        RAILCAR.addMember(railcarID[_currentGameID], player);
-        emit PlayerJoined(_currentGameID, player, playerCount[_currentGameID]);
-
-        // auto-start game if at limit
-        if (playerCount[_currentGameID] == playerLimit) {
-            startGame();
-        }
+    function joinGameFor(address player) public payable onlyRole(RELAYER_ROLE) {
+        _joinPlayer(player);
     }
 
     function canStart() public view returns (bool) {
@@ -133,22 +105,80 @@ contract Lobby is Hub {
         entryFee = newEntryFee;
     }
 
-    function setAdminFee(uint256 newAdminFee)
+    function setProtocolFeeBps(uint256 newFeeBps)
         public
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
-        adminFee = newAdminFee;
+        require(newFeeBps <= MAX_PROTOCOL_FEE_BPS, "Fee exceeds 10% cap");
+        protocolFeeBps = newFeeBps;
+    }
+
+    function addRelayer(address relayerAddress)
+        public
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        grantRole(RELAYER_ROLE, relayerAddress);
     }
 
     function withdraw(address withdrawAddress)
         public
         onlyRole(DEFAULT_ADMIN_ROLE)
     {
-        (bool success, ) = payable(withdrawAddress).call{value: address(this).balance}("");
+        uint256 amount = totalProtocolFees;
+        require(amount > 0, "No fees to withdraw");
+        totalProtocolFees = 0;
+        (bool success, ) = payable(withdrawAddress).call{value: amount}("");
         require(success, "Withdraw failed");
     }
 
     // Internal functions
+    function _joinPlayer(address player) internal {
+        require(
+            !SCORE_KEEPER.playerInActiveGame(player),
+            "player already in game"
+        );
+        require(msg.value >= entryFee, "Minimum entry fee not sent");
+        if (_needsNewGameID) {
+            _currentGameID++;
+            RAILCAR.createRailcar(playerLimit);
+            railcarID[_currentGameID] = RAILCAR.totalRailcars();
+            _needsNewGameID = false;
+        }
+
+        // Calculate protocol fee (2% default) and prize pool contribution
+        uint256 fee = (msg.value * protocolFeeBps) / 10000;
+        uint256 poolValue = msg.value - fee;
+        totalProtocolFees += fee;
+
+        if (poolValue > 0) {
+            (bool success, ) = payable(REGISTRY.addressFromName("hjivemind.winners")).call{value: poolValue}("");
+            require(success, "Prize pool transfer failed");
+            SCORE_KEEPER.increasePrizePool(poolValue, _currentGameID);
+        }
+
+        if (fee > 0) {
+            emit ProtocolFeeCollected(_currentGameID, fee);
+        }
+
+        SCORE_KEEPER.setGameID(
+            _currentGameID,
+            player,
+            railcarID[_currentGameID]
+        );
+        playerCount[_currentGameID]++;
+
+        if (playerCount[_currentGameID] == 2) {
+            joinCountdownStartTime = block.timestamp;
+        }
+
+        RAILCAR.addMember(railcarID[_currentGameID], player);
+        emit PlayerJoined(_currentGameID, player, playerCount[_currentGameID]);
+
+        if (playerCount[_currentGameID] == playerLimit) {
+            startGame();
+        }
+    }
+
     function _canStartGame() internal view returns (bool canStartGame) {
         canStartGame = false;
         if (
@@ -156,8 +186,6 @@ contract Lobby is Hub {
             playerCount[_currentGameID] >= playerLimit
         ) {
             if (!_needsNewGameID) {
-                // if this is false we have an unstarted game
-                // if true, _currentGameID will not be an active game
                 canStartGame = true;
             }
         }
