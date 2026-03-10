@@ -5,7 +5,7 @@ import { paymentMiddleware } from "x402-next";
 export default paymentMiddleware({
   payTo: process.env.X402_PAY_TO_ADDRESS,
   facilitatorUrl: process.env.X402_FACILITATOR_URL || "https://x402.org/facilitator",
-  network: "base-sepolia",
+  network: process.env.X402_NETWORK || "base-sepolia",
   routes: {
     // Phase 1: Read-only game data (cheap micropayments)
     "/api/game/active": { price: "$0.001", description: "List active games" },

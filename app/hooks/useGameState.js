@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import Addresses from "../contracts/deployed-contracts.json";
 import GameController from "../contracts/GameController.json";
 import GameRound from "../contracts/GameRound.json";
+import { getAddresses } from "../lib/chains";
 
 const settings = require("../settings");
 
@@ -78,6 +78,7 @@ export default function useGameState(addToast) {
   const [playerRank, setPlayerRank] = useState("?");
   const [rounds, setRounds] = useState(makeInitialRounds);
   const [lobbyButton, setLobbyButton] = useState("Join Game");
+  const [chainId, setChainId] = useState(null);
 
   const mountedRef = useRef(true);
   const sfxRef = useRef({});
@@ -102,11 +103,16 @@ export default function useGameState(addToast) {
     }));
   }, []);
 
-  // Provider / accounts
-  const setProvider = useCallback((p) => {
+  // Provider / accounts — detect chain and use correct contract addresses
+  const setProvider = useCallback(async (p) => {
     setProviderState(p);
-    const gc = new p.eth.Contract(GameController.abi, Addresses.gameController);
-    setGameController(gc);
+    const detectedChainId = await window.ethereum.request({ method: "eth_chainId" });
+    setChainId(detectedChainId);
+    const addresses = getAddresses(detectedChainId);
+    if (addresses && addresses.gameController) {
+      const gc = new p.eth.Contract(GameController.abi, addresses.gameController);
+      setGameController(gc);
+    }
     p.eth.getAccounts().then(setAccounts);
   }, []);
 
@@ -390,6 +396,7 @@ export default function useGameState(addToast) {
     lobbyButton, setLobbyButton,
     showHub,
     submitChoices, revealChoices,
+    chainId, setChainId,
     claimPrize, resetGame,
     setPlayerChoice, setCrowdChoice,
     // Derived

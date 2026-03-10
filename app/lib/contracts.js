@@ -1,5 +1,6 @@
 // Server-side read-only contract instances for x402 API endpoints
 const { ethers } = require("ethers");
+const { CHAINS, getChainConfig } = require("./chains");
 
 // ABIs - minimal interfaces for read-only operations
 const LobbyABI = [
@@ -71,56 +72,61 @@ const GameRoundABI = [
   "function revealAnswersFor(string questionAnswer, string crowdAnswer, string secretPhrase, uint256 gameID, address player)",
 ];
 
-// Contract addresses from deployed-contracts.json (Sepolia)
-const ADDRESSES = {
-  lobby: "0x735Af89C1bB8908461575626F2927016d1f5f772",
-  gameController: "0xE250FE77adb0181926b8367f2e3cEf92ffe3141f",
-  scoreKeeper: "0xA3F5A9B26Af99a3503F50A4039C2494c5692e4e3",
-  winners: "0xb5eC1508065aE915705194b3895854BB89083e86",
-  round1: "0x4B013455400a2E3Cf36Db767Fe14D1040759EF12",
-  round2: "0x67bc655564EfBb0a292283a562c9232348eF7F37",
-  round3: "0xc188d7a8bC093936ba51c71d35805eb0B0532ACF",
-  round4: "0x7876F19c8786835B36b1C6fFC2ebdD3861e687d0",
-};
+// Determine active chain from env, defaulting to sepolia
+function getActiveChainId() {
+  const env = process.env.CHAIN_ID || process.env.NEXT_PUBLIC_CHAIN_ID || "0xaa36a7";
+  return env;
+}
 
-const ROUND_HUBS = {
-  "hjivemind.round1": ADDRESSES.round1,
-  "hjivemind.round2": ADDRESSES.round2,
-  "hjivemind.round3": ADDRESSES.round3,
-  "hjivemind.round4": ADDRESSES.round4,
-};
-
-function getProvider() {
-  const rpcUrl = process.env.SEPOLIA_RPC_URL || "https://ethereum-sepolia-rpc.publicnode.com";
+function getProvider(chainId) {
+  const cid = chainId || getActiveChainId();
+  const chain = getChainConfig(cid);
+  if (!chain) throw new Error(`Unsupported chain: ${cid}`);
+  const rpcUrl = process.env.RPC_URL || chain.rpcUrl;
   return new ethers.JsonRpcProvider(rpcUrl);
 }
 
-function getContracts(providerOrSigner) {
-  const p = providerOrSigner || getProvider();
+function getAddressesForChain(chainId) {
+  const cid = chainId || getActiveChainId();
+  const chain = getChainConfig(cid);
+  if (!chain) throw new Error(`Unsupported chain: ${cid}`);
+  return chain.addresses;
+}
+
+function getContracts(providerOrSigner, chainId) {
+  const p = providerOrSigner || getProvider(chainId);
+  const addr = getAddressesForChain(chainId);
   return {
-    lobby: new ethers.Contract(ADDRESSES.lobby, LobbyABI, p),
-    gameController: new ethers.Contract(ADDRESSES.gameController, GameControllerABI, p),
-    scoreKeeper: new ethers.Contract(ADDRESSES.scoreKeeper, ScoreKeeperABI, p),
-    winners: new ethers.Contract(ADDRESSES.winners, WinnersABI, p),
-    round1: new ethers.Contract(ADDRESSES.round1, GameRoundABI, p),
-    round2: new ethers.Contract(ADDRESSES.round2, GameRoundABI, p),
-    round3: new ethers.Contract(ADDRESSES.round3, GameRoundABI, p),
-    round4: new ethers.Contract(ADDRESSES.round4, GameRoundABI, p),
+    lobby: new ethers.Contract(addr.lobby, LobbyABI, p),
+    gameController: new ethers.Contract(addr.gameController, GameControllerABI, p),
+    scoreKeeper: new ethers.Contract(addr.scoreKeeper, ScoreKeeperABI, p),
+    winners: new ethers.Contract(addr.winners, WinnersABI, p),
+    round1: new ethers.Contract(addr.round1, GameRoundABI, p),
+    round2: new ethers.Contract(addr.round2, GameRoundABI, p),
+    round3: new ethers.Contract(addr.round3, GameRoundABI, p),
+    round4: new ethers.Contract(addr.round4, GameRoundABI, p),
   };
 }
 
-function getRoundContract(hubAlias, providerOrSigner) {
-  const addr = ROUND_HUBS[hubAlias];
-  if (!addr) return null;
-  return new ethers.Contract(addr, GameRoundABI, providerOrSigner || getProvider());
+function getRoundContract(hubAlias, providerOrSigner, chainId) {
+  const addr = getAddressesForChain(chainId);
+  const ROUND_HUBS = {
+    "hjivemind.round1": addr.round1,
+    "hjivemind.round2": addr.round2,
+    "hjivemind.round3": addr.round3,
+    "hjivemind.round4": addr.round4,
+  };
+  const roundAddr = ROUND_HUBS[hubAlias];
+  if (!roundAddr) return null;
+  return new ethers.Contract(roundAddr, GameRoundABI, providerOrSigner || getProvider(chainId));
 }
 
 module.exports = {
   getProvider,
   getContracts,
   getRoundContract,
-  ADDRESSES,
-  ROUND_HUBS,
+  getAddressesForChain,
+  getActiveChainId,
   LobbyABI,
   GameControllerABI,
   ScoreKeeperABI,

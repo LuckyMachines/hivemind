@@ -22,6 +22,7 @@ function Dashboard() {
     accounts, setAccounts,
     gameController,
     setConnectedWallet,
+    chainId, setChainId,
     secretPhrase, setSecretPhrase,
     currentHub, gameID,
     playersInGame, setPlayersInGame,
@@ -76,6 +77,7 @@ function Dashboard() {
             setProvider={setProvider}
             setAccounts={setAccounts}
             setConnectedWallet={setConnectedWallet}
+            setChainId={setChainId}
           />
         </div>
 

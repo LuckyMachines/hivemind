@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import Addresses from "../contracts/deployed-contracts.json";
 import LobbyABI from "../contracts/Lobby.json";
+import { getAddresses } from "../lib/chains";
 const settings = require("../settings");
 
 const Lobby = (props) => {
@@ -20,9 +20,16 @@ const Lobby = (props) => {
             .call();
 
           if (!playerInGame) {
+            const chainID = await window.ethereum.request({ method: "eth_chainId" });
+            const addresses = getAddresses(chainID);
+            if (!addresses || !addresses.lobby) {
+              window.alert("No contract addresses configured for this network.");
+              setJoinGameLoading(false);
+              return;
+            }
             const lobbyContract = new web3.eth.Contract(
               LobbyABI.abi,
-              Addresses.lobby
+              addresses.lobby
             );
             const entryFee = await lobbyContract.methods.entryFee().call();
             const tx = await gameController.methods.joinGame().send({

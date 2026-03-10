@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import Web3 from "web3";
+import { isSupportedChain, getChainName, SUPPORTED_CHAIN_IDS } from "../lib/chains";
 
 const ConnectWallet = (props) => {
-  // const REQUIRED_CHAIN_ID = "0x1"; // mainnet
-  // const REQUIRED_CHAIN_ID = "0xaa36a7"; // sepolia
-  const REQUIRED_CHAIN_ID = "0x7a69"; // anvil local
   const [connectWalletLoading, setConnectedWalletLoading] = useState(false);
   const [wrongChain, setWrongChain] = useState(false);
   const [switchingChain, setSwitchingChain] = useState(false);
   const [connectedAddress, setConnectedAddress] = useState("");
+  const [chainLabel, setChainLabel] = useState("");
 
   const truncateAddress = (addr) => {
     if (!addr) return "";
@@ -18,12 +17,13 @@ const ConnectWallet = (props) => {
   const switchChain = async () => {
     setSwitchingChain(true);
     try {
+      // Try switching to the first supported chain (Sepolia by default, Anvil for local dev)
+      const targetChain = SUPPORTED_CHAIN_IDS.includes("0xaa36a7") ? "0xaa36a7" : SUPPORTED_CHAIN_IDS[0];
       await window.ethereum.request({
         method: "wallet_switchEthereumChain",
-        params: [{ chainId: REQUIRED_CHAIN_ID }]
+        params: [{ chainId: targetChain }]
       });
       setWrongChain(false);
-      // Retry connection after switching
       await connectWallet();
     } catch (err) {
       console.log("Failed to switch chain:", err.message);
@@ -40,19 +40,22 @@ const ConnectWallet = (props) => {
         let chainID = await window.ethereum.request({
           method: "eth_chainId"
         });
-        if (chainID != REQUIRED_CHAIN_ID) {
+        if (!isSupportedChain(chainID)) {
           setWrongChain(true);
+          setChainLabel("");
           console.log(
-            `Wrong chain (${chainID}). Please connect to ${REQUIRED_CHAIN_ID}`
+            `Unsupported chain (${chainID}). Please connect to Anvil, Sepolia, or Mainnet.`
           );
         } else {
           setWrongChain(false);
+          setChainLabel(getChainName(chainID));
           const accounts = await provider.eth.getAccounts();
           setConnectedAddress(accounts[0]);
           props.setProvider(provider);
           props.setAccounts(accounts);
           props.setConnectedWallet(accounts[0]);
-          console.log("Wallet connected:", accounts[0]);
+          if (props.setChainId) props.setChainId(chainID);
+          console.log("Wallet connected:", accounts[0], "on", getChainName(chainID));
         }
       } else {
         console.log("Wallet not connected, no window.ethereum");
@@ -68,6 +71,7 @@ const ConnectWallet = (props) => {
       {connectedAddress ? (
         <span className="play-wallet-address">
           {truncateAddress(connectedAddress)}
+          {chainLabel && <span className="play-wallet-chain"> ({chainLabel})</span>}
         </span>
       ) : null}
       {wrongChain ? (
@@ -76,7 +80,7 @@ const ConnectWallet = (props) => {
           onClick={switchChain}
           disabled={switchingChain}
         >
-          {switchingChain ? "Switching..." : "Wrong Chain — Switch"}
+          {switchingChain ? "Switching..." : "Unsupported Chain — Switch"}
         </button>
       ) : connectedAddress ? (
         <button className="wallet-btn wallet-btn--connected" disabled>

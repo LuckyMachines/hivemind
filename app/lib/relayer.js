@@ -1,7 +1,7 @@
 // Server-side relayer wallet for x402 protocol
 // Submits Sepolia transactions on behalf of players who pay via USDC on Base Sepolia
 const { ethers } = require("ethers");
-const { getContracts, getRoundContract, getProvider, ADDRESSES } = require("./contracts");
+const { getContracts, getRoundContract, getProvider } = require("./contracts");
 
 function getRelayerWallet() {
   const privateKey = process.env.RELAYER_PRIVATE_KEY;
