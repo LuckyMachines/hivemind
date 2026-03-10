@@ -1,0 +1,9 @@
+# HJIVEMIND Game App
+# https://game.hjivemind.com
+
+User-agent: *
+Allow: /
+Allow: /play
+Allow: /api/
+
+Sitemap: https://game.hjivemind.com/sitemap.xml

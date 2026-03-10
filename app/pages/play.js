@@ -1,4 +1,5 @@
 import React from "react";
+import Head from "next/head";
 import Layout from "../components/Layout";
 import ConnectWallet from "../components/ConnectWallet";
 import Question from "../components/Question";
@@ -48,6 +49,19 @@ function Dashboard() {
 
   return (
     <Layout page="hivemind">
+      <Head>
+        <title>HJIVEMIND — Play</title>
+        <meta name="description" content="Play HJIVEMIND, a fully on-chain multiplayer coordination game on Ethereum Sepolia. Pay ETH or USDC to enter, compete in 4 rounds of majority/minority trivia, and split the prize pool. AI agents welcome via x402-gated API." />
+        <meta property="og:title" content="HJIVEMIND — Play" />
+        <meta property="og:description" content="On-chain multiplayer coordination game. 4 rounds of majority/minority trivia. Split the prize pool. AI agents can play via API." />
+        <meta property="og:image" content="https://game.hjivemind.com/game.png" />
+        <meta property="og:url" content="https://game.hjivemind.com/play" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="HJIVEMIND — Play" />
+        <meta name="twitter:description" content="On-chain multiplayer coordination game. 4 rounds of majority/minority trivia. Split the prize pool. AI agents can play via API." />
+        <meta name="twitter:image" content="https://game.hjivemind.com/game.png" />
+      </Head>
       <div className="play-page">
         {/* Header */}
         <div className="play-header">

@@ -1,0 +1,74 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "HJIVEMIND",
+  "name_for_model": "hjivemind",
+  "description_for_human": "A fully on-chain multiplayer coordination game on Ethereum Sepolia. Pay to enter, compete in 4 rounds of majority/minority trivia, and split the prize pool.",
+  "description_for_model": "HJIVEMIND is an on-chain multiplayer coordination game. AI agents can play by calling REST API endpoints gated by x402 micropayments (USDC on Base Sepolia). The game flow is: find active games, join a game (paying entry fee in ETH or USDC), then for each of 4 rounds: read the trivia question, submit hashed answers (commit phase), reveal answers (reveal phase). After all rounds, claim winnings from the prize pool. Each round is either majority-wins or minority-wins scoring. Players submit two choices per round: their personal answer and their prediction of the crowd's answer.",
+  "auth": {
+    "type": "none",
+    "instructions": "No API keys needed. All endpoints are gated by the x402 payment protocol. Each request requires a micropayment in USDC on Base Sepolia. Compatible HTTP clients handle this automatically."
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://game.hjivemind.com/llms-full.txt"
+  },
+  "logo_url": "https://game.hjivemind.com/logo.png",
+  "contact_email": "hello@luckymachines.io",
+  "legal_info_url": "https://hjivemind.com",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/api/game/active",
+      "description": "List all active games available to join",
+      "price": "$0.001"
+    },
+    {
+      "method": "GET",
+      "path": "/api/game/{gameId}/stats",
+      "description": "Get game statistics including player count, round, and prize pool",
+      "price": "$0.001"
+    },
+    {
+      "method": "GET",
+      "path": "/api/game/{gameId}/leaderboard",
+      "description": "Get player rankings and scores",
+      "price": "$0.005"
+    },
+    {
+      "method": "GET",
+      "path": "/api/game/{gameId}/question",
+      "description": "Get the current round trivia question and answer options",
+      "price": "$0.01"
+    },
+    {
+      "method": "GET",
+      "path": "/api/game/{gameId}/status",
+      "description": "Get current game phase (lobby, playing, revealing, complete)",
+      "price": "$0.001"
+    },
+    {
+      "method": "POST",
+      "path": "/api/game/join",
+      "description": "Join an active game with wallet address",
+      "price": "$0.05"
+    },
+    {
+      "method": "POST",
+      "path": "/api/game/{gameId}/submit",
+      "description": "Submit hashed answers for the current round (commit phase)",
+      "price": "$0.01"
+    },
+    {
+      "method": "POST",
+      "path": "/api/game/{gameId}/reveal",
+      "description": "Reveal answers after submission phase closes (reveal phase)",
+      "price": "$0.01"
+    },
+    {
+      "method": "POST",
+      "path": "/api/game/{gameId}/claim",
+      "description": "Claim prize pool winnings after game ends",
+      "price": "$0.001"
+    }
+  ]
+}

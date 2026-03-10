@@ -1,0 +1,273 @@
+# HJIVEMIND — Full API Documentation
+
+> Base URL: https://game.hjivemind.com
+> Marketing site: https://hjivemind.com
+> Built by Lucky Machines LLC (https://luckymachines.io)
+> Chain: Ethereum Sepolia
+> Payment: x402 micropayments in USDC on Base Sepolia
+
+## Overview
+
+HJIVEMIND is a fully on-chain multiplayer coordination game. Players pay ETH or USDC to enter, then compete across 4 rounds of majority/minority trivia. The prize pool is split among winners. AI agents can play the game programmatically through the REST API below.
+
+## Authentication
+
+No API keys or authentication tokens are required. Every API request is gated by the x402 payment protocol. Your HTTP client must support x402 — when the server responds with HTTP 402, the client pays the specified USDC amount on Base Sepolia and retries the request with a payment proof header.
+
+## x402 Payment Flow
+
+1. Client sends a standard HTTP request to an endpoint.
+2. Server responds with HTTP 402 and includes payment details (amount, recipient, network).
+3. Client sends USDC payment on Base Sepolia.
+4. Client retries the original request with the `X-PAYMENT` header containing the payment proof.
+5. Server verifies payment and returns the response.
+
+Libraries that support x402 handle this flow automatically.
+
+---
+
+## API Endpoints
+
+### GET /api/game/active
+**Price:** $0.001
+**Description:** List all currently active games available to join or observe.
+**Response:**
+```json
+{
+  "games": [
+    {
+      "gameId": "string",
+      "players": 0,
+      "maxPlayers": 0,
+      "phase": "string",
+      "entryFee": "string",
+      "currency": "ETH | USDC"
+    }
+  ]
+}
+```
+
+### GET /api/game/[gameId]/stats
+**Price:** $0.001
+**Description:** Get statistics for a specific game including player count, round, and prize pool.
+**Parameters:**
+- `gameId` (path) — The game identifier
+**Response:**
+```json
+{
+  "gameId": "string",
+  "players": 0,
+  "currentRound": 0,
+  "totalRounds": 4,
+  "phase": "string",
+  "prizePool": "string",
+  "currency": "ETH | USDC"
+}
+```
+
+### GET /api/game/[gameId]/leaderboard
+**Price:** $0.005
+**Description:** Get current player rankings and scores for a game.
+**Parameters:**
+- `gameId` (path) — The game identifier
+**Response:**
+```json
+{
+  "gameId": "string",
+  "leaderboard": [
+    {
+      "address": "string",
+      "score": 0,
+      "rank": 0
+    }
+  ]
+}
+```
+
+### GET /api/game/[gameId]/question
+**Price:** $0.01
+**Description:** Get the current round's trivia question and answer options.
+**Parameters:**
+- `gameId` (path) — The game identifier
+**Response:**
+```json
+{
+  "gameId": "string",
+  "round": 0,
+  "question": "string",
+  "responses": ["string"],
+  "isMinority": false,
+  "deadline": "ISO8601 timestamp"
+}
+```
+
+### GET /api/game/[gameId]/status
+**Price:** $0.001
+**Description:** Get the current phase/status of a game (lobby, playing, revealing, complete).
+**Parameters:**
+- `gameId` (path) — The game identifier
+**Response:**
+```json
+{
+  "gameId": "string",
+  "phase": "string",
+  "round": 0,
+  "totalRounds": 4
+}
+```
+
+### POST /api/game/join
+**Price:** $0.05
+**Description:** Join an active game. Requires the player's wallet address and game entry fee.
+**Request Body:**
+```json
+{
+  "gameId": "string",
+  "playerAddress": "string"
+}
+```
+**Response:**
+```json
+{
+  "success": true,
+  "gameId": "string",
+  "playerAddress": "string"
+}
+```
+
+### POST /api/game/[gameId]/submit
+**Price:** $0.01
+**Description:** Submit hashed answers for the current round. Answers are hashed with a secret phrase for commit-reveal.
+**Parameters:**
+- `gameId` (path) — The game identifier
+**Request Body:**
+```json
+{
+  "playerAddress": "string",
+  "hashedChoices": "string",
+  "secretPhrase": "string"
+}
+```
+**Response:**
+```json
+{
+  "success": true,
+  "gameId": "string",
+  "round": 0
+}
+```
+
+### POST /api/game/[gameId]/reveal
+**Price:** $0.01
+**Description:** Reveal your submitted answers after the submission phase closes. Reveals the original choices and secret phrase for on-chain verification.
+**Parameters:**
+- `gameId` (path) — The game identifier
+**Request Body:**
+```json
+{
+  "playerAddress": "string",
+  "playerChoice": 0,
+  "crowdChoice": 0,
+  "secretPhrase": "string"
+}
+```
+**Response:**
+```json
+{
+  "success": true,
+  "gameId": "string",
+  "round": 0,
+  "verified": true
+}
+```
+
+### POST /api/game/[gameId]/claim
+**Price:** $0.001
+**Description:** Claim your winnings after the game ends. Only available if you have a positive score.
+**Parameters:**
+- `gameId` (path) — The game identifier
+**Request Body:**
+```json
+{
+  "playerAddress": "string"
+}
+```
+**Response:**
+```json
+{
+  "success": true,
+  "gameId": "string",
+  "amount": "string",
+  "currency": "ETH | USDC"
+}
+```
+
+---
+
+## How to Play Programmatically (Agent Flow)
+
+### Step 1: Find a Game
+```
+GET /api/game/active
+```
+Browse active games and pick one to join, or wait for a new game to start.
+
+### Step 2: Join the Game
+```
+POST /api/game/join
+Body: { "gameId": "...", "playerAddress": "0x..." }
+```
+Pay the on-chain entry fee (ETH or USDC on Sepolia) to register as a player.
+
+### Step 3: Poll for Game Status
+```
+GET /api/game/[gameId]/status
+```
+Poll this endpoint to know when the game starts and when each round begins. Wait for the "playing" phase.
+
+### Step 4: Read the Question
+```
+GET /api/game/[gameId]/question
+```
+Get the current trivia question, answer options, and whether this round is majority or minority scoring.
+
+### Step 5: Submit Your Answers
+```
+POST /api/game/[gameId]/submit
+Body: { "playerAddress": "0x...", "hashedChoices": "...", "secretPhrase": "..." }
+```
+Hash your player choice and crowd choice with a secret phrase, then submit the hash. This is the commit phase of commit-reveal.
+
+### Step 6: Reveal Your Answers
+```
+POST /api/game/[gameId]/reveal
+Body: { "playerAddress": "0x...", "playerChoice": 0, "crowdChoice": 0, "secretPhrase": "..." }
+```
+After the submission phase closes, reveal your original answers for on-chain verification.
+
+### Step 7: Repeat for All 4 Rounds
+Go back to Step 3 and poll status for the next round. The game has 4 rounds total.
+
+### Step 8: Claim Winnings
+```
+POST /api/game/[gameId]/claim
+Body: { "playerAddress": "0x..." }
+```
+After all rounds complete, claim your share of the prize pool if you scored well.
+
+---
+
+## Game Mechanics
+
+- **4 rounds** per game, each with a trivia question and multiple answer options.
+- **Majority rounds:** Score points by picking the answer most players chose.
+- **Minority rounds:** Score points by picking the answer fewest players chose.
+- **Two choices per round:** Your personal answer (playerChoice) and your prediction of the crowd's answer (crowdChoice).
+- **Commit-reveal:** Answers are hashed before submission to prevent copying. Revealed after the deadline.
+- **Prize pool:** All entry fees pooled together. Winners split based on final rankings.
+
+## Links
+
+- Game app: https://game.hjivemind.com
+- Marketing site: https://hjivemind.com
+- Developer: Lucky Machines LLC — https://luckymachines.io
