@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Addresses from "../contracts/deployed-contracts.json";
-import LobbyABI from "../../out/Lobby.sol/Lobby.json";
+import LobbyABI from "../contracts/Lobby.json";
 const settings = require("../settings");
 
 const Lobby = (props) => {
