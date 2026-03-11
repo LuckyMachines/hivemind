@@ -1,0 +1,11 @@
+{
+  "name": "hivemind-digest",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "send": "node send-digest.js"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.0"
+  }
+}

@@ -1,5 +1,4 @@
-// x402 payment middleware for Next.js
-// Gated by X402_ENABLED env var — passes through if not configured
+// Combined middleware: analytics tracking + x402 payment gating
 import { NextResponse } from "next/server";
 import { paymentMiddleware } from "x402-next";
 
@@ -52,10 +51,38 @@ const x402Handler =
     : null;
 
 export default function middleware(request) {
-  if (x402Handler) return x402Handler(request);
+  const pathname = request.nextUrl.pathname;
+
+  // x402 payment gating for game API routes
+  if (pathname.startsWith("/api/game/") && x402Handler) {
+    return x402Handler(request);
+  }
+
+  // Analytics tracking for page routes (not API, not static assets)
+  if (
+    !pathname.startsWith("/api/") &&
+    !pathname.startsWith("/_next/") &&
+    !pathname.startsWith("/favicon")
+  ) {
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.ip ||
+      "unknown";
+    const ua = request.headers.get("user-agent") || "";
+    const referrer = request.headers.get("referer") || "";
+
+    // Fire-and-forget POST to our analytics collect endpoint
+    const collectUrl = new URL("/api/analytics/collect", request.url);
+    fetch(collectUrl.toString(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ip, ua, referrer, path: pathname }),
+    }).catch(() => {});
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: "/api/game/:path*",
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
