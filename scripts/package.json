@@ -2,7 +2,9 @@
   "name": "hivemind-digest",
   "version": "1.0.0",
   "private": true,
+  "main": "send-digest.js",
   "scripts": {
+    "start": "node send-digest.js",
     "send": "node send-digest.js"
   },
   "dependencies": {
