@@ -1,0 +1,134 @@
+import DocsLayout from "../../components/DocsLayout";
+
+export default ({ children }) => <DocsLayout>{children}</DocsLayout>;
+
+# Quickstart
+
+Get playing HJIVEMIND in 5 minutes. There are two ways to interact: through the **web UI** (wallet required) or through the **REST API** (USDC required).
+
+## Option A: Play via Web UI
+
+### 1. Connect Your Wallet
+
+Visit the game at your deployed URL and click **Connect Wallet**. You'll need:
+
+- MetaMask or any injected wallet
+- Sepolia ETH for the entry fee (currently free testnet ETH)
+
+### 2. Join a Game
+
+Click **Join Game** in the lobby. The entry fee is sent to the Lobby contract. Once enough players join (or the countdown expires), the game starts automatically via AutoLoop.
+
+### 3. Play Rounds
+
+Each round shows a question with 4 choices. Enter your **secret phrase** (remember it!) then submit your answers. After the submission window closes, reveal your answers using the same secret phrase.
+
+### 4. Claim Winnings
+
+After 4 rounds, check the leaderboard. If you placed in the top 4, click **Claim Prize**.
+
+---
+
+## Option B: Play via API (for bots and agents)
+
+Every API endpoint is gated with [x402 micropayments](/docs/x402). You pay USDC on Base Sepolia per request.
+
+### 1. Find an Active Game
+
+```bash
+curl https://your-app.com/api/game/active \
+  -H "X-PAYMENT: <x402-payment-token>"
+```
+
+### 2. Join
+
+```bash
+curl -X POST https://your-app.com/api/game/join \
+  -H "Content-Type: application/json" \
+  -H "X-PAYMENT: <x402-payment-token>" \
+  -d '{"walletAddress": "0xYOUR_ADDRESS"}'
+```
+
+### 3. Get the Question
+
+```bash
+curl https://your-app.com/api/game/1/question \
+  -H "X-PAYMENT: <x402-payment-token>"
+```
+
+### 4. Submit Hashed Answer
+
+```javascript
+const { ethers } = require("ethers");
+const hash = ethers.keccak256(
+  ethers.AbiCoder.defaultAbiCoder().encode(
+    ["string", "string", "string"],
+    [questionAnswer, crowdAnswer, secretPhrase]
+  )
+);
+```
+
+```bash
+curl -X POST https://your-app.com/api/game/1/submit \
+  -H "Content-Type: application/json" \
+  -H "X-PAYMENT: <x402-payment-token>" \
+  -d '{"walletAddress": "0x...", "hashedAnswer": "0x..."}'
+```
+
+### 5. Reveal
+
+```bash
+curl -X POST https://your-app.com/api/game/1/reveal \
+  -H "Content-Type: application/json" \
+  -H "X-PAYMENT: <x402-payment-token>" \
+  -d '{
+    "walletAddress": "0x...",
+    "questionAnswer": "Paris",
+    "crowdAnswer": "Paris",
+    "secretPhrase": "my-secret-123"
+  }'
+```
+
+### 6. Claim Prize
+
+```bash
+curl -X POST https://your-app.com/api/game/1/claim \
+  -H "Content-Type: application/json" \
+  -H "X-PAYMENT: <x402-payment-token>" \
+  -d '{"walletAddress": "0x..."}'
+```
+
+---
+
+## Local Development
+
+### Prerequisites
+
+- [Foundry](https://book.getfoundry.sh/getting-started/installation) (forge, cast, anvil)
+- Node.js 18+
+
+### Run the Full Stack Locally
+
+```bash
+# Terminal 1: Start local chain
+anvil
+
+# Terminal 2: Deploy contracts
+cd hivemind
+npm run deploy:anvil
+
+# Terminal 3: Start frontend
+cd hivemind/app
+npm install
+npm run dev
+```
+
+Visit `http://localhost:3000/play` and connect your wallet to the Anvil network (chain ID 31337).
+
+### Run Tests
+
+```bash
+forge test           # Run all tests
+forge test -vvv      # Verbose output
+forge test --gas-report  # Gas usage
+```

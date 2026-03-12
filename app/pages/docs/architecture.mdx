@@ -1,0 +1,238 @@
+import DocsLayout from "../../components/DocsLayout";
+
+export default ({ children }) => <DocsLayout>{children}</DocsLayout>;
+
+# Architecture
+
+HJIVEMIND is a multi-layer system spanning two blockchains, an off-chain automation network, and a Next.js frontend.
+
+## System Overview
+
+```
+                    ┌─────────────────────┐
+                    │   Player / Agent    │
+                    └──────┬──────────────┘
+                           │
+              ┌────────────┼────────────┐
+              │            │            │
+         Web UI      REST API     Direct Contract
+         (Next.js)   (x402-gated)  (ethers/web3)
+              │            │            │
+              └────────────┼────────────┘
+                           │
+                   ┌───────┴───────┐
+                   │  Relayer      │   Base Sepolia
+                   │  (USDC→ETH)  │◄── x402 payments
+                   └───────┬───────┘
+                           │
+              ┌────────────┼────────────────┐
+              │     Ethereum Sepolia         │
+              │                              │
+              │  ┌─────────┐  ┌──────────┐  │
+              │  │  Lobby   │  │  Score   │  │
+              │  │          │  │  Keeper  │  │
+              │  └────┬─────┘  └──────────┘  │
+              │       │                      │
+              │  ┌────┴────────────────────┐ │
+              │  │     GameController      │ │
+              │  └────┬───┬───┬───┬───────┘ │
+              │       │   │   │   │          │
+              │  ┌──┐ ┌──┐┌──┐┌──┐┌───────┐ │
+              │  │R1│ │R2││R3││R4││Winners│ │
+              │  └──┘ └──┘└──┘└──┘└───────┘ │
+              │       │                      │
+              │  ┌────┴─────────┐            │
+              │  │  Hjivemind   │◄── AutoLoop│
+              │  │  Keeper      │   Workers  │
+              │  └──────────────┘            │
+              └──────────────────────────────┘
+```
+
+## Contract Architecture
+
+### Hub-Based Routing
+
+All game contracts extend the **Railway** framework's Hub pattern. Players are grouped into **Railcars** (groups), and each hub (Lobby, Round 1-4, Winners) processes the railcar as it moves through the game flow:
+
+```
+Lobby → Round 1 → Round 2 → Round 3 → Round 4 → Winners
+```
+
+The `HubRegistry` maps hub aliases (e.g., `hjivemind.round1`) to contract addresses, enabling contract-to-contract discovery.
+
+### State Flow
+
+```
+Player joins Lobby
+  → ScoreKeeper.setGameID()
+  → Railcar created, player added
+  → Countdown starts (or starts immediately if limit reached)
+
+Lobby starts game
+  → Railcar moves to Round 1
+  → HjivemindKeeper queues SeedRound action
+
+AutoLoop delivers VRF seed
+  → Round selects question via seed % questionCount
+  → Question phase begins
+
+Players submit hashed answers
+  → Phase advances to Reveal (when all submitted or time expires)
+
+Players reveal answers
+  → Scores calculated (submission + winning + fast reveal bonus)
+  → Phase advances to Completed
+  → Railcar moves to next round (or Winners)
+
+Winners phase
+  → Final rankings calculated
+  → Prize pool distributed to top 4
+```
+
+## AutoLoop Integration
+
+[AutoLoop](https://tryautoloop.com) provides two critical services:
+
+### 1. Keeper Automation
+
+AutoLoop workers continuously call `shouldProgressLoop()` on the HjivemindKeeper. When work is pending, they call `progressLoop()` to advance game state. This handles:
+
+- Starting games when lobby countdown expires
+- Advancing round phases when time limits are reached
+- Moving railcars between rounds
+- Triggering winner calculations
+
+### 2. Verifiable Randomness (VRF)
+
+Each round needs a random seed to select questions. AutoLoop workers generate **ECVRF proofs** (Elliptic Curve Verifiable Random Function) that are verified on-chain:
+
+1. Worker detects `SeedRound` action in keeper queue
+2. Worker computes deterministic seed: `keccak256(keeperAddress, gameID)`
+3. Worker generates ECVRF proof using its secp256k1 private key
+4. Worker submits proof in `progressLoop()` call
+5. `VRFVerifier` contract verifies the proof on-chain (~3k gas via ecrecover)
+6. Verified randomness delivered to GameRound
+
+The VRF envelope format:
+
+```solidity
+abi.encode(
+    uint8 vrfVersion,          // 1 = ECVRF-SECP256K1-SHA256-TAI
+    uint256[4] proof,          // [gamma_x, gamma_y, c, s]
+    uint256[2] uPoint,         // precomputed U point
+    uint256[4] vComponents,    // precomputed V components
+    bytes gameData             // original queue data
+)
+```
+
+### AutoLoop Addresses (Sepolia)
+
+| Contract | Address |
+|----------|---------|
+| AutoLoop | `0xB5F4cF500daE3162A4A4F5D2f3569bE1d5BE5238` |
+| AutoLoop Registry | `0xAE63c1071020964e61f668De95cA1c90ad5695A7` |
+| AutoLoop Registrar | `0xAE473527893bbf687D93cFD0e447d13202054ef0` |
+
+## x402 Payment Architecture
+
+The game uses a **two-chain model** for payments:
+
+| Chain | Role |
+|-------|------|
+| Base Sepolia | USDC micropayments (x402 protocol) |
+| Ethereum Sepolia | Game smart contracts |
+
+The **relayer** bridges these chains: it verifies USDC payment on Base Sepolia, then submits Sepolia transactions using a funded server-side wallet. This means players never need Sepolia ETH.
+
+See [x402 Payments](/docs/x402) for implementation details.
+
+## Frontend Architecture
+
+```
+app/
+├── pages/
+│   ├── _app.js          # App wrapper + analytics
+│   ├── index.js          # Redirect to /play
+│   ├── play.js           # Main game UI
+│   ├── docs/             # Documentation (MDX)
+│   └── api/
+│       ├── game/         # Game endpoints (x402-gated)
+│       └── analytics/    # Analytics collection
+├── components/
+│   ├── ConnectWallet.js  # Wallet connection
+│   ├── Lobby.js          # Join game UI
+│   ├── Question.js       # Question display
+│   ├── Score.js          # Round results
+│   ├── Winners.js        # Leaderboard
+│   └── DocsLayout.js     # Documentation layout
+├── hooks/
+│   └── useGameState.js   # Core game state management
+├── lib/
+│   ├── chains.js         # Multi-chain configuration
+│   ├── contracts.js      # Contract interfaces
+│   ├── relayer.js        # Server-side relayer wallet
+│   └── analytics.js      # GDPR-compliant analytics
+└── middleware.js          # x402 payment gating
+```
+
+### Game State Management
+
+`useGameState.js` is the core hook that manages:
+
+- Wallet connection and chain detection
+- Contract instance creation
+- Game ID and round tracking
+- Event listeners for phase transitions
+- Submit/reveal/claim transaction handlers
+- Sound effects for game events
+
+### Multi-Chain Support
+
+The frontend supports three networks:
+
+| Network | Chain ID | Use |
+|---------|----------|-----|
+| Anvil | 0x7a69 | Local development |
+| Sepolia | 0xaa36a7 | Staging |
+| Mainnet | 0x1 | Production (not deployed) |
+
+Chain detection is automatic via `window.ethereum.request({ method: "eth_chainId" })`.
+
+## Security Model
+
+### Commit-Reveal
+
+Answers are hashed before submission to prevent front-running and copying:
+
+```
+hash = keccak256(abi.encode(questionAnswer, crowdAnswer, secretPhrase))
+```
+
+The secret phrase adds entropy — without it, someone could brute-force the hash since there are only 16 possible answer combinations (4 choices x 4 crowd predictions).
+
+### Access Control
+
+Every contract uses OpenZeppelin `AccessControlEnumerable` with role-based permissions. No contract function that modifies state is publicly callable without the appropriate role.
+
+### VRF Soundness
+
+The ECVRF implementation ensures question selection is:
+
+- **Unpredictable**: Workers cannot choose which question is selected
+- **Verifiable**: Anyone can verify the proof was correctly computed
+- **Deterministic**: Same seed always produces the same output
+
+## Test Coverage
+
+87 tests across 8 test suites cover all game logic:
+
+| Suite | Tests |
+|-------|-------|
+| AutoLoopVRF | 12 |
+| GameRound | 14 |
+| HjivemindKeeper | 10 |
+| Integration | 4 |
+| Lobby | 21 |
+| Questions | 6 |
+| Relayer | 13 |
+| ScoreKeeper | 7 |

@@ -1,0 +1,274 @@
+import DocsLayout from "../../components/DocsLayout";
+
+export default ({ children }) => <DocsLayout>{children}</DocsLayout>;
+
+# API Reference
+
+All game API endpoints are gated with [x402 micropayments](/docs/x402). Each request costs a small amount of USDC on Base Sepolia.
+
+> Include the `X-PAYMENT` header with a valid x402 payment token. If omitted, the server returns `402 Payment Required` with payment instructions.
+
+---
+
+## GET `/api/game/active`
+
+List active games in the lobby.
+
+**Price:** $0.001
+
+**Response:**
+
+```json
+{
+  "games": [
+    {
+      "gameID": 1,
+      "playerCount": 5,
+      "prizePool": "500000000000000000",
+      "currentRound": "lobby",
+      "canStart": false,
+      "entryFee": "100000000000000000",
+      "playerLimit": 20
+    }
+  ]
+}
+```
+
+---
+
+## POST `/api/game/join`
+
+Join a game via the relayer. The x402 payment covers the entry fee.
+
+**Price:** $0.05
+
+**Request:**
+
+```json
+{
+  "walletAddress": "0x..."
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "gameID": "1",
+  "txHash": "0x...",
+  "blockNumber": 12345,
+  "player": "0x..."
+}
+```
+
+**Errors:**
+
+| Status | Meaning |
+|--------|---------|
+| 400 | Invalid wallet address |
+| 409 | Player already in active game |
+| 503 | Relayer not configured |
+
+---
+
+## GET `/api/game/[gameId]/status`
+
+Current game phase and timing info.
+
+**Price:** $0.001
+
+**Response:**
+
+```json
+{
+  "gameID": 1,
+  "currentRound": "hjivemind.round1",
+  "phase": "Question",
+  "timeRemaining": 842,
+  "playerCount": 10,
+  "prizePool": "1000000000000000000",
+  "totalResponses": 6,
+  "totalReveals": 0
+}
+```
+
+**Phases:** `lobby`, `Question`, `Reveal`, `Completed`, `winners`
+
+---
+
+## GET `/api/game/[gameId]/question`
+
+Get the current round's question and choices.
+
+**Price:** $0.01
+
+**Response:**
+
+```json
+{
+  "gameID": 1,
+  "round": "hjivemind.round1",
+  "question": "Which city has the largest population?",
+  "choices": ["Tokyo", "Delhi", "Shanghai", "Mumbai"],
+  "isMinorityRound": false
+}
+```
+
+> Only available during Question or Reveal phases.
+
+---
+
+## POST `/api/game/[gameId]/submit`
+
+Submit a hashed answer via the relayer.
+
+**Price:** $0.01
+
+**Request:**
+
+```json
+{
+  "walletAddress": "0x...",
+  "hashedAnswer": "0x..."
+}
+```
+
+The hash must be a 66-character hex string (bytes32) computed as:
+
+```
+keccak256(abi.encode(questionAnswer, crowdAnswer, secretPhrase))
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "txHash": "0x...",
+  "round": "hjivemind.round1"
+}
+```
+
+---
+
+## POST `/api/game/[gameId]/reveal`
+
+Reveal your plaintext answers. The contract verifies the hash.
+
+**Price:** $0.01
+
+**Request:**
+
+```json
+{
+  "walletAddress": "0x...",
+  "questionAnswer": "Tokyo",
+  "crowdAnswer": "Tokyo",
+  "secretPhrase": "my-secret-123"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "txHash": "0x...",
+  "round": "hjivemind.round1"
+}
+```
+
+---
+
+## POST `/api/game/[gameId]/claim`
+
+Claim prize winnings after the game ends.
+
+**Price:** $0.001
+
+**Request:**
+
+```json
+{
+  "walletAddress": "0x..."
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "txHash": "0x...",
+  "gameID": 1,
+  "player": "0x...",
+  "payoutAmount": "700000000000000000"
+}
+```
+
+---
+
+## GET `/api/game/[gameId]/leaderboard`
+
+Final rankings and payout status.
+
+**Price:** $0.005
+
+**Response:**
+
+```json
+{
+  "gameID": 1,
+  "prizePool": "1000000000000000000",
+  "hasWinnings": true,
+  "leaderboard": [
+    { "address": "0x...", "score": 12100, "rank": 1, "paid": true },
+    { "address": "0x...", "score": 9200, "rank": 2, "paid": false }
+  ]
+}
+```
+
+---
+
+## GET `/api/game/[gameId]/stats`
+
+Game statistics and player scores.
+
+**Price:** $0.001
+
+**Response:**
+
+```json
+{
+  "gameID": 1,
+  "playerCount": 10,
+  "prizePool": "1000000000000000000",
+  "currentRound": "hjivemind.round2",
+  "players": [
+    { "address": "0x...", "score": 6200 },
+    { "address": "0x...", "score": 3100 }
+  ]
+}
+```
+
+---
+
+## Error Responses
+
+All endpoints return errors in this format:
+
+```json
+{
+  "error": "Human-readable error message"
+}
+```
+
+| Status | Meaning |
+|--------|---------|
+| 400 | Bad request (missing or invalid params) |
+| 402 | Payment required (x402) |
+| 405 | Wrong HTTP method |
+| 409 | Conflict (e.g., already joined) |
+| 500 | Server error |
+| 503 | Service unavailable (relayer down) |

@@ -1,0 +1,74 @@
+import DocsLayout from "../../components/DocsLayout";
+
+export default ({ children }) => <DocsLayout>{children}</DocsLayout>;
+
+# HJIVEMIND Developer Docs
+
+HJIVEMIND is an on-chain multiplayer trivia game where you win by predicting how the crowd will vote. Built on Ethereum with [x402](https://x402.org) micropayments and [AutoLoop](https://tryautoloop.com) automation.
+
+## How It Works
+
+1. **Join** a game lobby by paying an entry fee (ETH or USDC via x402)
+2. **Answer** trivia questions across 4 rounds
+3. **Predict** what the majority (or minority) will choose
+4. **Reveal** your answers in the commit-reveal phase
+5. **Win** prizes from the pooled entry fees
+
+Each game has 4 rounds with a commit-reveal scheme. Players submit a hashed answer (question answer + crowd prediction + secret phrase), then reveal after the submission window closes. Correct crowd predictions earn points, and the top scorers split the prize pool.
+
+## Key Concepts
+
+### Majority vs. Minority Rounds
+
+- **Majority rounds**: You score by picking the response most players choose
+- **Minority rounds**: You score by picking the response fewest players choose
+
+### Commit-Reveal
+
+All answers are hashed before submission to prevent copying. The hash is:
+
+```
+keccak256(abi.encode(questionAnswer, crowdAnswer, secretPhrase))
+```
+
+During the reveal phase, players submit their plaintext answers. The contract verifies the hash matches.
+
+### Scoring
+
+| Action | Points |
+|--------|--------|
+| Submitting answers | 100 |
+| Correct crowd prediction | 3,000 |
+| Fast reveal bonus | 0 - 1,000 |
+
+### Prize Distribution
+
+Top 4 scorers split the prize pool:
+
+| Rank | Share |
+|------|-------|
+| 1st | 70% |
+| 2nd | 15% |
+| 3rd | 10% |
+| 4th | 5% |
+
+Ties split equally within tiers.
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Smart Contracts | Solidity 0.8.33, Foundry |
+| Automation | [AutoLoop](https://tryautoloop.com) (on-chain keeper + VRF) |
+| Payments | [x402 Protocol](https://x402.org) (USDC on Base Sepolia) |
+| Frontend | Next.js 16, React 19, ethers.js |
+| Chain | Ethereum Sepolia (staging) |
+
+## Quick Links
+
+- [Quickstart](/docs/quickstart) - Get playing in 5 minutes
+- [API Reference](/docs/api) - All REST endpoints
+- [Smart Contracts](/docs/contracts) - On-chain interfaces
+- [x402 Payments](/docs/x402) - How micropayments work
+- [Agent Integration](/docs/agents) - Build a bot that plays
+- [Architecture](/docs/architecture) - System design overview

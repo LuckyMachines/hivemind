@@ -8,7 +8,8 @@
     "build": "forge build",
     "test": "forge test",
     "test:gas": "forge test --gas-report",
-    "deploy:anvil": "forge script script/DeployRegistry.s.sol --fork-url http://127.0.0.1:8545 --broadcast && forge script script/DeployRailcar.s.sol --fork-url http://127.0.0.1:8545 --broadcast && forge script script/DeployHivemindCore.s.sol --fork-url http://127.0.0.1:8545 --broadcast && forge script script/DeployHivemindGame.s.sol --fork-url http://127.0.0.1:8545 --broadcast && forge script script/ConnectHivemind.s.sol --fork-url http://127.0.0.1:8545 --broadcast && forge script script/RailwayConnections.s.sol --fork-url http://127.0.0.1:8545 --broadcast"
+    "deploy:anvil": "forge script script/DeployRegistry.s.sol --fork-url http://127.0.0.1:8545 --broadcast && forge script script/DeployRailcar.s.sol --fork-url http://127.0.0.1:8545 --broadcast && forge script script/DeployHivemindCore.s.sol --fork-url http://127.0.0.1:8545 --broadcast && forge script script/DeployHivemindGame.s.sol --fork-url http://127.0.0.1:8545 --broadcast && forge script script/ConnectHivemind.s.sol --fork-url http://127.0.0.1:8545 --broadcast && forge script script/RailwayConnections.s.sol --fork-url http://127.0.0.1:8545 --broadcast",
+    "register:autoloop:sepolia": "forge script script/RegisterAutoLoop.s.sol --fork-url ${SEPOLIA_RPC_URL} --broadcast --verify"
   },
   "repository": {
     "type": "git",

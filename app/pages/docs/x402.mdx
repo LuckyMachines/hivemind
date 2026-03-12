@@ -1,0 +1,135 @@
+import DocsLayout from "../../components/DocsLayout";
+
+export default ({ children }) => <DocsLayout>{children}</DocsLayout>;
+
+# x402 Payments
+
+HJIVEMIND uses the [x402 protocol](https://x402.org) to gate API access with micropayments. Players pay USDC on **Base Sepolia** to interact with the game API, and a server-side relayer executes Ethereum Sepolia transactions on their behalf.
+
+## How It Works
+
+```
+Player                    HJIVEMIND API              Sepolia
+  │                           │                        │
+  ├─ GET /api/game/active ───►│                        │
+  │◄── 402 Payment Required ──┤                        │
+  │                           │                        │
+  ├─ Sign USDC on Base ──────►│                        │
+  ├─ Retry with X-PAYMENT ───►│                        │
+  │                           ├── Verify payment ──►   │
+  │                           │◄── Payment valid ──    │
+  │                           ├── Relayer sends tx ───►│
+  │◄── 200 OK + response ────┤                        │
+```
+
+1. Client makes a request **without** the `X-PAYMENT` header
+2. Server returns **402 Payment Required** with payment details (price, network, recipient)
+3. Client signs a USDC transfer on Base Sepolia
+4. Client retries the request with the signed payment in the `X-PAYMENT` header
+5. Server verifies payment via the x402 facilitator, then processes the request
+6. For write operations, the relayer wallet submits Sepolia transactions on behalf of the player
+
+## Endpoint Pricing
+
+| Endpoint | Method | Price |
+|----------|--------|-------|
+| `/api/game/active` | GET | $0.001 |
+| `/api/game/join` | POST | $0.05 |
+| `/api/game/[id]/question` | GET | $0.01 |
+| `/api/game/[id]/status` | GET | $0.001 |
+| `/api/game/[id]/submit` | POST | $0.01 |
+| `/api/game/[id]/reveal` | POST | $0.01 |
+| `/api/game/[id]/claim` | POST | $0.001 |
+| `/api/game/[id]/leaderboard` | GET | $0.005 |
+| `/api/game/[id]/stats` | GET | $0.001 |
+
+Total cost to play a full game via API: **~$0.09** in USDC.
+
+## Two-Chain Architecture
+
+HJIVEMIND operates across two chains:
+
+| Chain | Purpose |
+|-------|---------|
+| **Base Sepolia** | USDC payments via x402 |
+| **Ethereum Sepolia** | Game smart contracts |
+
+The **relayer** bridges these: it receives x402 USDC payments on Base Sepolia, then submits Sepolia transactions using a funded server-side wallet. Players never need Sepolia ETH for gas.
+
+## Using x402 in Your Client
+
+### Browser (with x402 paywall)
+
+When `X402_ENABLED=true`, the API returns an interactive HTML paywall for browser requests. Users can pay directly through the paywall UI.
+
+### Programmatic (Node.js)
+
+```javascript
+// Install: npm install x402
+const { wrapFetch } = require("x402");
+const { ethers } = require("ethers");
+
+const wallet = new ethers.Wallet(PRIVATE_KEY);
+const x402Fetch = wrapFetch(fetch, wallet);
+
+// Automatically handles 402 → sign → retry
+const response = await x402Fetch("https://game.hjivemind.com/api/game/active");
+const data = await response.json();
+```
+
+### Manual Payment Flow
+
+```javascript
+// 1. Make request, get 402 response
+const res = await fetch("/api/game/active");
+if (res.status === 402) {
+  const requirements = res.headers.get("X-PAYMENT-REQUIREMENTS");
+  // requirements contains: payTo, price, network, token address
+
+  // 2. Sign USDC transfer on Base Sepolia
+  const payment = await signPayment(requirements); // your signing logic
+
+  // 3. Retry with payment proof
+  const paid = await fetch("/api/game/active", {
+    headers: { "X-PAYMENT": payment },
+  });
+}
+```
+
+## Configuration
+
+The x402 middleware is configured in `app/middleware.js`:
+
+```javascript
+import { paymentMiddleware } from "x402-next";
+
+const handler = paymentMiddleware(
+  process.env.X402_PAY_TO_ADDRESS,  // USDC recipient
+  routes,                            // endpoint → price mapping
+  process.env.X402_FACILITATOR_URL   // payment verifier
+);
+```
+
+### Environment Variables
+
+```bash
+X402_ENABLED=true
+X402_PAY_TO_ADDRESS=0x...          # Your wallet to receive USDC
+X402_FACILITATOR_URL=https://x402.org/facilitator
+X402_NETWORK=base-sepolia           # base-sepolia (staging) or base (production)
+```
+
+## Disabling x402
+
+Set `X402_ENABLED=false` in `.env.local`. All API endpoints become freely accessible (useful for local development).
+
+## Facilitator
+
+The x402 facilitator (`x402.org/facilitator`) is a third-party service that verifies payment signatures. It confirms that:
+
+1. The payment was signed by the claimed wallet
+2. The amount matches the required price
+3. The payment targets the correct recipient
+4. The payment hasn't been replayed
+
+No funds flow through the facilitator — it only verifies cryptographic proofs.

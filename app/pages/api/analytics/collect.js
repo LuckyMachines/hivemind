@@ -1,5 +1,5 @@
-// Analytics collection endpoint — called by middleware
-// No authentication needed; only accepts internal POST requests
+// Analytics collection endpoint — called by client-side _app.js on page views
+// No authentication needed; lightweight fire-and-forget from the browser
 const { recordPageView } = require("../../../lib/analytics");
 
 export default function handler(req, res) {
@@ -8,8 +8,14 @@ export default function handler(req, res) {
   }
 
   try {
-    const { ip, ua, referrer, path } = req.body;
-    recordPageView({ ip, userAgent: ua, path, referrer });
+    const { path, ua, referrer } = req.body;
+    // Extract IP from request headers (set by reverse proxy / hosting platform)
+    const ip =
+      (req.headers["x-forwarded-for"] || "").split(",")[0].trim() ||
+      req.socket?.remoteAddress ||
+      "unknown";
+
+    recordPageView({ ip, userAgent: ua || req.headers["user-agent"] || "", path, referrer });
     return res.status(204).end();
   } catch (e) {
     console.error("Analytics collect error:", e.message);

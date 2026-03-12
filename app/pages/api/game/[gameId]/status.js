@@ -1,5 +1,5 @@
 // GET /api/game/[gameId]/status - Game phase and time remaining (x402-gated: $0.001)
-const { getContracts, getRoundContract, ROUND_HUBS } = require("../../../../lib/contracts");
+const { getContracts, getRoundContract, getRoundHubs } = require("../../../../lib/contracts");
 
 const PHASE_NAMES = ["Pregame", "Question", "Reveal", "Completed"];
 
@@ -23,6 +23,7 @@ export default async function handler(req, res) {
     let totalResponses = 0;
     let totalReveals = 0;
 
+    const ROUND_HUBS = getRoundHubs();
     if (latestRound && ROUND_HUBS[latestRound]) {
       const roundContract = getRoundContract(latestRound);
       const [phaseNum, roundStartTime, revealStartTime, roundTimeLimit, responses, reveals] =

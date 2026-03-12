@@ -3,6 +3,7 @@
   "chainId": 11155111,
   "deployBlock": 10361409,
   "deployer": "0x98609e60FDd4C5fB656a4C4A7D229c515bDE139b",
+  "admin": "0x7E0023bCA4AB785b56E081c37719BA85078c80ed",
   "vrfMode": "autoloop",
   "hubRegistry": "0xC6f23f3B57847d8b2807823Fe1F252a58c7955C4",
   "railcar": "0x01679c0573A946e8016E65b4E25F4Ae86a338122",

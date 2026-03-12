@@ -108,15 +108,26 @@ function getContracts(providerOrSigner, chainId) {
   };
 }
 
-function getRoundContract(hubAlias, providerOrSigner, chainId) {
+const ROUND_HUBS_KEYS = [
+  "hjivemind.round1",
+  "hjivemind.round2",
+  "hjivemind.round3",
+  "hjivemind.round4",
+];
+
+function getRoundHubs(chainId) {
   const addr = getAddressesForChain(chainId);
-  const ROUND_HUBS = {
+  return {
     "hjivemind.round1": addr.round1,
     "hjivemind.round2": addr.round2,
     "hjivemind.round3": addr.round3,
     "hjivemind.round4": addr.round4,
   };
-  const roundAddr = ROUND_HUBS[hubAlias];
+}
+
+function getRoundContract(hubAlias, providerOrSigner, chainId) {
+  const hubs = getRoundHubs(chainId);
+  const roundAddr = hubs[hubAlias];
   if (!roundAddr) return null;
   return new ethers.Contract(roundAddr, GameRoundABI, providerOrSigner || getProvider(chainId));
 }
@@ -125,8 +136,10 @@ module.exports = {
   getProvider,
   getContracts,
   getRoundContract,
+  getRoundHubs,
   getAddressesForChain,
   getActiveChainId,
+  ROUND_HUBS_KEYS,
   LobbyABI,
   GameControllerABI,
   ScoreKeeperABI,

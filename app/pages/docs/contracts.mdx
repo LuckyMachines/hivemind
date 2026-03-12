@@ -1,0 +1,245 @@
+import DocsLayout from "../../components/DocsLayout";
+
+export default ({ children }) => <DocsLayout>{children}</DocsLayout>;
+
+# Smart Contracts
+
+All contracts are deployed on **Ethereum Sepolia** (chain ID 11155111). Source code is verified and available at [github.com/LuckyMachines/hivemind](https://github.com/LuckyMachines/hivemind).
+
+## Deployed Addresses (Sepolia)
+
+| Contract | Address |
+|----------|---------|
+| Lobby | `0x735Af89C1bB8908461575626F2927016d1f5f772` |
+| GameController | `0xE250FE77adb0181926b8367f2e3cEf92ffe3141f` |
+| ScoreKeeper | `0xA3F5A9B26Af99a3503F50A4039C2494c5692e4e3` |
+| HjivemindKeeper | `0xbb704032148Eb9247cB7aEd7aD6b3871d8060d26` |
+| Round 1 | `0x4B013455400a2E3Cf36Db767Fe14D1040759EF12` |
+| Round 2 | `0x67bc655564EfBb0a292283a562c9232348eF7F37` |
+| Round 3 | `0xc188d7a8bC093936ba51c71d35805eb0B0532ACF` |
+| Round 4 | `0x7876F19c8786835B36b1C6fFC2ebdD3861e687d0` |
+| Winners | `0xb5eC1508065aE915705194b3895854BB89083e86` |
+| HubRegistry | `0xC6f23f3B57847d8b2807823Fe1F252a58c7955C4` |
+| Railcar | `0x01679c0573A946e8016E65b4E25F4Ae86a338122` |
+
+---
+
+## Lobby
+
+Entry point for players. Collects fees, manages countdown, groups players into railcars.
+
+### Key Functions
+
+```solidity
+// Join the current game (send entryFee as value)
+function joinGame() public payable
+
+// Check if game can start (countdown expired or player limit hit)
+function canStart() public view returns (bool)
+
+// Current game ID
+function currentGame() public view returns (uint256)
+
+// Entry fee in wei
+function entryFee() public view returns (uint256)
+
+// Players in a specific game
+function playerCount(uint256 gameID) public view returns (uint256)
+```
+
+### Admin
+
+```solidity
+function setEntryFee(uint256 newEntryFee) public          // DEFAULT_ADMIN_ROLE
+function setPlayerLimit(uint256 limit) public              // DEFAULT_ADMIN_ROLE
+function setTimeLimitToJoin(uint256 timeInSeconds) public  // DEFAULT_ADMIN_ROLE
+```
+
+---
+
+## GameController
+
+Central coordinator. Routes player actions to the correct round contract and emits game events for off-chain listeners.
+
+### Player Functions
+
+```solidity
+// Join (proxies to Lobby)
+function joinGame() public payable
+
+// Submit hashed answer to current round
+function submitAnswers(bytes32 _hashedAnswer, uint256 gameID, string hubAlias) public
+
+// Reveal plaintext answers
+function revealAnswers(
+    string questionAnswer,
+    string crowdAnswer,
+    string secretPhrase,
+    uint256 gameID,
+    string hubAlias
+) public
+
+// Claim prize
+function claimPrize(uint256 gameID, uint256 finalScore) public
+```
+
+### Read Functions
+
+```solidity
+function getScore(uint256 gameID, address player) public view returns (uint256)
+function getIsInActiveGame(address player) public view returns (bool)
+function getCurrentGame(address player) public view returns (uint256)
+function getPlayerCount(uint256 gameID) public view returns (uint256)
+function getLatestRound(uint256 gameID) public view returns (string)
+function getQuestion(string hubAlias, uint256 gameID) public view returns (string, string[4])
+function getResponseScores(string hubAlias, uint256 gameID) public view returns (uint256[4])
+function getWinningIndex(string hubAlias, uint256 gameID) public view returns (uint256[])
+function getIsMinorityRound(string hubAlias, uint256 gameID) public view returns (bool)
+function getPrizePool(uint256 gameID) public view returns (uint256)
+function getFinalRanking(uint256 gameID, address player) public view returns (uint256)
+function checkPayout(address player) public view returns (uint256)
+```
+
+### Events
+
+```solidity
+event RoundStart(string hubAlias, uint256 startTime, uint256 gameID, uint256 groupID)
+event RevealStart(string hubAlias, uint256 startTime, uint256 gameID, uint256 groupID)
+event RoundEnd(string hubAlias, uint256 timestamp, uint256 gameID, uint256 groupID)
+event EnterWinners(uint256 timestamp, uint256 gameID, uint256 groupID)
+```
+
+---
+
+## GameRound
+
+Manages a single round: question delivery, answer submission, reveal, and scoring. There are 4 instances (round1-4), each linked to a question pack.
+
+### Phases
+
+```solidity
+enum GamePhase { Pregame, Question, Reveal, Completed }
+```
+
+### Player Functions
+
+```solidity
+// Submit hashed answer (Question phase only)
+function submitAnswers(bytes32 _hashedAnswer, uint256 gameID) public
+
+// Reveal answers (Reveal phase only)
+function revealAnswers(
+    string questionAnswer,
+    string crowdAnswer,
+    string secretPhrase,
+    uint256 gameID
+) public
+```
+
+### Read Functions
+
+```solidity
+function phase(uint256 gameID) public view returns (uint8)
+function getQuestion(uint256 gameID) public view returns (string, string[4])
+function getResponseScores(uint256 gameID) public view returns (uint256[4])
+function totalResponses(uint256 gameID) public view returns (uint256)
+function totalReveals(uint256 gameID) public view returns (uint256)
+function isMinorityRound(uint256 gameID) public view returns (bool)
+function roundTimeLimit() public view returns (uint256)
+```
+
+### Scoring
+
+| Action | Points |
+|--------|--------|
+| `submissionPoints` | 100 |
+| `winningPoints` | 3,000 |
+| `maxFastRevealBonus` | 1,000 |
+
+Fast reveal bonus scales linearly: first to reveal gets the full 1,000 points, last gets 0.
+
+---
+
+## Winners
+
+Calculates final rankings and distributes prizes.
+
+```solidity
+function getFinalRank(uint256 gameID, address player) public view returns (uint256)
+function getPayoutAmount(uint256 gameID, uint256 finalScore) public view returns (uint256)
+function gameHasWinnings(uint256 gameID) public view returns (bool)
+function playerPaid(uint256 gameID, address player) public view returns (bool)
+function claimWinnings(uint256 gameID, uint256 finalScore) public
+```
+
+---
+
+## ScoreKeeper
+
+Authoritative score registry. Only contracts with `SCORE_SETTER_ROLE` can modify state.
+
+```solidity
+function playerScore(uint256 gameID, address player) public view returns (uint256)
+function currentGameID(address player) public view returns (uint256)
+function playerInActiveGame(address player) public view returns (bool)
+function latestRound(uint256 gameID) public view returns (string)
+function prizePool(uint256 gameID) public view returns (uint256)
+```
+
+---
+
+## HjivemindKeeper
+
+AutoLoop-compatible automation contract. Monitors all game rounds and advances state when conditions are met.
+
+### AutoLoop Interface
+
+```solidity
+// Called by AutoLoop workers to check for pending work
+function shouldProgressLoop() external view returns (bool loopIsReady, bytes memory progressWithData)
+
+// Called by AutoLoop workers to execute pending work
+function progressLoop(bytes calldata progressWithData) external
+```
+
+### VRF Integration
+
+```solidity
+// Register a controller's secp256k1 public key for VRF proofs
+function registerControllerKey(address controller, uint256 pkX, uint256 pkY) external
+
+// Enable/disable VRF processing
+function setVRFEnabled(bool enabled) external
+
+// Check VRF status
+function vrfEnabled() public view returns (bool)
+```
+
+### Queue System
+
+The keeper processes 6 queues in priority order:
+
+1. **Lobby** - Start games when conditions met
+2. **Round 1-4** - Advance round phases, deliver VRF seeds
+3. **Winners** - Calculate final rankings
+
+```solidity
+function addActionToQueue(Action actionType, Queue queueType, uint256 gameID) public
+```
+
+Actions: `StartGame`, `StartRound`, `UpdatePhase`, `Clean`, `FindWinners`, `SeedRound`
+
+---
+
+## Access Control
+
+All contracts use OpenZeppelin `AccessControlEnumerable`. Key roles:
+
+| Role | Held By | Purpose |
+|------|---------|---------|
+| `DEFAULT_ADMIN_ROLE` | Admin wallet | Configuration, role grants |
+| `SCORE_SETTER_ROLE` | Lobby, Rounds, Winners, GameController | Modify scores |
+| `KEEPER_ROLE` | HjivemindKeeper, Admin | Advance round phases |
+| `QUEUE_ROLE` | Lobby, Rounds, Winners | Add to keeper queue |
+| `EVENT_SENDER_ROLE` | Rounds, Winners | Emit events on GameController |
+| `GAME_ROUND_ROLE` | Round contracts | Query question packs |
