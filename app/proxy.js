@@ -1,4 +1,5 @@
-// Combined middleware: analytics tracking + x402 payment gating
+// Combined proxy: analytics tracking + x402 payment gating
+// Uses proxy.js (Next.js 16 Node.js runtime) instead of middleware.js (Edge)
 import { NextResponse } from "next/server";
 import { paymentMiddleware } from "x402-next";
 
@@ -60,7 +61,7 @@ const x402Handler =
     ? paymentMiddleware(payTo, routes, facilitator)
     : null;
 
-export default function middleware(request) {
+export default async function proxy(request) {
   const pathname = request.nextUrl.pathname;
 
   // x402 payment gating for game API routes
