@@ -131,8 +131,8 @@ function getStats(date, site) {
       uniqueVisitors: 0,
       topPages: [],
       topReferrers: [],
-      browsers: {},
-      os: {},
+      browsers: [],
+      os: [],
       hourly: new Array(24).fill(0),
     };
   }

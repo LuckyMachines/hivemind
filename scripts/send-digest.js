@@ -39,28 +39,31 @@ function renderSection(title, domain, stats) {
       </td></tr>`;
   }
 
-  const topPagesRows = stats.topPages
+  // Ensure arrays (API might return objects or arrays)
+  const toArr = (v) => (Array.isArray(v) ? v : []);
+
+  const topPagesRows = toArr(stats.topPages)
     .map(
       (p) =>
         `<tr><td style="padding:4px 0;color:#ccc;">${p.name}</td><td style="padding:4px 0 4px 16px;color:#fff;text-align:right;">${formatNumber(p.count)}</td></tr>`
     )
     .join("");
 
-  const topReferrerRows = stats.topReferrers
+  const topReferrerRows = toArr(stats.topReferrers)
     .map(
       (r) =>
         `<tr><td style="padding:4px 0;color:#ccc;">${r.name || "(direct)"}</td><td style="padding:4px 0 4px 16px;color:#fff;text-align:right;">${formatNumber(r.count)}</td></tr>`
     )
     .join("");
 
-  const browserRows = (stats.browsers || [])
+  const browserRows = toArr(stats.browsers)
     .map(
       (b) =>
         `<tr><td style="padding:2px 0;color:#ccc;">${b.name}</td><td style="padding:2px 0 2px 16px;color:#fff;text-align:right;">${formatNumber(b.count)}</td></tr>`
     )
     .join("");
 
-  const osRows = (stats.os || [])
+  const osRows = toArr(stats.os)
     .map(
       (o) =>
         `<tr><td style="padding:2px 0;color:#ccc;">${o.name}</td><td style="padding:2px 0 2px 16px;color:#fff;text-align:right;">${formatNumber(o.count)}</td></tr>`
