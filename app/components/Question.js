@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import { useToast } from "./Toast";
 
 const Question = (props) => {
   const [submitLoading, setSubmitLoading] = useState(false);
+  const { addToast } = useToast();
   const web3 = props.provider;
 
   const submit = async () => {
@@ -31,7 +33,7 @@ const Question = (props) => {
         console.log(err.message);
       }
     } else {
-      window.alert("Please connect your web3 wallet");
+      addToast("Please connect your web3 wallet to submit.", { type: "warning", title: "Wallet Required" });
     }
     setSubmitLoading(false);
   };

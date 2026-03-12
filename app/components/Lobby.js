@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import LobbyABI from "../contracts/Lobby.json";
 import { getAddresses } from "../lib/chains";
+import { useToast } from "./Toast";
 const settings = require("../settings");
 
 const Lobby = (props) => {
   const [joinGameLoading, setJoinGameLoading] = useState(false);
   const [usdcLoading, setUsdcLoading] = useState(false);
+  const { addToast } = useToast();
   const web3 = props.provider;
   const accounts = props.accounts;
   const gameController = props.gameController;
@@ -23,7 +25,7 @@ const Lobby = (props) => {
             const chainID = await window.ethereum.request({ method: "eth_chainId" });
             const addresses = getAddresses(chainID);
             if (!addresses || !addresses.lobby) {
-              window.alert("No contract addresses configured for this network.");
+              addToast("No contract addresses configured for this network.", { type: "error", title: "Wrong Network" });
               setJoinGameLoading(false);
               return;
             }
@@ -58,14 +60,14 @@ const Lobby = (props) => {
         console.log(err.message);
       }
     } else {
-      window.alert("Please connect your web3 wallet");
+      addToast("Please connect your web3 wallet to join.", { type: "warning", title: "Wallet Required" });
     }
     setJoinGameLoading(false);
   };
 
   const joinWithUSDC = async () => {
     if (!accounts || !accounts[0]) {
-      window.alert("Please connect your web3 wallet first");
+      addToast("Please connect your web3 wallet first.", { type: "warning", title: "Wallet Required" });
       return;
     }
 
@@ -85,11 +87,9 @@ const Lobby = (props) => {
         const paymentDetails = await response.json();
         console.log("x402 payment required:", paymentDetails);
 
-        // Display payment instructions to user
-        window.alert(
-          "USDC payment required on Base Sepolia.\n" +
-          "Amount: " + (paymentDetails.price || "$0.05") + "\n" +
-          "Please approve the USDC transaction in your wallet."
+        addToast(
+          "Amount: " + (paymentDetails.price || "$0.05") + "\nPlease approve the USDC transaction in your wallet.",
+          { type: "info", title: "USDC Payment Required", duration: 8000 }
         );
 
         // In production, use x402-fetch or handle the payment flow:
@@ -114,7 +114,7 @@ const Lobby = (props) => {
       props.setGameID(result.gameID);
     } catch (err) {
       console.error("USDC join error:", err.message);
-      window.alert("Failed to join with USDC: " + err.message);
+      addToast(err.message, { type: "error", title: "USDC Payment Failed" });
     }
     setUsdcLoading(false);
   };
