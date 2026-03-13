@@ -29,21 +29,28 @@ Player                    HJIVEMIND API              Sepolia
 5. Server verifies payment via the x402 facilitator, then processes the request
 6. For write operations, the relayer wallet submits Sepolia transactions on behalf of the player
 
-## Endpoint Pricing
+## Dynamic Pricing
 
-| Endpoint | Method | Price |
-|----------|--------|-------|
-| `/api/game/active` | GET | $0.01 |
-| `/api/game/join` | POST | $0.10 |
-| `/api/game/[id]/question` | GET | $0.05 |
-| `/api/game/[id]/status` | GET | $0.01 |
-| `/api/game/[id]/submit` | POST | $0.05 |
-| `/api/game/[id]/reveal` | POST | $0.05 |
-| `/api/game/[id]/claim` | POST | $0.01 |
-| `/api/game/[id]/leaderboard` | GET | $0.02 |
-| `/api/game/[id]/stats` | GET | $0.01 |
+Prices scale with ETH/USD to stay proportional to ecosystem costs:
 
-Total cost to play a full game via API: **~$0.35** in USDC.
+```
+price = basePrice × max(1, ethPrice / anchorPrice)
+```
+
+- **basePrice** — the minimum USD price (floor)
+- **anchorPrice** — ETH/USD price at which base prices apply (default: $2,000)
+- Prices never drop below the base. Above the anchor, they scale linearly.
+
+ETH price is fetched from the Coinbase public API every 10 minutes.
+
+### Pricing Tiers
+
+| Tier | Base Price | Endpoints |
+|------|-----------|-----------|
+| **Operational** | $0.05 | `/api/game/join`, `/api/game/[id]/submit`, `/api/game/[id]/reveal` |
+| **Analysis** | $0.01 | `/api/game/active`, `/api/game/[id]/status`, `/api/game/[id]/question`, `/api/game/[id]/leaderboard`, `/api/game/[id]/stats`, `/api/game/[id]/claim` |
+
+Check current prices at [`/api/x402/pricing`](https://game.hjivemind.com/api/x402/pricing).
 
 ## Two-Chain Architecture
 

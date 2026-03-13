@@ -388,13 +388,38 @@ server.tool(
   }
 );
 
+server.tool(
+  "get_pricing",
+  "Get current x402 pricing. Prices scale dynamically with ETH/USD. Free.",
+  {},
+  async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/x402/pricing`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      const pricing = await res.json();
+      return { content: [{ type: "text", text: JSON.stringify(pricing, null, 2) }] };
+    } catch (e) {
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            error: "Could not fetch pricing",
+            message: e.message,
+            hint: "Pricing endpoint may not be deployed yet. Default prices: operational=$0.05, analysis=$0.01",
+          }, null, 2),
+        }],
+      };
+    }
+  }
+);
+
 // ════════════════════════════════════════════════════════
 // x402-GATED WRITE TOOLS — paid via USDC on Base Sepolia
 // ════════════════════════════════════════════════════════
 
 server.tool(
   "join_game",
-  "Join the current game. Costs $0.10 USDC via x402 on Base Sepolia. The relayer pays the ETH entry fee on Sepolia on your behalf.",
+  "Join the current game. Paid via x402 USDC on Base Sepolia (operational tier, dynamically priced). The relayer pays the ETH entry fee on Sepolia on your behalf. Call get_pricing to see current rates.",
   {
     walletAddress: z.string().describe("Your Ethereum wallet address"),
     paymentHeader: z.string().optional().describe("x402 payment proof (X-PAYMENT header value). Omit to get payment requirements."),
@@ -412,7 +437,7 @@ server.tool(
 
 server.tool(
   "submit_answers",
-  "Submit hashed answers for the current round. Costs $0.05 USDC via x402. You must hash your answers: keccak256(abi.encode(questionAnswer, crowdAnswer, secretPhrase)).",
+  "Submit hashed answers for the current round. Paid via x402 USDC (operational tier). You must hash your answers: keccak256(abi.encode(questionAnswer, crowdAnswer, secretPhrase)).",
   {
     gameID: z.number().int().positive().describe("The game ID"),
     walletAddress: z.string().describe("Your Ethereum wallet address"),
@@ -436,7 +461,7 @@ server.tool(
 
 server.tool(
   "reveal_answers",
-  "Reveal your answers for the current round. Costs $0.05 USDC via x402. Must match the hash you submitted.",
+  "Reveal your answers for the current round. Paid via x402 USDC (operational tier). Must match the hash you submitted.",
   {
     gameID: z.number().int().positive().describe("The game ID"),
     walletAddress: z.string().describe("Your Ethereum wallet address"),
@@ -462,7 +487,7 @@ server.tool(
 
 server.tool(
   "claim_prize",
-  "Claim your winnings after a game ends. Costs $0.01 USDC via x402. Only works if you ranked in the top 4.",
+  "Claim your winnings after a game ends. Paid via x402 USDC (analysis tier). Only works if you ranked in the top 4.",
   {
     gameID: z.number().int().positive().describe("The game ID"),
     walletAddress: z.string().describe("Your Ethereum wallet address"),
