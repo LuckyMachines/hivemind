@@ -10,47 +10,47 @@ const network = process.env.X402_NETWORK || "base-sepolia";
 
 const routes = {
   "/api/game/active": {
-    price: "$0.001",
+    price: "$0.01",
     network,
     description: "List active games",
   },
   "/api/game/:id/stats": {
-    price: "$0.001",
+    price: "$0.01",
     network,
     description: "Game statistics",
   },
   "/api/game/:id/leaderboard": {
-    price: "$0.005",
+    price: "$0.02",
     network,
     description: "Game leaderboard",
   },
   "/api/game/:id/question": {
-    price: "$0.01",
+    price: "$0.05",
     network,
     description: "Current question data",
   },
   "/api/game/:id/status": {
-    price: "$0.001",
+    price: "$0.01",
     network,
     description: "Game phase status",
   },
   "/api/game/join": {
-    price: "$0.05",
+    price: "$0.10",
     network,
     description: "Join game with USDC",
   },
   "/api/game/:id/submit": {
-    price: "$0.01",
+    price: "$0.05",
     network,
     description: "Submit answers",
   },
   "/api/game/:id/reveal": {
-    price: "$0.01",
+    price: "$0.05",
     network,
     description: "Reveal answers",
   },
   "/api/game/:id/claim": {
-    price: "$0.001",
+    price: "$0.01",
     network,
     description: "Claim winnings",
   },
