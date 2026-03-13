@@ -2,7 +2,7 @@
 // Protected by ANALYTICS_SECRET env var
 const { getStats, cleanup } = require("../../../lib/analytics");
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -16,8 +16,9 @@ export default function handler(req, res) {
     const date =
       req.query.date ||
       new Date(Date.now() - 86400000).toISOString().split("T")[0];
+    const site = req.query.site || null;
 
-    const stats = getStats(date);
+    const stats = await getStats(date, site);
 
     // Run cleanup on stats requests
     cleanup();

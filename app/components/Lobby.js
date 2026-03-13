@@ -51,8 +51,8 @@ const Lobby = (props) => {
           props.setPlayersInGame(playerCount);
           props.setLobbyButton("Waiting for game to start...");
           props.setGameID(currentGameID);
-        } else if (buttonText == "Start Game") {
-          // move into next round (probably do this automatically without button)
+        } else if (props.lobbyButton == "Start Game") {
+          // move into next round (handled automatically by AutoLoop keeper)
         } else {
           console.log("This button does nothing, but have fun clicking away!");
         }

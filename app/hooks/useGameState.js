@@ -6,20 +6,20 @@ import { getAddresses } from "../lib/chains";
 const settings = require("../settings");
 
 const HUB_ORDER = [
-  "hivemind.lobby",
-  "hivemind.round1",
-  "hivemind.round2",
-  "hivemind.round3",
-  "hivemind.round4",
-  "hivemind.winners"
+  "hjivemind.lobby",
+  "hjivemind.round1",
+  "hjivemind.round2",
+  "hjivemind.round3",
+  "hjivemind.round4",
+  "hjivemind.winners"
 ];
 
 function hubToRoundNumber(hub) {
   switch (hub) {
-    case "hivemind.round1": return 1;
-    case "hivemind.round2": return 2;
-    case "hivemind.round3": return 3;
-    case "hivemind.round4": return 4;
+    case "hjivemind.round1": return 1;
+    case "hjivemind.round2": return 2;
+    case "hjivemind.round3": return 3;
+    case "hjivemind.round4": return 4;
     default: return 0;
   }
 }
@@ -71,7 +71,7 @@ export default function useGameState(addToast) {
   const [gameController, setGameController] = useState(null);
   const [connectedWallet, setConnectedWallet] = useState("");
   const [secretPhrase, setSecretPhrase] = useState("");
-  const [currentHub, setCurrentHub] = useState("hivemind.lobby");
+  const [currentHub, setCurrentHub] = useState("hjivemind.lobby");
   const [gameID, setGameIDState] = useState("(Not in game)");
   const [playersInGame, setPlayersInGame] = useState("(Not in game)");
   const [playerScore, setPlayerScore] = useState("0");
@@ -85,11 +85,11 @@ export default function useGameState(addToast) {
 
   useEffect(() => {
     sfxRef.current = {
-      round1: new Audio("sfx/round1.m4a"),
-      round2: new Audio("sfx/round2.m4a"),
-      round3: new Audio("sfx/round3.m4a"),
-      round4: new Audio("sfx/round4.m4a"),
-      gameFinish: new Audio("sfx/gameFinish.m4a")
+      round1: new Audio("/sfx/round1.m4a"),
+      round2: new Audio("/sfx/round2.m4a"),
+      round3: new Audio("/sfx/round3.m4a"),
+      round4: new Audio("/sfx/round4.m4a"),
+      gameFinish: new Audio("/sfx/gameFinish.m4a")
     };
     Object.values(sfxRef.current).forEach((a) => a.load());
     mountedRef.current = true;
@@ -141,10 +141,10 @@ export default function useGameState(addToast) {
 
   // Update player score for previous round
   const updatePlayerScoreForHub = useCallback(async (gc, hubAlias, gID, accts) => {
-    if (hubAlias === "hivemind.round1" || hubAlias === "hivemind.lobby" || gID === "(Not in game)") return;
+    if (hubAlias === "hjivemind.round1" || hubAlias === "hjivemind.lobby" || gID === "(Not in game)") return;
 
     const prevHub = previousHub(hubAlias);
-    if (!prevHub || prevHub === "hivemind.lobby") return;
+    if (!prevHub || prevHub === "hjivemind.lobby") return;
     const prevRoundNum = hubToRoundNumber(prevHub);
 
     try {
@@ -176,7 +176,7 @@ export default function useGameState(addToast) {
         winningIndex
       });
 
-      if (hubAlias === "hivemind.winners") {
+      if (hubAlias === "hjivemind.winners") {
         const rank = await retryWithBackoff(() =>
           gc.methods.getFinalRanking(gID, accts[0]).call()
         );
@@ -191,10 +191,10 @@ export default function useGameState(addToast) {
   const showHub = useCallback(async (hubAlias, gc, gID, accts) => {
     if (hubAlias === currentHub) return;
 
-    if (hubAlias !== "hivemind.winners" && hubAlias !== "hivemind.lobby") {
+    if (hubAlias !== "hjivemind.winners" && hubAlias !== "hjivemind.lobby") {
       await loadQuestions(gc, hubAlias, gID);
     }
-    if (hubAlias !== "hivemind.lobby" && hubAlias !== "hivemind.round1") {
+    if (hubAlias !== "hjivemind.lobby" && hubAlias !== "hjivemind.round1") {
       await updatePlayerScoreForHub(gc, hubAlias, gID, accts);
     }
 
@@ -204,7 +204,7 @@ export default function useGameState(addToast) {
     const roundNum = hubToRoundNumber(hubAlias);
     if (roundNum > 0 && sfxRef.current[`round${roundNum}`]) {
       sfxRef.current[`round${roundNum}`].play().catch(() => {});
-    } else if (hubAlias === "hivemind.winners" && sfxRef.current.gameFinish) {
+    } else if (hubAlias === "hjivemind.winners" && sfxRef.current.gameFinish) {
       sfxRef.current.gameFinish.play().catch(() => {});
     }
 
@@ -227,7 +227,7 @@ export default function useGameState(addToast) {
     if (roundNum > 0) {
       updateRound(roundNum, { button: "Reveal Answers", inputLocked: false });
     }
-    if (curHub !== hubAlias && curHub === "hivemind.lobby") {
+    if (curHub !== hubAlias && curHub === "hjivemind.lobby") {
       showHub(hubAlias, gc, curGID, accts);
     }
   }, [showHub, updateRound]);
@@ -239,7 +239,7 @@ export default function useGameState(addToast) {
   }, []);
 
   const enterWinners = useCallback((gID, groupID, startTime, gc, accts) => {
-    showHub("hivemind.winners", gc, gID, accts);
+    showHub("hjivemind.winners", gc, gID, accts);
   }, [showHub]);
 
   // Set game ID and subscribe to events
@@ -345,7 +345,7 @@ export default function useGameState(addToast) {
   // Reset game
   const resetGame = useCallback(() => {
     setSecretPhrase("");
-    setCurrentHub("hivemind.lobby");
+    setCurrentHub("hjivemind.lobby");
     setGameIDState("(Not in game)");
     setPlayersInGame("(Not in game)");
     setPlayerScore("0");
@@ -366,9 +366,9 @@ export default function useGameState(addToast) {
   }, [updateRound]);
 
   // Derived state
-  const roundIndex = hubToRoundNumber(currentHub) || (currentHub === "hivemind.winners" ? 5 : 0);
-  const showLobby = currentHub === "hivemind.lobby";
-  const showWinners = currentHub === "hivemind.winners";
+  const roundIndex = hubToRoundNumber(currentHub) || (currentHub === "hjivemind.winners" ? 5 : 0);
+  const showLobby = currentHub === "hjivemind.lobby";
+  const showWinners = currentHub === "hjivemind.winners";
   const showSecretPhrase = !showLobby && !showWinners;
   const activeRound = hubToRoundNumber(currentHub);
 

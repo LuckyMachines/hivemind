@@ -1,34 +1,64 @@
-// GDPR-compliant local-first analytics
+// GDPR-compliant analytics — Postgres-backed
 // No cookies, no PII, anonymized IPs, no third-party services
 const crypto = require("crypto");
-const fs = require("fs");
-const path = require("path");
+const { Pool } = require("pg");
 
-const DATA_DIR = process.env.ANALYTICS_DATA_DIR || path.join(process.cwd(), ".analytics");
 const SITE = process.env.ANALYTICS_SITE || "game";
 
-// Ensure data directory exists
-function ensureDir() {
+// Lazy-init connection pool
+let pool;
+function getPool() {
+  if (!pool) {
+    const url = process.env.DATABASE_URL;
+    if (!url) {
+      console.error("Analytics: DATABASE_URL not set");
+      return null;
+    }
+    pool = new Pool({ connectionString: url, max: 3, ssl: { rejectUnauthorized: false } });
+  }
+  return pool;
+}
+
+// Auto-create table on first use
+let tableReady = false;
+async function ensureTable() {
+  if (tableReady) return true;
+  const p = getPool();
+  if (!p) return false;
   try {
-    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    await p.query(`
+      CREATE TABLE IF NOT EXISTS page_views (
+        id SERIAL PRIMARY KEY,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        site VARCHAR(20) NOT NULL,
+        path TEXT NOT NULL,
+        visitor_hash VARCHAR(16) NOT NULL,
+        referrer TEXT,
+        browser VARCHAR(20),
+        os VARCHAR(20),
+        hour SMALLINT NOT NULL
+      )
+    `);
+    await p.query(`CREATE INDEX IF NOT EXISTS idx_pv_created ON page_views (created_at)`);
+    await p.query(`CREATE INDEX IF NOT EXISTS idx_pv_site ON page_views (site)`);
+    tableReady = true;
+    return true;
   } catch (e) {
-    console.error("Analytics: failed to create data dir", e.message);
+    console.error("Analytics: table init failed", e.message);
+    return false;
   }
 }
 
 // Anonymize IP — zero last octet (IPv4) or last 80 bits (IPv6)
 function anonymizeIP(ip) {
   if (!ip || ip === "unknown") return "0.0.0.0";
-  // IPv4
   if (ip.includes(".") && !ip.includes(":")) {
     const parts = ip.split(".");
     parts[3] = "0";
     return parts.join(".");
   }
-  // IPv6
   if (ip.includes(":")) {
     const parts = ip.split(":");
-    // Zero the last 5 groups (80 bits)
     for (let i = Math.max(3, parts.length - 5); i < parts.length; i++) {
       parts[i] = "0";
     }
@@ -46,7 +76,7 @@ function hashVisitor(anonIP, userAgent, date) {
     .slice(0, 16);
 }
 
-// Parse user agent to browser + OS (simple, no dependency needed)
+// Parse user agent to browser + OS
 function parseUA(ua) {
   if (!ua) return { browser: "Unknown", os: "Unknown" };
 
@@ -68,8 +98,9 @@ function parseUA(ua) {
 }
 
 // Record a page view
-function recordPageView({ ip, userAgent, path: pagePath, referrer }) {
-  ensureDir();
+async function recordPageView({ ip, userAgent, path: pagePath, referrer }) {
+  if (!(await ensureTable())) return;
+
   const now = new Date();
   const date = now.toISOString().split("T")[0];
   const hour = now.getUTCHours();
@@ -77,7 +108,6 @@ function recordPageView({ ip, userAgent, path: pagePath, referrer }) {
   const visitorHash = hashVisitor(anonIP, userAgent, date);
   const { browser, os } = parseUA(userAgent);
 
-  // Clean referrer — strip query params, only keep domain
   let ref = "";
   if (referrer) {
     try {
@@ -88,102 +118,65 @@ function recordPageView({ ip, userAgent, path: pagePath, referrer }) {
     }
   }
 
-  const entry = {
-    t: now.toISOString(),
-    h: hour,
-    p: pagePath,
-    v: visitorHash,
-    r: ref,
-    b: browser,
-    o: os,
-    s: SITE,
-  };
-
-  const file = path.join(DATA_DIR, `${date}.jsonl`);
   try {
-    fs.appendFileSync(file, JSON.stringify(entry) + "\n");
+    await getPool().query(
+      `INSERT INTO page_views (created_at, site, path, visitor_hash, referrer, browser, os, hour)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [now, SITE, pagePath, visitorHash, ref, browser, os, hour]
+    );
   } catch (e) {
-    console.error("Analytics: failed to write", e.message);
-  }
-}
-
-// Read a day's data
-function readDay(date) {
-  const file = path.join(DATA_DIR, `${date}.jsonl`);
-  try {
-    if (!fs.existsSync(file)) return [];
-    const lines = fs.readFileSync(file, "utf8").trim().split("\n").filter(Boolean);
-    return lines.map((l) => JSON.parse(l));
-  } catch (e) {
-    console.error("Analytics: failed to read", e.message);
-    return [];
+    console.error("Analytics: insert failed", e.message);
   }
 }
 
 // Get stats for a specific date
-function getStats(date, site) {
-  const entries = readDay(date).filter((e) => !site || e.s === site);
-  if (entries.length === 0) {
+async function getStats(date, site) {
+  if (!(await ensureTable())) {
+    return { date, site: site || "all", pageViews: 0, uniqueVisitors: 0, topPages: [], topReferrers: [], browsers: [], os: [], hourly: new Array(24).fill(0) };
+  }
+
+  const p = getPool();
+  const siteFilter = site ? "AND site = $2" : "";
+  const params = site ? [date, site] : [date];
+
+  try {
+    const [pvRes, uvRes, pagesRes, refRes, browserRes, osRes, hourlyRes] = await Promise.all([
+      p.query(`SELECT COUNT(*) as c FROM page_views WHERE created_at::date = $1 ${siteFilter}`, params),
+      p.query(`SELECT COUNT(DISTINCT visitor_hash) as c FROM page_views WHERE created_at::date = $1 ${siteFilter}`, params),
+      p.query(`SELECT path as name, COUNT(*) as count FROM page_views WHERE created_at::date = $1 ${siteFilter} GROUP BY path ORDER BY count DESC LIMIT 10`, params),
+      p.query(`SELECT referrer as name, COUNT(*) as count FROM page_views WHERE created_at::date = $1 ${siteFilter} AND referrer != '' GROUP BY referrer ORDER BY count DESC LIMIT 10`, params),
+      p.query(`SELECT browser as name, COUNT(*) as count FROM page_views WHERE created_at::date = $1 ${siteFilter} GROUP BY browser ORDER BY count DESC LIMIT 10`, params),
+      p.query(`SELECT os as name, COUNT(*) as count FROM page_views WHERE created_at::date = $1 ${siteFilter} GROUP BY os ORDER BY count DESC LIMIT 10`, params),
+      p.query(`SELECT hour, COUNT(*) as count FROM page_views WHERE created_at::date = $1 ${siteFilter} GROUP BY hour ORDER BY hour`, params),
+    ]);
+
+    const hourly = new Array(24).fill(0);
+    for (const row of hourlyRes.rows) {
+      hourly[row.hour] = parseInt(row.count);
+    }
+
     return {
       date,
       site: site || "all",
-      pageViews: 0,
-      uniqueVisitors: 0,
-      topPages: [],
-      topReferrers: [],
-      browsers: [],
-      os: [],
-      hourly: new Array(24).fill(0),
+      pageViews: parseInt(pvRes.rows[0].c),
+      uniqueVisitors: parseInt(uvRes.rows[0].c),
+      topPages: pagesRes.rows.map((r) => ({ name: r.name, count: parseInt(r.count) })),
+      topReferrers: refRes.rows.map((r) => ({ name: r.name, count: parseInt(r.count) })),
+      browsers: browserRes.rows.map((r) => ({ name: r.name, count: parseInt(r.count) })),
+      os: osRes.rows.map((r) => ({ name: r.name, count: parseInt(r.count) })),
+      hourly,
     };
+  } catch (e) {
+    console.error("Analytics: stats query failed", e.message);
+    return { date, site: site || "all", pageViews: 0, uniqueVisitors: 0, topPages: [], topReferrers: [], browsers: [], os: [], hourly: new Array(24).fill(0) };
   }
-
-  const visitors = new Set();
-  const pages = {};
-  const referrers = {};
-  const browsers = {};
-  const osMap = {};
-  const hourly = new Array(24).fill(0);
-
-  for (const e of entries) {
-    visitors.add(e.v);
-    pages[e.p] = (pages[e.p] || 0) + 1;
-    if (e.r) referrers[e.r] = (referrers[e.r] || 0) + 1;
-    browsers[e.b] = (browsers[e.b] || 0) + 1;
-    osMap[e.o] = (osMap[e.o] || 0) + 1;
-    hourly[e.h] = (hourly[e.h] || 0) + 1;
-  }
-
-  const sortObj = (obj, limit = 10) =>
-    Object.entries(obj)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, limit)
-      .map(([name, count]) => ({ name, count }));
-
-  return {
-    date,
-    site: site || "all",
-    pageViews: entries.length,
-    uniqueVisitors: visitors.size,
-    topPages: sortObj(pages),
-    topReferrers: sortObj(referrers),
-    browsers: sortObj(browsers),
-    os: sortObj(osMap),
-    hourly,
-  };
 }
 
-// Clean up old data files (keep last 30 days)
-function cleanup() {
-  ensureDir();
+// Clean up old data (keep last 90 days)
+async function cleanup() {
+  if (!(await ensureTable())) return;
   try {
-    const files = fs.readdirSync(DATA_DIR).filter((f) => f.endsWith(".jsonl"));
-    const cutoff = new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
-    for (const f of files) {
-      const fileDate = f.replace(".jsonl", "");
-      if (fileDate < cutoff) {
-        fs.unlinkSync(path.join(DATA_DIR, f));
-      }
-    }
+    await getPool().query(`DELETE FROM page_views WHERE created_at < NOW() - INTERVAL '90 days'`);
   } catch (e) {
     console.error("Analytics: cleanup failed", e.message);
   }
@@ -192,7 +185,6 @@ function cleanup() {
 module.exports = {
   recordPageView,
   getStats,
-  readDay,
   cleanup,
   anonymizeIP,
   hashVisitor,

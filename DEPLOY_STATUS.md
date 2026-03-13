@@ -28,7 +28,7 @@
 | - App deployed | Yes (`game.hjivemind.com`) | Same service |
 | - UI | Panel-based responsive layout | Same |
 | - Docs (MDX) | 7 pages live | Same |
-| - Analytics | Client-side tracking | Same |
+| - Analytics | Postgres-backed (Railway) | Same |
 | **Relayer** | | |
 | - Wallet configured | Deployer wallet | Dedicated wallet needed |
 | - RPC URL | Set (public node) | Mainnet RPC needed |
@@ -41,7 +41,39 @@
 | - Languages | EN, ES, DE, JA, FR, PT, KO, ZH, IT | Same |
 | **Tests** | 87/87 passing | Same contracts |
 
-## Go-Live Checklist
+## Sepolia Staging Status
+
+### Completed
+- [x] All contracts deployed to Sepolia
+- [x] AutoLoop keeper registered + funded (0.1 ETH)
+- [x] VRF enabled on all 4 rounds
+- [x] Controller keys registered (3 workers)
+- [x] Frontend deployed to `game.hjivemind.com`
+- [x] x402 payment gating live (Base Sepolia USDC)
+- [x] Relayer wallet configured
+- [x] Analytics backed by Postgres (shared DB for game + marketing)
+- [x] Hub name alignment fixed (`hjivemind.*` across contracts + frontend)
+- [x] Marketing site deployed to `hjivemind.com` (9 languages)
+- [x] OG image configured for social sharing
+- [x] 87/87 tests passing
+
+### Staging Game Config (On-Chain)
+- Entry fee: 0 ETH (free for testnet)
+- Player limit: 20
+- Join countdown: 300 seconds (after 2nd player)
+- Auto-start: when player limit reached or countdown expires
+
+### Ready for Playtesting
+- [ ] Run a full game with 2+ wallets (join → 4 rounds → claim)
+- [ ] Verify AutoLoop keeper advances rounds automatically
+- [ ] Test relayer-based join (x402 USDC flow)
+- [ ] Verify toast notifications appear correctly
+- [ ] Test mobile layout on phone / tablet
+- [ ] Verify SFX plays on round transitions
+
+---
+
+## Go-Live Checklist (Mainnet)
 
 ### Smart Contracts
 - [ ] Deploy all contracts to Ethereum mainnet

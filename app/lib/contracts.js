@@ -82,7 +82,7 @@ function getProvider(chainId) {
   const cid = chainId || getActiveChainId();
   const chain = getChainConfig(cid);
   if (!chain) throw new Error(`Unsupported chain: ${cid}`);
-  const rpcUrl = process.env.RPC_URL || chain.rpcUrl;
+  const rpcUrl = process.env.RPC_URL || process.env.SEPOLIA_RPC_URL || chain.rpcUrl;
   return new ethers.JsonRpcProvider(rpcUrl);
 }
 
