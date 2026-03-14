@@ -68,6 +68,7 @@ function buildRoutes(multiplier) {
         price: `$${price}`,
         network,
         description: DESCRIPTIONS[route] || tierName,
+        maxTimeoutSeconds: Math.floor(REFRESH_INTERVAL_MS / 1000),
       };
     }
   }
