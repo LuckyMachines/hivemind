@@ -3,7 +3,16 @@
 const crypto = require("crypto");
 const { Pool } = require("pg");
 
-const SITE = process.env.ANALYTICS_SITE || "game";
+// Network-aware site tag: game-sepolia or game-mainnet
+function getSiteTag() {
+  const override = process.env.ANALYTICS_SITE;
+  if (override) return override;
+  const chainId = process.env.CHAIN_ID || process.env.NEXT_PUBLIC_CHAIN_ID || "0xaa36a7";
+  if (chainId === "0x1") return "game-mainnet";
+  return "game-sepolia";
+}
+
+const SITE = getSiteTag();
 
 // Lazy-init connection pool
 let pool;

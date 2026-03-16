@@ -1,28 +1,35 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import "../styles/globals.css";
 import { ToastProvider } from "../components/Toast";
 
+let pendingTrack = null;
+
 function trackPageView(path) {
-  fetch("/api/analytics/collect", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      path,
-      ua: navigator.userAgent,
-      referrer: document.referrer,
-    }),
-  }).catch(() => {});
+  clearTimeout(pendingTrack);
+  pendingTrack = setTimeout(() => {
+    fetch("/api/analytics/collect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        path,
+        ua: navigator.userAgent,
+        referrer: document.referrer,
+      }),
+    }).catch(() => {});
+  }, 300);
 }
 
 function MyApp({ Component, pageProps }) {
   const router = useRouter();
+  const tracked = useRef(false);
 
   useEffect(() => {
-    // Track initial page load
-    trackPageView(router.asPath);
+    if (!tracked.current) {
+      trackPageView(router.asPath);
+      tracked.current = true;
+    }
 
-    // Track client-side navigations
     const handleRouteChange = (url) => trackPageView(url);
     router.events.on("routeChangeComplete", handleRouteChange);
     return () => router.events.off("routeChangeComplete", handleRouteChange);

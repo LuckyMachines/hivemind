@@ -1,6 +1,7 @@
 // Analytics stats endpoint — used by the cron digest service
 // Protected by ANALYTICS_SECRET env var
-const { getStats, cleanup } = require("../../../lib/analytics");
+// Query params: ?date=YYYY-MM-DD&site=game-sepolia|game-mainnet|all
+const { getStats, cleanup, SITE } = require("../../../lib/analytics");
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
@@ -16,9 +17,11 @@ export default async function handler(req, res) {
     const date =
       req.query.date ||
       new Date(Date.now() - 86400000).toISOString().split("T")[0];
-    const site = req.query.site || null;
+    // Default to this service's site tag, pass null for all sites
+    const site = req.query.site === "all" ? null : (req.query.site || SITE);
 
     const stats = await getStats(date, site);
+    stats.availableSites = ["game-sepolia", "game-mainnet", "marketing", "all"];
 
     // Run cleanup on stats requests
     cleanup();
