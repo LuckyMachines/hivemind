@@ -1274,3 +1274,118 @@ a { color: inherit; text-decoration: none; }
   .hjivemind-title { font-size: 2.5em; }
   .landing-hero__logo { width: 80px; height: 80px; }
 }
+
+/* ── AutoLoop Funding ── */
+.autoloop-fund {
+  background: var(--hm-bg-card);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius-sm);
+  padding: 12px;
+}
+
+.autoloop-fund__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--hm-text-secondary);
+  margin-bottom: 8px;
+}
+
+.autoloop-fund__chain {
+  margin-left: auto;
+  font-size: 0.8em;
+  font-weight: 500;
+  color: var(--hm-text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.autoloop-fund__balance {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.autoloop-fund__label {
+  font-size: 0.75em;
+  color: var(--hm-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.autoloop-fund__value {
+  font-size: 1.3em;
+  font-weight: 700;
+  color: var(--hm-green);
+  font-variant-numeric: tabular-nums;
+}
+
+.autoloop-fund__value--low {
+  color: var(--hm-orange);
+}
+
+.autoloop-fund__warning {
+  font-size: 0.75em;
+  color: var(--hm-orange);
+  margin-top: 2px;
+}
+
+.autoloop-fund__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.autoloop-fund__presets {
+  display: flex;
+  gap: 4px;
+}
+
+.autoloop-fund__preset {
+  flex: 1;
+  padding: 6px 4px;
+  font-size: 0.78em;
+  font-weight: 600;
+  color: var(--hm-text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--hm-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.autoloop-fund__preset:hover {
+  border-color: var(--hm-border-hover);
+  color: var(--hm-text);
+}
+
+.autoloop-fund__preset--active {
+  border-color: var(--hm-accent);
+  color: var(--hm-accent);
+  background: rgba(33, 150, 243, 0.08);
+}
+
+.autoloop-fund__btn {
+  padding: 8px 12px;
+  font-size: 0.85em;
+  font-weight: 700;
+  color: #fff;
+  background: var(--hm-accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.autoloop-fund__btn:hover:not(:disabled) {
+  background: var(--hm-accent-dark);
+}
+
+.autoloop-fund__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -15,6 +15,7 @@ MCP server for AI agents to play HJIVEMIND. Free read tools query the chain dire
 | `get_leaderboard` | Final rankings for a completed game |
 | `get_round_results` | Response distribution + winning answer for a round |
 | `get_pricing` | Current x402 prices, ETH/USD rate, multiplier |
+| `get_autoloop_balance` | Keeper ETH balance for game automation + funding info |
 | `hash_answers` | Compute keccak256 hash for answer submission |
 
 ### Paid (x402-gated, USDC on Base Sepolia)

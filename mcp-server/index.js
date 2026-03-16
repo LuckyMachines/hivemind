@@ -413,6 +413,54 @@ server.tool(
   }
 );
 
+// ── AutoLoop balance (direct chain read) ──
+
+const AUTOLOOP_ADDRESS = "0xAE63c1071020964e61f668De95cA1c90ad5695A7"; // Sepolia
+const AUTOLOOP_REGISTRAR = "0xAE473527893bbf687D93cFD0e447d13202054ef0"; // Sepolia
+const KEEPER_ADDRESS = "0xbb704032148Eb9247cB7aEd7aD6b3871d8060d26"; // Sepolia
+
+const AutoLoopABI = [
+  "function balance(address) view returns (uint256)",
+];
+const AutoLoopRegistryABI = [
+  "function isRegisteredAutoLoop(address) view returns (bool)",
+];
+
+server.tool(
+  "get_autoloop_balance",
+  "Get the AutoLoop keeper balance. This is how much ETH is available to fund game automation (round progression, VRF). Players can deposit ETH to keep the game running. Free.",
+  {},
+  async () => {
+    try {
+      const autoLoop = new ethers.Contract(AUTOLOOP_ADDRESS, AutoLoopABI, provider);
+      const registry = new ethers.Contract(AUTOLOOP_ADDRESS, AutoLoopRegistryABI, provider);
+
+      const [balanceWei, isRegistered] = await Promise.all([
+        autoLoop.balance(KEEPER_ADDRESS),
+        registry.isRegisteredAutoLoop(KEEPER_ADDRESS),
+      ]);
+
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            keeper: KEEPER_ADDRESS,
+            registrar: AUTOLOOP_REGISTRAR,
+            balance: ethers.formatEther(balanceWei),
+            balanceWei: balanceWei.toString(),
+            isRegistered,
+            fundingInfo: "Players can fund the keeper by calling AutoLoopRegistrar.deposit(keeperAddress) with ETH. This funds gas for game automation (round transitions, VRF proofs).",
+          }, null, 2),
+        }],
+      };
+    } catch (e) {
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: "Failed to fetch AutoLoop balance", message: e.message }, null, 2) }],
+      };
+    }
+  }
+);
+
 // ════════════════════════════════════════════════════════
 // x402-GATED WRITE TOOLS — paid via USDC on Base Sepolia
 // ════════════════════════════════════════════════════════

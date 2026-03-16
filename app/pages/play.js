@@ -8,6 +8,7 @@ import Score from "../components/Score";
 import Winners from "../components/Winners";
 import Panel from "../components/Panel";
 import PanelTabs from "../components/PanelTabs";
+import FundAutoLoop from "../components/FundAutoLoop";
 import { useToast } from "../components/Toast";
 import useGameState from "../hooks/useGameState";
 
@@ -193,6 +194,16 @@ function Dashboard() {
           setAccounts={setAccounts}
           setConnectedWallet={setConnectedWallet}
           setChainId={setChainId}
+        />
+      </div>
+
+      {/* AutoLoop Keeper Funding */}
+      <div className="status-block">
+        <div className="status-block__label">Game Automation</div>
+        <FundAutoLoop
+          provider={provider}
+          accounts={accounts}
+          chainId={chainId}
         />
       </div>
     </>

@@ -36,6 +36,12 @@ const CHAINS = {
       round3: "0xc188d7a8bC093936ba51c71d35805eb0B0532ACF",
       round4: "0x7876F19c8786835B36b1C6fFC2ebdD3861e687d0",
     },
+    autoloop: {
+      autoLoop: "0xAE63c1071020964e61f668De95cA1c90ad5695A7", // also serves as registry on Sepolia
+      registry: "0xAE63c1071020964e61f668De95cA1c90ad5695A7",
+      registrar: "0xAE473527893bbf687D93cFD0e447d13202054ef0",
+      keeper: "0xbb704032148Eb9247cB7aEd7aD6b3871d8060d26",
+    },
   },
   // Ethereum Mainnet
   "0x1": {
@@ -51,6 +57,12 @@ const CHAINS = {
       round2: "",
       round3: "",
       round4: "",
+    },
+    autoloop: {
+      autoLoop: "0x6748415BcE63c0FBf1E50ceB2128BfeAC977224F",
+      registry: "0xC1b9241DE87108EffF5caAf0340CcEbD05A5425f",
+      registrar: "0x202d73Ac243907A6e81B5FF55E4c316567e4fF80",
+      keeper: "", // set after mainnet game deployment
     },
   },
 };
@@ -75,11 +87,17 @@ function getChainName(chainId) {
   return chain ? chain.name : "Unknown";
 }
 
+function getAutoLoopConfig(chainId) {
+  const chain = CHAINS[chainId];
+  return chain ? chain.autoloop || null : null;
+}
+
 module.exports = {
   CHAINS,
   SUPPORTED_CHAIN_IDS,
   getChainConfig,
   getAddresses,
+  getAutoLoopConfig,
   getChainName,
   isSupportedChain,
 };
