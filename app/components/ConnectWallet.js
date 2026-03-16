@@ -44,7 +44,7 @@ const ConnectWallet = (props) => {
           setWrongChain(true);
           setChainLabel("");
           console.log(
-            `Unsupported chain (${chainID}). Please connect to Anvil, Sepolia, or Mainnet.`
+            `Unsupported chain (${chainID}). Please switch to Sepolia.`
           );
         } else {
           setWrongChain(false);
@@ -80,7 +80,7 @@ const ConnectWallet = (props) => {
           onClick={switchChain}
           disabled={switchingChain}
         >
-          {switchingChain ? "Switching..." : "Unsupported Chain — Switch"}
+          {switchingChain ? "Switching..." : "Switch to Sepolia"}
         </button>
       ) : connectedAddress ? (
         <button className="wallet-btn wallet-btn--connected" disabled>

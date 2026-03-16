@@ -43,28 +43,29 @@ const CHAINS = {
       keeper: "0xbb704032148Eb9247cB7aEd7aD6b3871d8060d26",
     },
   },
-  // Ethereum Mainnet
-  "0x1": {
-    name: "Mainnet",
-    chainId: "0x1",
-    rpcUrl: "https://ethereum-rpc.publicnode.com",
-    addresses: {
-      lobby: "",
-      gameController: "",
-      scoreKeeper: "",
-      winners: "",
-      round1: "",
-      round2: "",
-      round3: "",
-      round4: "",
-    },
-    autoloop: {
-      autoLoop: "0x6748415BcE63c0FBf1E50ceB2128BfeAC977224F",
-      registry: "0xC1b9241DE87108EffF5caAf0340CcEbD05A5425f",
-      registrar: "0x202d73Ac243907A6e81B5FF55E4c316567e4fF80",
-      keeper: "", // set after mainnet game deployment
-    },
-  },
+  // Ethereum Mainnet — disabled until game contracts are deployed
+  // Uncomment when ready for mainnet launch
+  // "0x1": {
+  //   name: "Mainnet",
+  //   chainId: "0x1",
+  //   rpcUrl: "https://ethereum-rpc.publicnode.com",
+  //   addresses: {
+  //     lobby: "",
+  //     gameController: "",
+  //     scoreKeeper: "",
+  //     winners: "",
+  //     round1: "",
+  //     round2: "",
+  //     round3: "",
+  //     round4: "",
+  //   },
+  //   autoloop: {
+  //     autoLoop: "0x6748415BcE63c0FBf1E50ceB2128BfeAC977224F",
+  //     registry: "0xC1b9241DE87108EffF5caAf0340CcEbD05A5425f",
+  //     registrar: "0x202d73Ac243907A6e81B5FF55E4c316567e4fF80",
+  //     keeper: "", // set after mainnet game deployment
+  //   },
+  // },
 };
 
 const SUPPORTED_CHAIN_IDS = Object.keys(CHAINS);

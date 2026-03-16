@@ -295,6 +295,14 @@ function Dashboard() {
       </Head>
 
       <div className="hm-shell">
+        {/* ── Beta Banner ── */}
+        <div className="hm-beta-banner">
+          <strong>BETA</strong> — HJIVEMIND is in beta on Sepolia testnet. Mainnet coming soon! Play for free — get testnet ETH from{" "}
+          <a href="https://cloud.google.com/application/web3/faucet/ethereum/sepolia" target="_blank" rel="noopener noreferrer">Google</a>,{" "}
+          <a href="https://www.alchemy.com/faucets/ethereum-sepolia" target="_blank" rel="noopener noreferrer">Alchemy</a>, or{" "}
+          <a href="https://faucets.chain.link/sepolia" target="_blank" rel="noopener noreferrer">Chainlink</a>.
+        </div>
+
         {/* ── Top Bar (all sizes) ── */}
         <header className="hm-topbar">
           <div className="hm-topbar__brand">

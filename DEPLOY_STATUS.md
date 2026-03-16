@@ -1,6 +1,6 @@
 # HJIVEMIND — Deploy & Readiness Status
 
-*Last updated: 2026-03-13*
+*Last updated: 2026-03-15*
 
 | Component | Staging (Sepolia) | Production (Mainnet) |
 |-----------|------------------|---------------------|
@@ -19,11 +19,20 @@
 | - Controller keys (3 workers) | Registered | — |
 | - ETH funded | 0.1 ETH | — |
 | - VRF source on rounds | AutoLoop (all 4) | — |
+| - Player self-funding UI | Yes | — |
+| - AutoLoop (mainnet) | `0x6748415BcE63c0FBf1E50ceB2128BfeAC977224F` | Live |
+| - Registry (mainnet) | `0xC1b9241DE87108EffF5caAf0340CcEbD05A5425f` | Live |
+| - Registrar (mainnet) | `0x202d73Ac243907A6e81B5FF55E4c316567e4fF80` | Live |
 | **x402 Payments** | | |
 | - Enabled | Yes | — |
 | - Network | Base Sepolia | Base (mainnet) |
 | - Facilitator | x402.org | x402.org |
+| - Dynamic pricing | Yes (ETH/USD via Coinbase, 10 min refresh) | Same |
 | - Pricing | $0.01–$0.10/call (~$0.35/game) | TBD |
+| **MCP Server** | | |
+| - Free tools | 9 (chain reads + hash + pricing + autoloop balance) | Same |
+| - Paid tools (x402) | 4 (join, submit, reveal, claim) | Same |
+| - Dynamic pricing | Yes | Same |
 | **Frontend (Railway)** | | |
 | - App deployed | Yes (`game.hjivemind.com`) | Same service |
 | - UI | Panel-based responsive layout | Same |
@@ -39,6 +48,9 @@
 | **Marketing Site** | | |
 | - Deployed | Yes | Same |
 | - Languages | EN, ES, DE, JA, FR, PT, KO, ZH, IT | Same |
+| - Mobile-first CSS | Yes (3 breakpoints, touch targets, a11y) | Same |
+| - Self-hosted Inter font | Yes | Same |
+| - PWA meta tags | Yes | Same |
 | **Tests** | 87/87 passing | Same contracts |
 
 ## Sepolia Staging Status
@@ -50,11 +62,17 @@
 - [x] Controller keys registered (3 workers)
 - [x] Frontend deployed to `game.hjivemind.com`
 - [x] x402 payment gating live (Base Sepolia USDC)
+- [x] Dynamic x402 pricing (ETH/USD scaled, Coinbase feed, 10 min refresh)
 - [x] Relayer wallet configured
 - [x] Analytics backed by Postgres (shared DB for game + marketing)
 - [x] Hub name alignment fixed (`hjivemind.*` across contracts + frontend)
 - [x] Marketing site deployed to `hjivemind.com` (9 languages)
+- [x] Marketing site mobile-first redesign (touch targets, a11y, print stylesheet)
+- [x] Self-hosted Inter font (no Google Fonts CDN dependency)
 - [x] OG image configured for social sharing
+- [x] MCP server with 9 free tools + 4 x402-gated tools
+- [x] AutoLoop self-funding UI (players deposit ETH to keep automation running)
+- [x] AutoLoop balance API (`/api/autoloop/balance`) + MCP tool
 - [x] 87/87 tests passing
 
 ### Staging Game Config (On-Chain)
@@ -70,6 +88,8 @@
 - [ ] Verify toast notifications appear correctly
 - [ ] Test mobile layout on phone / tablet
 - [ ] Verify SFX plays on round transitions
+- [ ] Test AutoLoop self-funding flow (deposit ETH from player wallet)
+- [ ] Test MCP server tools with Claude Desktop / Claude Code
 
 ---
 
@@ -79,7 +99,7 @@
 - [ ] Deploy all contracts to Ethereum mainnet
 - [ ] Verify all contracts on Etherscan
 - [ ] Update `deployed-contracts.json` with mainnet addresses
-- [ ] Update `lib/chains.js` with mainnet contract addresses
+- [ ] Update `lib/chains.js` with mainnet contract addresses + keeper
 - [ ] Run full test suite against mainnet fork
 - [ ] Confirm contract ownership / admin roles are correct
 - [ ] Set up contract upgrade path or document immutability
@@ -90,6 +110,7 @@
 - [ ] Register controller keys for mainnet workers
 - [ ] Set keeper gas limits and alerting thresholds
 - [ ] Test full game cycle via keeper on mainnet
+- [ ] Verify player self-funding works on mainnet
 
 ### Relayer
 - [ ] Set up dedicated relayer wallet (not deployer)
