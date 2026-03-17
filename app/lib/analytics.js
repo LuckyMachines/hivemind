@@ -28,26 +28,60 @@ function getPool() {
   return pool;
 }
 
-// Auto-create table on first use
+// Auto-create or migrate table on first use
 let tableReady = false;
 async function ensureTable() {
   if (tableReady) return true;
   const p = getPool();
   if (!p) return false;
   try {
-    await p.query(`
-      CREATE TABLE IF NOT EXISTS page_views (
-        id SERIAL PRIMARY KEY,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        site VARCHAR(20) NOT NULL,
-        path TEXT NOT NULL,
-        visitor_hash VARCHAR(16) NOT NULL,
-        referrer TEXT,
-        browser VARCHAR(20),
-        os VARCHAR(20),
-        hour SMALLINT NOT NULL
+    const exists = await p.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables WHERE table_name = 'page_views'
       )
     `);
+
+    if (!exists.rows[0].exists) {
+      await p.query(`
+        CREATE TABLE page_views (
+          id SERIAL PRIMARY KEY,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          site VARCHAR(20) NOT NULL,
+          path TEXT NOT NULL,
+          visitor_hash VARCHAR(16) NOT NULL,
+          referrer TEXT,
+          browser VARCHAR(20),
+          os VARCHAR(20),
+          hour SMALLINT NOT NULL
+        )
+      `);
+    } else {
+      // Migrate: add missing columns from older schema
+      const cols = await p.query(`
+        SELECT column_name FROM information_schema.columns WHERE table_name = 'page_views'
+      `);
+      const colNames = cols.rows.map((r) => r.column_name);
+
+      if (!colNames.includes("created_at")) {
+        await p.query(`ALTER TABLE page_views ADD COLUMN created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
+      }
+      if (!colNames.includes("site")) {
+        await p.query(`ALTER TABLE page_views ADD COLUMN site VARCHAR(20) NOT NULL DEFAULT 'unknown'`);
+      }
+      if (!colNames.includes("visitor_hash")) {
+        await p.query(`ALTER TABLE page_views ADD COLUMN visitor_hash VARCHAR(16) NOT NULL DEFAULT ''`);
+      }
+      if (!colNames.includes("browser")) {
+        await p.query(`ALTER TABLE page_views ADD COLUMN browser VARCHAR(20)`);
+      }
+      if (!colNames.includes("os")) {
+        await p.query(`ALTER TABLE page_views ADD COLUMN os VARCHAR(20)`);
+      }
+      if (!colNames.includes("hour")) {
+        await p.query(`ALTER TABLE page_views ADD COLUMN hour SMALLINT NOT NULL DEFAULT 0`);
+      }
+    }
+
     await p.query(`CREATE INDEX IF NOT EXISTS idx_pv_created ON page_views (created_at)`);
     await p.query(`CREATE INDEX IF NOT EXISTS idx_pv_site ON page_views (site)`);
     tableReady = true;
