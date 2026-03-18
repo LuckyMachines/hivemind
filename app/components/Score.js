@@ -35,7 +35,7 @@ const Score = (props) => {
 
       <div className="score-section__question">{props.question}</div>
       <div className="score-section__answer">
-        &ldquo;{props.responses[Number(props.guess)]}&rdquo;
+        &ldquo;{props.responses[Number(props.guess)] || "—"}&rdquo;
       </div>
 
       {activeResponses.map((response, idx) => {

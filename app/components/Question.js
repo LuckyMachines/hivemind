@@ -11,7 +11,7 @@ const Question = (props) => {
     if (web3) {
       console.log("Player choice:", props.playerChoice);
       console.log("Crowd choice:", props.crowdChoice);
-      console.log("Secret Phase choice:", props.secretPhrase);
+      console.log("Secret Phrase:", props.secretPhrase);
       try {
         if (props.buttonText == "Submit Answers") {
           const encodedChoices = web3.eth.abi.encodeParameters(
