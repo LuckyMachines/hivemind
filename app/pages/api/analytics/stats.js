@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     const site = req.query.site === "all" ? null : (req.query.site || SITE);
 
     const stats = await getStats(date, site);
-    stats.availableSites = ["game-sepolia", "game-mainnet", "marketing", "all"];
+    stats.availableSites = [SITE, "marketing", "game-sepolia", "game-mainnet", "all"].filter((v, i, a) => a.indexOf(v) === i);
 
     // Run cleanup on stats requests
     cleanup();

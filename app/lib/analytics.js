@@ -62,6 +62,15 @@ async function ensureTable() {
       `);
       const colNames = cols.rows.map((r) => r.column_name);
 
+      // Rename legacy column from older schema
+      if (colNames.includes("pathname") && !colNames.includes("path")) {
+        await p.query(`ALTER TABLE page_views RENAME COLUMN pathname TO path`);
+      }
+      // Add path column if missing entirely
+      if (!colNames.includes("path") && !colNames.includes("pathname")) {
+        await p.query(`ALTER TABLE page_views ADD COLUMN path TEXT NOT NULL DEFAULT ''`);
+      }
+
       if (!colNames.includes("created_at")) {
         await p.query(`ALTER TABLE page_views ADD COLUMN created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`);
       }
