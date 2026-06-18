@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/router";
+import Script from "next/script";
 import "../styles/globals.css";
 import { ToastProvider } from "../components/Toast";
 
@@ -36,9 +37,17 @@ function MyApp({ Component, pageProps }) {
   }, [router]);
 
   return (
-    <ToastProvider>
-      <Component {...pageProps} />
-    </ToastProvider>
+    <>
+      <Script
+        defer
+        data-domain="hjivemind.com"
+        src="https://plausible.racerverse.com/js/script.outbound-links.js"
+        strategy="afterInteractive"
+      />
+      <ToastProvider>
+        <Component {...pageProps} />
+      </ToastProvider>
+    </>
   );
 }
 
